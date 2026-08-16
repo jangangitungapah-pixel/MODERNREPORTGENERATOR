@@ -18,7 +18,7 @@
     "preview:worker": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "upload:worker": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "deploy:worker": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "acceptance:production": "node scripts/production-acceptance.mjs",
+    "acceptance:production": "node scripts/production-acceptance.mjs && node scripts/firestore-production-acceptance.mjs",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply reportos-db --local",
