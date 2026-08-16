@@ -1,6 +1,7 @@
 import {
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
 } from 'drizzle-orm/sqlite-core';
@@ -115,6 +116,12 @@ export const idempotencyKeys =
         ).notNull(),
     },
     (table) => [
+      primaryKey({
+        columns: [
+          table.workspaceId,
+          table.requestKey,
+        ],
+      }),
       index(
         'idx_idempotency_created'
       ).on(
