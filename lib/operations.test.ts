@@ -332,4 +332,69 @@ describe('operational intelligence', () => {
       view.closurePending
     ).toBe(false);
   });
+
+  it('does not mark the whole incident restored while an impact link is explicitly down', () => {
+    const report = {
+      ...SAMPLE_REPORT,
+      primaryMarker: 'up' as const,
+      impactLinks: [
+        {
+          id: 'impact-1',
+          marker: 'down' as const,
+          region:
+            'FLP_3rd_MANDAU',
+          statusTag:
+            '[Open - Major]',
+          summary:
+            'DOWN - CHILD_A<>CHILD_B',
+          ticket:
+            'DATACOM-INC-20260816-00000001',
+        },
+      ],
+    };
+
+    expect(
+      deriveOperationalStatus(
+        report
+      )
+    ).toBe('repair');
+  });
+
+  it('allows restored status after every explicit impact marker is cleared', () => {
+    const report = {
+      ...SAMPLE_REPORT,
+      primaryMarker: 'up' as const,
+      impactLinks: [
+        {
+          id: 'impact-1',
+          marker: 'up' as const,
+          region:
+            'FLP_3rd_MANDAU',
+          statusTag:
+            '[Open - Major]',
+          summary:
+            'DOWN - CHILD_A<>CHILD_B',
+          ticket:
+            'DATACOM-INC-20260816-00000001',
+        },
+      ],
+      cutPoints: [
+        {
+          id: 'cp-1',
+          label: 'CP1',
+          rootcause:
+            'Drainage project',
+          cutPoint:
+            'KM 7.9',
+          marker: 'up' as const,
+        },
+      ],
+    };
+
+    expect(
+      deriveOperationalStatus(
+        report
+      )
+    ).toBe('restored');
+  });
 });

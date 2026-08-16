@@ -19,6 +19,7 @@ import {
   FolderArchive,
   Gauge,
   Layers3,
+  Mail,
   Pencil,
   Plus,
   RotateCcw,
@@ -85,6 +86,13 @@ import {
   toggleClosureChecklistTask,
   type ClosureTaskKey,
 } from '@/lib/closure';
+
+import {
+  buildClosedEmailDraft,
+  buildDeliveryValidation,
+  formatFinalClosurePackage,
+  formatWagDelivery,
+} from '@/lib/delivery';
 
 const STORAGE_KEY = 'reportos:draft:v1';
 const WORKSPACE_STORAGE_KEY =
@@ -266,6 +274,16 @@ export function ReportWorkspace() {
 
   const [copied, setCopied] =
     useState(false);
+
+  const [
+    deliveryCopied,
+    setDeliveryCopied,
+  ] = useState<
+    | 'wag'
+    | 'email'
+    | 'package'
+    | null
+  >(null);
 
   const [rawImport, setRawImport] =
     useState('');
@@ -611,6 +629,41 @@ export function ReportWorkspace() {
       (view) =>
         view.incidentId ===
         activeIncidentId
+    );
+
+  const deliveryValidation =
+    useMemo(
+      () =>
+        buildDeliveryValidation(
+          report,
+          activeClosureChecklist
+        ),
+      [
+        activeClosureChecklist,
+        report,
+      ]
+    );
+
+  const closedEmailDraft =
+    useMemo(
+      () =>
+        buildClosedEmailDraft(
+          report
+        ),
+      [report]
+    );
+
+  const finalClosurePackage =
+    useMemo(
+      () =>
+        formatFinalClosurePackage(
+          report,
+          activeClosureChecklist
+        ),
+      [
+        activeClosureChecklist,
+        report,
+      ]
     );
 
   const activeIncidentCount =
@@ -976,6 +1029,62 @@ export function ReportWorkspace() {
     } catch {
       setCopied(false);
     }
+  }
+
+  async function copyDelivery(
+    target:
+      | 'wag'
+      | 'email'
+      | 'package',
+    value: string
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        value
+      );
+
+      setDeliveryCopied(
+        target
+      );
+
+      window.setTimeout(
+        () =>
+          setDeliveryCopied(
+            null
+          ),
+        1700
+      );
+    } catch {
+      setDeliveryCopied(
+        null
+      );
+    }
+  }
+
+  function finalizeIncident() {
+    if (
+      !activeIncidentId ||
+      !deliveryValidation.canFinalize ||
+      activeIncident?.status ===
+        'archived'
+    ) {
+      return;
+    }
+
+    const current =
+      snapshotCurrentIncident();
+
+    setIncidentRecords(
+      setIncidentArchived(
+        current,
+        activeIncidentId,
+        true
+      )
+    );
+
+    setWorkspaceMode(
+      'archive'
+    );
   }
 
   function resetToSample() {
@@ -3336,6 +3445,299 @@ export function ReportWorkspace() {
                   </button>
                 </div>
               </div>
+
+              <section className="delivery-console-card glass-panel">
+                <div className="delivery-console-head">
+                  <div>
+                    <span className="delivery-kicker">
+                      SMART CLOSE / DELIVERY
+                    </span>
+
+                    <h3>
+                      Delivery console
+                    </h3>
+
+                    <p>
+                      Prepare operational handoff,
+                      closure email, and final
+                      archive without rebuilding
+                      the report manually.
+                    </p>
+                  </div>
+
+                  <span
+                    className="delivery-ready-chip"
+                    data-ready={
+                      deliveryValidation.canFinalize
+                        ? 'true'
+                        : 'false'
+                    }
+                  >
+                    {deliveryValidation.canFinalize
+                      ? 'READY TO CLOSE'
+                      : 'VALIDATION ACTIVE'}
+                  </span>
+                </div>
+
+                <div className="delivery-validation-grid">
+                  <div>
+                    <span>
+                      STATUS
+                    </span>
+
+                    <strong>
+                      {
+                        operationalStatusLabel(
+                          deliveryValidation.operationalStatus
+                        )
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      REPORT
+                    </span>
+
+                    <strong>
+                      {
+                        deliveryValidation.reportScore
+                      }%
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      CLOSURE
+                    </span>
+
+                    <strong>
+                      {
+                        deliveryValidation.closureScore
+                      }%
+                    </strong>
+                  </div>
+                </div>
+
+                {deliveryValidation.blockers.length >
+                0 ? (
+                  <div className="delivery-blockers">
+                    <div className="delivery-blocker-title">
+                      <AlertTriangle
+                        size={13}
+                      />
+                      Close validation
+                    </div>
+
+                    {deliveryValidation.blockers.map(
+                      (blocker) => (
+                        <span
+                          key={
+                            blocker
+                          }
+                        >
+                          {blocker}
+                        </span>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="delivery-clear">
+                    <ShieldCheck
+                      size={14}
+                    />
+
+                    <div>
+                      <strong>
+                        Closure gate passed
+                      </strong>
+
+                      <span>
+                        Operational restoration,
+                        report completeness, and
+                        administration are ready.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="delivery-action-grid">
+                  <button
+                    className="delivery-action-card"
+                    type="button"
+                    disabled={
+                      !deliveryValidation.canCopyWag
+                    }
+                    onClick={() =>
+                      copyDelivery(
+                        'wag',
+                        formatWagDelivery(
+                          report
+                        )
+                      )
+                    }
+                  >
+                    <span className="delivery-action-icon">
+                      {deliveryCopied ===
+                      'wag' ? (
+                        <Check
+                          size={16}
+                        />
+                      ) : (
+                        <Copy
+                          size={16}
+                        />
+                      )}
+                    </span>
+
+                    <span>
+                      <strong>
+                        {deliveryCopied ===
+                        'wag'
+                          ? 'WAG copied'
+                          : 'Copy WAG report'}
+                      </strong>
+
+                      <small>
+                        Exact ReportOS output,
+                        including impacts and CP.
+                      </small>
+                    </span>
+                  </button>
+
+                  <button
+                    className="delivery-action-card"
+                    type="button"
+                    disabled={
+                      !deliveryValidation.canPrepareClosedEmail
+                    }
+                    title={
+                      deliveryValidation.canPrepareClosedEmail
+                        ? 'Copy closed email draft'
+                        : 'Requires RESTORED status and a complete report'
+                    }
+                    onClick={() =>
+                      copyDelivery(
+                        'email',
+                        'Subject: ' +
+                          closedEmailDraft.subject +
+                          '\n\n' +
+                          closedEmailDraft.body
+                      )
+                    }
+                  >
+                    <span className="delivery-action-icon">
+                      {deliveryCopied ===
+                      'email' ? (
+                        <Check
+                          size={16}
+                        />
+                      ) : (
+                        <Mail
+                          size={16}
+                        />
+                      )}
+                    </span>
+
+                    <span>
+                      <strong>
+                        {deliveryCopied ===
+                        'email'
+                          ? 'Email copied'
+                          : 'Closed email'}
+                      </strong>
+
+                      <small>
+                        Generic closure draft;
+                        recipients stay manual.
+                      </small>
+                    </span>
+                  </button>
+
+                  <button
+                    className="delivery-action-card"
+                    type="button"
+                    disabled={
+                      !deliveryValidation.canFinalize
+                    }
+                    title={
+                      deliveryValidation.canFinalize
+                        ? 'Copy final closure package'
+                        : 'Resolve all close blockers first'
+                    }
+                    onClick={() =>
+                      copyDelivery(
+                        'package',
+                        finalClosurePackage
+                      )
+                    }
+                  >
+                    <span className="delivery-action-icon">
+                      {deliveryCopied ===
+                      'package' ? (
+                        <Check
+                          size={16}
+                        />
+                      ) : (
+                        <FileText
+                          size={16}
+                        />
+                      )}
+                    </span>
+
+                    <span>
+                      <strong>
+                        {deliveryCopied ===
+                        'package'
+                          ? 'Package copied'
+                          : 'Final package'}
+                      </strong>
+
+                      <small>
+                        Full report plus closure
+                        administration audit.
+                      </small>
+                    </span>
+                  </button>
+                </div>
+
+                <button
+                  className="delivery-finalize-button"
+                  type="button"
+                  disabled={
+                    !deliveryValidation.canFinalize ||
+                    activeIncident?.status ===
+                      'archived'
+                  }
+                  onClick={
+                    finalizeIncident
+                  }
+                >
+                  {activeIncident?.status ===
+                  'archived' ? (
+                    <>
+                      <Check
+                        size={16}
+                      />
+                      Incident already archived
+                    </>
+                  ) : (
+                    <>
+                      <Archive
+                        size={16}
+                      />
+                      Finalize & archive incident
+                    </>
+                  )}
+                </button>
+
+                <p className="delivery-footnote">
+                  Copy actions never mark WAG or
+                  email tasks as sent automatically.
+                  Checklist confirmation remains an
+                  explicit operator action.
+                </p>
+              </section>
 
               <div className="shortcut-card glass-panel">
                 <div className="shortcut-icon">

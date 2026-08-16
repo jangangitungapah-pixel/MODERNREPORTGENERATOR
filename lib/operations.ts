@@ -274,11 +274,36 @@ function latestProgress(
   };
 }
 
+function hasExplicitUnresolvedMarker(
+  report: IncidentReport
+): boolean {
+  const markers = [
+    report.primaryMarker,
+    ...(report.impactLinks ?? []).map(
+      (entry) => entry.marker
+    ),
+    ...(report.cutPoints ?? []).map(
+      (entry) => entry.marker
+    ),
+  ];
+
+  return markers.some(
+    (marker) =>
+      marker === 'down' ||
+      marker === 'warning'
+  );
+}
+
 export function deriveOperationalStatus(
   report: IncidentReport
 ): OperationalStatus {
   let status:
     OperationalStatus = 'new';
+
+  const unresolvedStructuredLink =
+    hasExplicitUnresolvedMarker(
+      report
+    );
 
   for (const entry of report.progress) {
     const candidate =
@@ -287,6 +312,19 @@ export function deriveOperationalStatus(
           entry.text
         )
       );
+
+    if (
+      candidate === 'restored' &&
+      unresolvedStructuredLink
+    ) {
+      //
+      // One child link can be UP while
+      // another Impact Link / CP is still
+      // explicitly DOWN. Do not promote
+      // the whole incident to RESTORED.
+      //
+      continue;
+    }
 
     if (
       STATUS_RANK[candidate] >
