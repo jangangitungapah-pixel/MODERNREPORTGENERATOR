@@ -1,0 +1,27 @@
+.link {
+  position: fixed;
+  z-index: 90;
+  right: 16px;
+  bottom: 164px;
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(94, 104, 143, 0.11);
+  border-radius: 10px;
+  padding: 0 10px;
+  color: #727c92;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 28px rgba(48, 54, 78, 0.08);
+  backdrop-filter: blur(15px);
+  text-decoration: none;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+@media (max-width: 700px) {
+  .link {
+    right: 10px;
+    bottom: 216px;
+  }
+}
