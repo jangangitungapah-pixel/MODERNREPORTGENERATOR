@@ -1,0 +1,293 @@
+/*
+ * ReportOS ARCHIVE-03
+ * Precision Typography Calibration
+ *
+ * Final Archive-only presentation layer.
+ * Tightens desktop type scale and vertical rhythm without changing behavior.
+ */
+
+.app-shell[data-workspace-mode='archive'] .main-stage > .topbar .eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+}
+
+.app-shell[data-workspace-mode='archive'] .main-stage > .topbar h1 {
+  font-size: clamp(30px, 2.15vw, 36px);
+  font-weight: 785;
+  line-height: 0.98;
+  letter-spacing: -0.048em;
+}
+
+.app-shell[data-workspace-mode='archive'] .incident-vault {
+  gap: 14px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-hero {
+  min-height: 150px;
+  max-height: 174px;
+  gap: 24px;
+  padding: 21px 24px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-kicker {
+  margin-bottom: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.115em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-hero-copy h2 {
+  max-width: 690px;
+  font-size: clamp(28px, 2.25vw, 34px);
+  font-weight: 775;
+  line-height: 1.025;
+  letter-spacing: -0.043em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-hero-copy p {
+  max-width: 670px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-stat-grid {
+  grid-template-columns: repeat(3, minmax(78px, 90px));
+  gap: 7px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-stat-grid > div {
+  min-height: 70px;
+  border-radius: 13px;
+  padding: 10px 12px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-stat-grid span {
+  font-size: 9.25px;
+  letter-spacing: 0.075em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-stat-grid strong {
+  margin-top: 4px;
+  font-size: 22px;
+  letter-spacing: -0.045em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-toolbar {
+  gap: 8px;
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-search {
+  min-height: 44px;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  border-radius: 11px;
+  padding-inline: 9px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-search input {
+  min-height: 42px;
+  padding-inline: 6px;
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-search button {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-create-button {
+  min-height: 44px;
+  border-radius: 11px;
+  padding-inline: 15px;
+  font-size: 11.5px;
+  font-weight: 750;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-list {
+  gap: 12px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-incident-card {
+  min-height: 214px;
+  border-radius: 18px;
+  padding: 17px 18px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-status {
+  min-height: 21px;
+  gap: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-status-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-current-chip {
+  min-height: 21px;
+  padding-inline: 7px;
+  font-size: 9.25px;
+  letter-spacing: 0.035em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-main {
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-region {
+  margin-bottom: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-identity h3 {
+  font-size: 15.5px;
+  font-weight: 770;
+  line-height: 1.22;
+  letter-spacing: -0.022em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-identity p {
+  margin-top: 5px;
+  font-size: 11.75px;
+  line-height: 1.45;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-metrics {
+  grid-template-columns: repeat(2, 66px);
+  gap: 5px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-metrics > div {
+  min-height: 54px;
+  border-radius: 10px;
+  padding: 7px 8px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-metrics span {
+  font-size: 9px;
+  letter-spacing: 0.055em;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-metrics strong {
+  margin-top: 3px;
+  font-size: 14px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-footer {
+  gap: 12px;
+  padding-top: 13px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-card-meta {
+  gap: 3px;
+  font-size: 10.75px;
+  line-height: 1.3;
+}
+
+.app-shell[data-workspace-mode='archive'] :is(
+  .vault-delete-action,
+  .vault-secondary-action,
+  .vault-open-action
+) {
+  min-height: 36px;
+  gap: 5px;
+  border-radius: 9px;
+  padding-inline: 10px;
+  font-size: 11.25px;
+  font-weight: 735;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-delete-action {
+  margin-right: 2px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-empty strong {
+  font-size: 14px;
+}
+
+.app-shell[data-workspace-mode='archive'] .vault-empty span {
+  font-size: 11.5px;
+}
+
+@media (max-width: 900px) {
+  .app-shell[data-workspace-mode='archive'] .vault-hero-copy h2 {
+    font-size: clamp(27px, 4.4vw, 32px);
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-card-identity h3 {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-shell[data-workspace-mode='archive'] .main-stage > .topbar h1 {
+    font-size: clamp(28px, 8vw, 34px);
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-hero {
+    min-height: 0;
+    max-height: none;
+    padding: 19px 17px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-kicker {
+    font-size: 10px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-hero-copy h2 {
+    font-size: clamp(27px, 8.4vw, 33px);
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-hero-copy p {
+    font-size: 13px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-stat-grid span {
+    font-size: 10px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-stat-grid strong {
+    font-size: 23px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-search input {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-create-button {
+    min-height: 48px;
+    font-size: 13px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-card-status,
+  .app-shell[data-workspace-mode='archive'] .vault-region,
+  .app-shell[data-workspace-mode='archive'] .vault-current-chip {
+    font-size: 10px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-card-identity h3 {
+    font-size: 17px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] .vault-card-identity p,
+  .app-shell[data-workspace-mode='archive'] .vault-card-meta {
+    font-size: 12.5px;
+  }
+
+  .app-shell[data-workspace-mode='archive'] :is(
+    .vault-delete-action,
+    .vault-secondary-action,
+    .vault-open-action
+  ) {
+    min-height: 44px;
+    font-size: 13px;
+  }
+}
