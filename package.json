@@ -23,6 +23,7 @@
     "firebase:deploy:data": "firebase deploy --only auth,firestore --project reportgeneratornoc"
   },
   "dependencies": {
+    "drizzle-orm": "0.45.2",
     "firebase": "12.17.0",
     "jspdf": "4.2.1",
     "lucide-react": "1.28.0",
@@ -30,19 +31,24 @@
     "next": "16.2.12",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "sor-reader": "1.0.0"
+    "sor-reader": "1.0.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.2",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitest/coverage-v8": "4.1.10",
+    "drizzle-kit": "0.31.10",
     "eslint": "latest",
     "eslint-config-next": "16.2.12",
     "firebase-tools": "15.25.1",
     "postcss": "latest",
     "tailwindcss": "4.3.3",
     "typescript": "latest",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.118.0"
   }
 }
