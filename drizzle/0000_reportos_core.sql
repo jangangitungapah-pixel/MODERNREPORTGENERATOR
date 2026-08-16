@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS idx_incidents_lifecycle
   ON incidents(workspace_id, lifecycle);
 
 CREATE TABLE IF NOT EXISTS progress_entries (
-  id TEXT PRIMARY KEY NOT NULL,
+  id TEXT NOT NULL,
   incident_id TEXT NOT NULL,
   date TEXT,
   time TEXT NOT NULL,
@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS progress_entries (
   created_by TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
+  PRIMARY KEY (incident_id, id),
   FOREIGN KEY (incident_id)
     REFERENCES incidents(id)
     ON DELETE CASCADE,
@@ -102,7 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_progress_incident_position
   ON progress_entries(incident_id, position);
 
 CREATE TABLE IF NOT EXISTS impact_links (
-  id TEXT PRIMARY KEY NOT NULL,
+  id TEXT NOT NULL,
   incident_id TEXT NOT NULL,
   marker TEXT NOT NULL DEFAULT 'unknown',
   region TEXT NOT NULL DEFAULT '',
@@ -110,6 +111,7 @@ CREATE TABLE IF NOT EXISTS impact_links (
   summary TEXT NOT NULL DEFAULT '',
   ticket TEXT NOT NULL DEFAULT '',
   position INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (incident_id, id),
   FOREIGN KEY (incident_id)
     REFERENCES incidents(id)
     ON DELETE CASCADE
@@ -119,13 +121,14 @@ CREATE INDEX IF NOT EXISTS idx_impact_incident_position
   ON impact_links(incident_id, position);
 
 CREATE TABLE IF NOT EXISTS cut_points (
-  id TEXT PRIMARY KEY NOT NULL,
+  id TEXT NOT NULL,
   incident_id TEXT NOT NULL,
   label TEXT NOT NULL,
   rootcause TEXT NOT NULL DEFAULT '',
   cut_point TEXT NOT NULL DEFAULT '',
   marker TEXT NOT NULL DEFAULT 'unknown',
   position INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (incident_id, id),
   FOREIGN KEY (incident_id)
     REFERENCES incidents(id)
     ON DELETE CASCADE
