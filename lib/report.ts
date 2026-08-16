@@ -153,8 +153,8 @@ function cleanImportedValue(
   value: string
 ): string {
   return value
-    .replace(/\\s+/g, ' ')
-    .replace(/^\\*+|\\*+$/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^\*+|\*+$/g, '')
     .trim();
 }
 
@@ -171,7 +171,7 @@ function parseProgressEntries(
   raw: string
 ): ProgressEntry[] {
   const normalized = raw
-    .replace(/\\r/g, '')
+    .replace(/\r/g, '')
     .trim();
 
   if (!normalized) {
@@ -179,57 +179,77 @@ function parseProgressEntries(
   }
 
   const lines = normalized
-    .split('\\n')
+    .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const entries: ProgressEntry[] = [];
+  //
+  // Preserve the richer line-by-line parser when
+  // the source still contains real line breaks.
+  //
+  // Continuation lines are appended to the previous
+  // timeline entry instead of being discarded.
+  //
+  if (lines.length > 1) {
+    const lineEntries: ProgressEntry[] = [];
 
-  for (const line of lines) {
-    const match = line.match(
-      /^[•*\\-\\s]*(\\d{1,2}:\\d{2})\\s+(.+)$/
-    );
-
-    if (match) {
-      const [, time, text] = match;
-
-      entries.push({
-        id: createProgressId(
-          entries.length
-        ),
-        time,
-        text: cleanImportedValue(text),
-      });
-
-      continue;
-    }
-
-    if (entries.length > 0) {
-      const previous =
-        entries[entries.length - 1];
-
-      previous.text = cleanImportedValue(
-        previous.text + ' ' + line
+    for (const line of lines) {
+      const match = line.match(
+        /^[•*\-\s]*(\d{1,2}:\d{2})\s+(.+)$/
       );
-    }
-  }
 
-  if (entries.length > 0) {
-    return entries;
+      if (match) {
+        const [, time, text] = match;
+
+        lineEntries.push({
+          id: createProgressId(
+            lineEntries.length
+          ),
+          time,
+          text: cleanImportedValue(text),
+        });
+
+        continue;
+      }
+
+      if (lineEntries.length > 0) {
+        const previous =
+          lineEntries[
+            lineEntries.length - 1
+          ];
+
+        previous.text =
+          cleanImportedValue(
+            previous.text +
+              ' ' +
+              line
+          );
+      }
+    }
+
+    if (lineEntries.length > 0) {
+      return lineEntries;
+    }
   }
 
   //
-  // Fallback for text copied from chat,
-  // spreadsheets, WhatsApp, or other
-  // sources that collapse all progress
-  // lines into one long line.
+  // Collapsed-source parser.
+  //
+  // Some sources flatten the complete Update Progress
+  // section into one long line. In that situation the
+  // first HH:mm must NOT consume every later update.
+  //
+  // Instead, each HH:mm token becomes the start of a
+  // new timeline segment.
   //
   const collapsed = normalized
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 
+  const entries: ProgressEntry[] = [];
+
   const segmentPattern =
-    /(?:^|\\s)(\\d{1,2}:\\d{2})\\s+(.+?)(?=\\s+\\d{1,2}:\\d{2}\\s+[A-Za-z0-9]|$)/g;
+    /(?:^|\s)(\d{1,2}:\d{2})\s+(.+?)(?=\s+\d{1,2}:\d{2}\s+|$)/g;
 
   let match:
     RegExpExecArray | null;
@@ -258,8 +278,8 @@ export function parseIncidentReport(
   raw: string
 ): IncidentParseResult {
   const normalized = raw
-    .replace(/\\u00a0/g, ' ')
-    .replace(/\\r/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r/g, '')
     .trim();
 
   const report: IncidentReport = {
@@ -288,7 +308,7 @@ export function parseIncidentReport(
   }
 
   const progressMarker =
-    /\\bUpdate\\s*Progress\\b/i;
+    /\bUpdate\s*Progress\b/i;
 
   const progressMarkerMatch =
     progressMarker.exec(
@@ -321,17 +341,17 @@ export function parseIncidentReport(
   //
   const compactMetadata =
     metadataRaw
-      .replace(/\\n+/g, ' ')
-      .replace(/[ \\t]+/g, ' ')
+      .replace(/\n+/g, ' ')
+      .replace(/[ \t]+/g, ' ')
       .trim();
 
   const metadataLines =
     compactMetadata
       .replace(
-        /\\s+(?=(?:Occur\\s*Time|(?:Dispacth|Dispatch)\\s*Time|PIC|Root\\s*Cause|Rootcause|Cut\\s*Point)\\s*=)/gi,
-        '\\n'
+        /\s+(?=(?:Occur\s*Time|(?:Dispacth|Dispatch)\s*Time|PIC|Root\s*Cause|Rootcause|Cut\s*Point)\s*=)/gi,
+        '\n'
       )
-      .split('\\n')
+      .split('\n')
       .map((line) => line.trim())
       .filter(Boolean);
 
@@ -340,7 +360,7 @@ export function parseIncidentReport(
 
   const completeHeader =
     header.match(
-      /^\\*?\\s*\\[([^\\]]+)\\]\\s*(.*?)\\s*,?\\s*\\[TT\\s*:\\s*([^\\]]+)\\]\\s*\\*?\\s*$/i
+      /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*,?\s*\[TT\s*:\s*([^\]]+)\]\s*\*?\s*$/i
     );
 
   if (completeHeader) {
@@ -353,7 +373,7 @@ export function parseIncidentReport(
       cleanImportedValue(
         completeHeader[2]
       ).replace(
-        /,\\s*$/,
+        /,\s*$/,
         ''
       );
 
@@ -370,7 +390,7 @@ export function parseIncidentReport(
     //
     const partialHeader =
       header.match(
-        /^\\*?\\s*\\[([^\\]]+)\\]\\s*(.*?)\\s*\\*?$/
+        /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*\*?$/
       );
 
     if (partialHeader) {
@@ -387,7 +407,7 @@ export function parseIncidentReport(
 
     const looseTicket =
       compactMetadata.match(
-        /\\[TT\\s*:\\s*([^\\]]+)\\]/i
+        /\[TT\s*:\s*([^\]]+)\]/i
       );
 
     if (looseTicket) {
@@ -425,7 +445,7 @@ export function parseIncidentReport(
       );
 
     if (
-      /^Occur\\s*Time$/i.test(
+      /^Occur\s*Time$/i.test(
         label
       )
     ) {
@@ -434,7 +454,7 @@ export function parseIncidentReport(
     }
 
     if (
-      /^(?:Dispacth|Dispatch)\\s*Time$/i.test(
+      /^(?:Dispacth|Dispatch)\s*Time$/i.test(
         label
       )
     ) {
@@ -454,7 +474,7 @@ export function parseIncidentReport(
     }
 
     if (
-      /^(?:Rootcause|Root\\s*Cause)$/i.test(
+      /^(?:Rootcause|Root\s*Cause)$/i.test(
         label
       )
     ) {
@@ -463,7 +483,7 @@ export function parseIncidentReport(
     }
 
     if (
-      /^Cut\\s*Point$/i.test(
+      /^Cut\s*Point$/i.test(
         label
       )
     ) {

@@ -109,11 +109,11 @@ describe('parseIncidentReport', () => {
         SAMPLE_REPORT
       )
         .replace(
-          /\\n+/g,
+          /\n+/g,
           ' '
         )
         .replace(
-          /\\s+/g,
+          /\s+/g,
           ' '
         );
 
@@ -168,7 +168,7 @@ describe('parseIncidentReport', () => {
         [
           '*[MANDAU] LINK DOWN AT SAMPLE, [TT : INC-123]*',
           'PIC = Agus',
-        ].join('\\n')
+        ].join('\n')
       );
 
     expect(
