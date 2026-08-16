@@ -8,7 +8,6 @@ import './globals.css';
 import './cloud-recovery.css';
 import './ui-overhaul.css';
 import './ui-overhaul-detail.css';
-import './ui-navbar-premium.css';
 import './styles/tokens.css';
 import './styles/primitives.css';
 import './styles/shell.css';
@@ -20,6 +19,7 @@ import './styles/fiber-lab.css';
 import './styles/utilities.css';
 import './ui-composer-ultra-premium.css';
 import './ui-composer-v3.css';
+import './ui-navbar-premium.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Operations Platform',
