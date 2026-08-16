@@ -3,8 +3,8 @@ import type {
 } from 'next';
 
 import {
-  BackboneImpactWorkspace,
-} from '@/components/backbone-impact-workspace';
+  BackboneImpactClientRuntime,
+} from '@/components/backbone-impact-client-runtime';
 
 export const metadata:
   Metadata = {
@@ -16,6 +16,6 @@ export const metadata:
 
 export default function BackboneImpactPage() {
   return (
-    <BackboneImpactWorkspace />
+    <BackboneImpactClientRuntime />
   );
 }
