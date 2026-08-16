@@ -1,5 +1,15 @@
 export type ProgressEntry = {
   id: string;
+  /**
+   * Optional calendar date for the timeline entry.
+   *
+   * Kept optional so F3 workspace snapshots created before
+   * the date-aware timeline remain runtime-compatible.
+   *
+   * Storage format: DD/MM/YYYY.
+   * Report output intentionally remains HH:mm + text.
+   */
+  date?: string;
   time: string;
   text: string;
 };
@@ -1256,8 +1266,11 @@ export function parseIncidentReport(
   }
 
   report.progress =
-    parseProgressEntries(
-      progressRaw
+    inferProgressDates(
+      parseProgressEntries(
+        progressRaw
+      ),
+      report.occurTime
     );
 
   const signals = [
@@ -1385,15 +1398,513 @@ export function progressTimeToMinutes(
   return hours * 60 + minutes;
 }
 
-export function sortProgressChronologically(
-  entries: ProgressEntry[]
+
+type ProgressDateParts = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+function parseProgressDateParts(
+  value: string
+): ProgressDateParts | null {
+  const match =
+    value
+      .trim()
+      .match(
+        /^(\d{2})\/(\d{2})\/(\d{4})$/
+      );
+
+  if (!match) {
+    return null;
+  }
+
+  const day =
+    Number(match[1]);
+
+  const month =
+    Number(match[2]);
+
+  const year =
+    Number(match[3]);
+
+  const candidate =
+    new Date(
+      year,
+      month - 1,
+      day,
+      0,
+      0,
+      0,
+      0
+    );
+
+  if (
+    candidate.getFullYear() !==
+      year ||
+    candidate.getMonth() !==
+      month - 1 ||
+    candidate.getDate() !==
+      day
+  ) {
+    return null;
+  }
+
+  return {
+    year,
+    month,
+    day,
+  };
+}
+
+function progressAnchor(
+  value: string
+): {
+  date: ProgressDateParts;
+  clockMinutes: number;
+} | null {
+  const match =
+    value
+      .trim()
+      .match(
+        /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/
+      );
+
+  if (!match) {
+    return null;
+  }
+
+  const date =
+    parseProgressDateParts(
+      match[1] +
+        '/' +
+        match[2] +
+        '/' +
+        match[3]
+    );
+
+  const clockMinutes =
+    progressTimeToMinutes(
+      match[4] +
+        ':' +
+        match[5]
+    );
+
+  if (
+    !date ||
+    clockMinutes === null
+  ) {
+    return null;
+  }
+
+  return {
+    date,
+    clockMinutes,
+  };
+}
+
+function formatProgressDate(
+  value: Date
+): string {
+  return (
+    String(
+      value.getDate()
+    ).padStart(
+      2,
+      '0'
+    ) +
+    '/' +
+    String(
+      value.getMonth() +
+        1
+    ).padStart(
+      2,
+      '0'
+    ) +
+    '/' +
+    String(
+      value.getFullYear()
+    )
+  );
+}
+
+export function currentProgressStamp(
+  now: Date =
+    new Date()
+): {
+  date: string;
+  time: string;
+} {
+  return {
+    date:
+      formatProgressDate(
+        now
+      ),
+    time:
+      String(
+        now.getHours()
+      ).padStart(
+        2,
+        '0'
+      ) +
+      ':' +
+      String(
+        now.getMinutes()
+      ).padStart(
+        2,
+        '0'
+      ),
+  };
+}
+
+export function progressDateToInput(
+  value: string
+): string {
+  const parts =
+    parseProgressDateParts(
+      value
+    );
+
+  if (!parts) {
+    return '';
+  }
+
+  return (
+    String(
+      parts.year
+    ).padStart(
+      4,
+      '0'
+    ) +
+    '-' +
+    String(
+      parts.month
+    ).padStart(
+      2,
+      '0'
+    ) +
+    '-' +
+    String(
+      parts.day
+    ).padStart(
+      2,
+      '0'
+    )
+  );
+}
+
+export function progressDateFromInput(
+  value: string
+): string {
+  const match =
+    value
+      .trim()
+      .match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+      );
+
+  if (!match) {
+    return '';
+  }
+
+  const date =
+    match[3] +
+    '/' +
+    match[2] +
+    '/' +
+    match[1];
+
+  return parseProgressDateParts(
+    date
+  )
+    ? date
+    : '';
+}
+
+export function progressEntryTimestamp(
+  entry: ProgressEntry
+): number | null {
+  const date =
+    parseProgressDateParts(
+      entry.date ??
+        ''
+    );
+
+  const clockMinutes =
+    progressTimeToMinutes(
+      entry.time
+    );
+
+  if (
+    !date ||
+    clockMinutes === null
+  ) {
+    return null;
+  }
+
+  const hours =
+    Math.floor(
+      clockMinutes /
+        60
+    );
+
+  const minutes =
+    clockMinutes %
+    60;
+
+  return new Date(
+    date.year,
+    date.month - 1,
+    date.day,
+    hours,
+    minutes,
+    0,
+    0
+  ).getTime();
+}
+
+export function progressDuplicateKey(
+  entry: ProgressEntry
+): string {
+  const time =
+    entry.time.trim();
+
+  if (
+    progressTimeToMinutes(
+      time
+    ) === null
+  ) {
+    return '';
+  }
+
+  const date =
+    entry.date?.trim() ??
+    '';
+
+  return date
+    ? date +
+        '|' +
+        time
+    : time;
+}
+
+export function inferProgressDates(
+  entries: ProgressEntry[],
+  anchorDateTime: string
 ): ProgressEntry[] {
+  const anchor =
+    progressAnchor(
+      anchorDateTime
+    );
+
+  if (!anchor) {
+    return entries.map(
+      (entry) => ({
+        ...entry,
+      })
+    );
+  }
+
+  let cursor =
+    new Date(
+      anchor.date.year,
+      anchor.date.month -
+        1,
+      anchor.date.day,
+      0,
+      0,
+      0,
+      0
+    );
+
+  let previousClockMinutes:
+    number | null =
+      anchor.clockMinutes;
+
+  return entries.map(
+    (entry) => {
+      const explicitDate =
+        parseProgressDateParts(
+          entry.date ??
+            ''
+        );
+
+      const clockMinutes =
+        progressTimeToMinutes(
+          entry.time
+        );
+
+      if (explicitDate) {
+        cursor =
+          new Date(
+            explicitDate.year,
+            explicitDate.month -
+              1,
+            explicitDate.day,
+            0,
+            0,
+            0,
+            0
+          );
+
+        if (
+          clockMinutes !==
+          null
+        ) {
+          previousClockMinutes =
+            clockMinutes;
+        }
+
+        return {
+          ...entry,
+          date:
+            formatProgressDate(
+              cursor
+            ),
+        };
+      }
+
+      if (
+        clockMinutes === null
+      ) {
+        return {
+          ...entry,
+        };
+      }
+
+      if (
+        previousClockMinutes !==
+          null &&
+        (
+          previousClockMinutes -
+          clockMinutes
+        ) >
+          12 * 60
+      ) {
+        cursor =
+          new Date(
+            cursor.getFullYear(),
+            cursor.getMonth(),
+            cursor.getDate() +
+              1,
+            0,
+            0,
+            0,
+            0
+          );
+      }
+
+      previousClockMinutes =
+        clockMinutes;
+
+      return {
+        ...entry,
+        date:
+          formatProgressDate(
+            cursor
+          ),
+      };
+    }
+  );
+}
+
+export function sortProgressChronologically(
+  entries: ProgressEntry[],
+  anchorDateTime = ''
+): ProgressEntry[] {
+  const normalized =
+    anchorDateTime.trim()
+      ? inferProgressDates(
+          entries,
+          anchorDateTime
+        )
+      : entries.map(
+          (entry) => ({
+            ...entry,
+          })
+        );
+
+  const withTimestamp =
+    normalized.map(
+      (entry, index) => ({
+        entry,
+        index,
+        timestamp:
+          progressEntryTimestamp(
+            entry
+          ),
+      })
+    );
+
+  const hasExplicitDates =
+    withTimestamp.some(
+      (item) =>
+        item.timestamp !==
+        null
+    );
+
+  if (hasExplicitDates) {
+    return withTimestamp
+      .sort(
+        (left, right) => {
+          if (
+            left.timestamp ===
+              null &&
+            right.timestamp ===
+              null
+          ) {
+            return (
+              left.index -
+              right.index
+            );
+          }
+
+          if (
+            left.timestamp ===
+            null
+          ) {
+            return 1;
+          }
+
+          if (
+            right.timestamp ===
+            null
+          ) {
+            return -1;
+          }
+
+          if (
+            left.timestamp ===
+            right.timestamp
+          ) {
+            return (
+              left.index -
+              right.index
+            );
+          }
+
+          return (
+            left.timestamp -
+            right.timestamp
+          );
+        }
+      )
+      .map(
+        ({ entry }) =>
+          entry
+      );
+  }
+
+  //
+  // Backward-compatible fallback for legacy workspace
+  // entries that have no calendar date yet.
+  //
   let dayOffset = 0;
 
   let previousClockMinutes:
     number | null = null;
 
-  return entries
+  return normalized
     .map(
       (entry, index) => {
         const clockMinutes =
@@ -1403,17 +1914,14 @@ export function sortProgressChronologically(
 
         if (
           clockMinutes !== null &&
-          previousClockMinutes !== null &&
+          previousClockMinutes !==
+            null &&
           (
             previousClockMinutes -
             clockMinutes
           ) >
             12 * 60
         ) {
-          //
-          // Large backward jump means the
-          // timeline crossed midnight.
-          //
           dayOffset += 1;
         }
 
@@ -1422,11 +1930,14 @@ export function sortProgressChronologically(
             ? null
             : (
                 clockMinutes +
-                dayOffset * 24 * 60
+                dayOffset *
+                  24 *
+                  60
               );
 
         if (
-          clockMinutes !== null
+          clockMinutes !==
+          null
         ) {
           previousClockMinutes =
             clockMinutes;
@@ -1484,7 +1995,8 @@ export function sortProgressChronologically(
       }
     )
     .map(
-      ({ entry }) => entry
+      ({ entry }) =>
+        entry
     );
 }
 
@@ -1492,23 +2004,39 @@ export function duplicateProgressTimes(
   entries: ProgressEntry[]
 ): string[] {
   const counts =
-    new Map<string, number>();
+    new Map<
+      string,
+      {
+        count: number;
+        entry: ProgressEntry;
+      }
+    >();
 
   for (const entry of entries) {
-    const time =
-      entry.time.trim();
+    const key =
+      progressDuplicateKey(
+        entry
+      );
 
-    if (
-      progressTimeToMinutes(
-        time
-      ) === null
-    ) {
+    if (!key) {
       continue;
     }
 
+    const current =
+      counts.get(key);
+
     counts.set(
-      time,
-      (counts.get(time) ?? 0) + 1
+      key,
+      {
+        count:
+          (
+            current?.count ??
+            0
+          ) + 1,
+        entry:
+          current?.entry ??
+          entry,
+      }
     );
   }
 
@@ -1516,22 +2044,54 @@ export function duplicateProgressTimes(
     counts.entries()
   )
     .filter(
-      ([, count]) =>
-        count > 1
+      ([, value]) =>
+        value.count > 1
     )
-    .map(([time]) => time)
     .sort(
-      (left, right) =>
-        (
-          progressTimeToMinutes(
-            left
-          ) ?? 0
-        ) -
-        (
-          progressTimeToMinutes(
-            right
-          ) ?? 0
-        )
+      (
+        [, left],
+        [, right]
+      ) => {
+        const leftTimestamp =
+          progressEntryTimestamp(
+            left.entry
+          );
+
+        const rightTimestamp =
+          progressEntryTimestamp(
+            right.entry
+          );
+
+        if (
+          leftTimestamp !==
+            null &&
+          rightTimestamp !==
+            null
+        ) {
+          return (
+            leftTimestamp -
+            rightTimestamp
+          );
+        }
+
+        return (
+          (
+            progressTimeToMinutes(
+              left.entry.time
+            ) ??
+            0
+          ) -
+          (
+            progressTimeToMinutes(
+              right.entry.time
+            ) ??
+            0
+          )
+        );
+      }
+    )
+    .map(
+      ([key]) => key
     );
 }
 

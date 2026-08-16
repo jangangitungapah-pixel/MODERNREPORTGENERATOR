@@ -5,7 +5,10 @@ import {
   detectProgressKind,
   duplicateProgressTimes,
   formatReport,
+  inferProgressDates,
   parseIncidentReport,
+  progressDateFromInput,
+  progressDateToInput,
   progressTimeToMinutes,
   sortProgressChronologically,
 } from './report';
@@ -969,5 +972,124 @@ describe('timeline operations engine', () => {
         'Link already up.'
       )
     ).toBe('restored');
+  });
+});
+
+
+describe('date-aware progress timeline', () => {
+  it('infers midnight rollover dates from the incident occur time', () => {
+    const entries =
+      inferProgressDates(
+        [
+          {
+            id: '1',
+            time: '23:41',
+            text: 'Checking',
+          },
+          {
+            id: '2',
+            time: '00:13',
+            text: 'Found issue',
+          },
+          {
+            id: '3',
+            time: '01:53',
+            text: 'Repair',
+          },
+        ],
+        '12/08/2026 16:25'
+      );
+
+    expect(
+      entries.map(
+        (entry) =>
+          entry.date
+      )
+    ).toEqual([
+      '12/08/2026',
+      '13/08/2026',
+      '13/08/2026',
+    ]);
+  });
+
+  it('sorts identical clock times correctly across different calendar days', () => {
+    const entries =
+      sortProgressChronologically(
+        [
+          {
+            id: 'day-two',
+            date:
+              '13/08/2026',
+            time: '08:00',
+            text: 'Day two',
+          },
+          {
+            id: 'day-one',
+            date:
+              '12/08/2026',
+            time: '08:00',
+            text: 'Day one',
+          },
+        ]
+      );
+
+    expect(
+      entries.map(
+        (entry) =>
+          entry.id
+      )
+    ).toEqual([
+      'day-one',
+      'day-two',
+    ]);
+
+    expect(
+      duplicateProgressTimes(
+        entries
+      )
+    ).toEqual([]);
+  });
+
+  it('keeps progress dates internal and preserves the existing bagan output', () => {
+    const output =
+      formatReport({
+        ...SAMPLE_REPORT,
+        progress: [
+          {
+            id: 'midnight',
+            date:
+              '16/08/2026',
+            time: '00:13',
+            text:
+              'Team continue checking',
+          },
+        ],
+      });
+
+    expect(output).toContain(
+      '00:13 Team continue checking'
+    );
+
+    expect(output).not.toContain(
+      '16/08/2026 00:13 Team continue checking'
+    );
+  });
+
+  it('converts browser date input values without changing storage format', () => {
+    expect(
+      progressDateFromInput(
+        '2026-08-16'
+      )
+    ).toBe(
+      '16/08/2026'
+    );
+
+    expect(
+      progressDateToInput(
+        '16/08/2026'
+      )
+    ).toBe(
+      '2026-08-16'
+    );
   });
 });

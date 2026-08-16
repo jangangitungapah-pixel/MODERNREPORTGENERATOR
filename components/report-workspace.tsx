@@ -52,10 +52,15 @@ import {
   EMPTY_REPORT,
   SAMPLE_REPORT,
   completionScore,
+  currentProgressStamp,
   detectProgressKind,
   duplicateProgressTimes,
   formatReport,
+  inferProgressDates,
   parseIncidentReport,
+  progressDateFromInput,
+  progressDateToInput,
+  progressDuplicateKey,
   sortProgressChronologically,
   type CutPointEntry,
   type ImpactLink,
@@ -94,6 +99,12 @@ import {
   toggleClosureChecklistTask,
   type ClosureTaskKey,
 } from '@/lib/closure';
+
+import {
+  PROGRESS_MACROS,
+  progressMacroSuggestions,
+  type ProgressMacro,
+} from '@/lib/progress-assistant';
 
 import {
   buildClosedEmailDraft,
@@ -436,6 +447,9 @@ export function ReportWorkspace() {
     setNowEpoch,
   ] = useState(0);
 
+  const [entryDate, setEntryDate] =
+    useState('');
+
   const [entryTime, setEntryTime] =
     useState('');
 
@@ -476,6 +490,11 @@ export function ReportWorkspace() {
   ] = useState<string | null>(
     null
   );
+
+  const [
+    editingProgressDate,
+    setEditingProgressDate,
+  ] = useState('');
 
   const [
     editingProgressTime,
@@ -641,6 +660,27 @@ export function ReportWorkspace() {
   ]);
 
   useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const stamp =
+      currentProgressStamp();
+
+    setEntryDate(
+      (current) =>
+        current ||
+        stamp.date
+    );
+
+    setEntryTime(
+      (current) =>
+        current ||
+        stamp.time
+    );
+  }, [hydrated]);
+
+  useEffect(() => {
     const updateClock = () => {
       setNowEpoch(
         Date.now()
@@ -801,6 +841,15 @@ export function ReportWorkspace() {
         activeIncidentId
     );
 
+  const activeProgressStatus =
+    activeOperationalView?.status ??
+    'new';
+
+  const suggestedProgressMacros =
+    progressMacroSuggestions(
+      activeProgressStatus
+    );
+
   const deliveryValidation =
     useMemo(
       () =>
@@ -865,6 +914,19 @@ export function ReportWorkspace() {
     );
   }
 
+  function setComposerTimestampNow() {
+    const stamp =
+      currentProgressStamp();
+
+    setEntryDate(
+      stamp.date
+    );
+
+    setEntryTime(
+      stamp.time
+    );
+  }
+
   function createNewIncident() {
     const current =
       snapshotCurrentIncident();
@@ -888,7 +950,7 @@ export function ReportWorkspace() {
       incident.report
     );
 
-    setEntryTime('');
+    setComposerTimestampNow();
     setEntryText('');
     setRawImport('');
     setImportFeedback(null);
@@ -936,7 +998,7 @@ export function ReportWorkspace() {
       target.report
     );
 
-    setEntryTime('');
+    setComposerTimestampNow();
     setEntryText('');
     setRawImport('');
     setImportFeedback(null);
@@ -1245,37 +1307,110 @@ export function ReportWorkspace() {
   }
 
   function addProgress() {
+    const date =
+      entryDate.trim();
+
     const time =
       entryTime.trim();
 
     const text =
       entryText.trim();
 
-    if (!time || !text) return;
+    if (
+      !date ||
+      !time ||
+      !text
+    ) {
+      return;
+    }
 
-    setReport((current) => {
-      const nextEntry = {
-        id:
-          typeof crypto !==
-            'undefined' &&
-          'randomUUID' in crypto
-            ? crypto.randomUUID()
-            : String(Date.now()),
-        time,
-        text,
-      };
+    setReport(
+      (current) => {
+        const nextEntry:
+          ProgressEntry = {
+          id:
+            typeof crypto !==
+              'undefined' &&
+            'randomUUID' in
+              crypto
+              ? crypto.randomUUID()
+              : String(
+                  Date.now()
+                ),
+          date,
+          time,
+          text,
+        };
 
-      return {
-        ...current,
-        progress:
-          sortProgressChronologically([
-            ...current.progress,
-            nextEntry,
-          ]),
-      };
-    });
+        return {
+          ...current,
+          progress:
+            sortProgressChronologically(
+              [
+                ...current.progress,
+                nextEntry,
+              ],
+              current.occurTime
+            ),
+        };
+      }
+    );
 
-    setEntryTime('');
+    setComposerTimestampNow();
+    setEntryText('');
+  }
+
+  function addProgressMacro(
+    macro: ProgressMacro
+  ) {
+    const stamp =
+      currentProgressStamp();
+
+    setReport(
+      (current) => {
+        const nextEntry:
+          ProgressEntry = {
+          id:
+            typeof crypto !==
+              'undefined' &&
+            'randomUUID' in
+              crypto
+              ? crypto.randomUUID()
+              : (
+                  String(
+                    Date.now()
+                  ) +
+                  '-' +
+                  macro.id
+                ),
+          date:
+            stamp.date,
+          time:
+            stamp.time,
+          text:
+            macro.text,
+        };
+
+        return {
+          ...current,
+          progress:
+            sortProgressChronologically(
+              [
+                ...current.progress,
+                nextEntry,
+              ],
+              current.occurTime
+            ),
+        };
+      }
+    );
+
+    setEntryDate(
+      stamp.date
+    );
+    setEntryTime(
+      stamp.time
+    );
     setEntryText('');
   }
 
@@ -1301,8 +1436,24 @@ export function ReportWorkspace() {
   function beginEditProgress(
     entry: ProgressEntry
   ) {
+    const inferredEntry =
+      inferProgressDates(
+        report.progress,
+        report.occurTime
+      ).find(
+        (candidate) =>
+          candidate.id ===
+          entry.id
+      );
+
     setEditingProgressId(
       entry.id
+    );
+
+    setEditingProgressDate(
+      inferredEntry?.date ??
+        entry.date ??
+        ''
     );
 
     setEditingProgressTime(
@@ -1319,6 +1470,7 @@ export function ReportWorkspace() {
       null
     );
 
+    setEditingProgressDate('');
     setEditingProgressTime('');
     setEditingProgressText('');
   }
@@ -1326,31 +1478,37 @@ export function ReportWorkspace() {
   function saveEditProgress() {
     if (
       !editingProgressId ||
+      !editingProgressDate.trim() ||
       !editingProgressTime.trim() ||
       !editingProgressText.trim()
     ) {
       return;
     }
 
-    setReport((current) => ({
-      ...current,
-      progress:
-        sortProgressChronologically(
-          current.progress.map(
-            (entry) =>
-              entry.id ===
-              editingProgressId
-                ? {
-                    ...entry,
-                    time:
-                      editingProgressTime.trim(),
-                    text:
-                      editingProgressText.trim(),
-                  }
-                : entry
-          )
-        ),
-    }));
+    setReport(
+      (current) => ({
+        ...current,
+        progress:
+          sortProgressChronologically(
+            current.progress.map(
+              (entry) =>
+                entry.id ===
+                editingProgressId
+                  ? {
+                      ...entry,
+                      date:
+                        editingProgressDate.trim(),
+                      time:
+                        editingProgressTime.trim(),
+                      text:
+                        editingProgressText.trim(),
+                    }
+                  : entry
+            ),
+            current.occurTime
+          ),
+      })
+    );
 
     cancelEditProgress();
   }
@@ -1403,7 +1561,8 @@ export function ReportWorkspace() {
       ...current,
       progress:
         sortProgressChronologically(
-          current.progress
+          current.progress,
+          current.occurTime
         ),
     }));
   }
@@ -1488,7 +1647,7 @@ export function ReportWorkspace() {
 
   function clearReport() {
     setReport(EMPTY_REPORT);
-    setEntryTime('');
+    setComposerTimestampNow();
     setEntryText('');
     cancelEditProgress();
   }
@@ -1566,7 +1725,7 @@ export function ReportWorkspace() {
         ),
     });
 
-    setEntryTime('');
+    setComposerTimestampNow();
     setEntryText('');
     cancelEditProgress();
 
@@ -3564,7 +3723,132 @@ export function ReportWorkspace() {
                   </span>
                 </div>
 
-                <div className="quick-add">
+                <div className="progress-assistant-panel">
+                  <div className="progress-assistant-head">
+                    <div>
+                      <span className="progress-assistant-icon">
+                        <Sparkles
+                          size={15}
+                        />
+                      </span>
+
+                      <div>
+                        <strong>
+                          Periodic update assistant
+                        </strong>
+
+                        <span>
+                          Suggested next signals
+                          follow the current
+                          operational stage.
+                          Clicking one records it
+                          with the current date
+                          and time.
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="progress-stage-chip">
+                      {
+                        operationalStatusLabel(
+                          activeProgressStatus
+                        )
+                      }
+                    </span>
+                  </div>
+
+                  <div className="progress-suggestion-row">
+                    {suggestedProgressMacros.map(
+                      (macro) => (
+                        <button
+                          className="progress-suggestion-button"
+                          data-kind={
+                            macro.kind
+                          }
+                          key={
+                            macro.id
+                          }
+                          type="button"
+                          title={
+                            'Add now: ' +
+                            macro.text
+                          }
+                          onClick={() =>
+                            addProgressMacro(
+                              macro
+                            )
+                          }
+                        >
+                          <Plus
+                            size={12}
+                          />
+                          {
+                            macro.label
+                          }
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <details className="progress-macro-library">
+                    <summary>
+                      More quick updates
+                      <ChevronRight
+                        size={13}
+                      />
+                    </summary>
+
+                    <div>
+                      {PROGRESS_MACROS.map(
+                        (macro) => (
+                          <button
+                            data-kind={
+                              macro.kind
+                            }
+                            key={
+                              macro.id
+                            }
+                            type="button"
+                            title={
+                              macro.text
+                            }
+                            onClick={() =>
+                              addProgressMacro(
+                                macro
+                              )
+                            }
+                          >
+                            {
+                              macro.label
+                            }
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </details>
+                </div>
+
+                <div className="quick-add quick-add-f10">
+                  <label className="quick-date">
+                    <span>DATE</span>
+
+                    <input
+                      type="date"
+                      value={
+                        progressDateToInput(
+                          entryDate
+                        )
+                      }
+                      onChange={(event) =>
+                        setEntryDate(
+                          progressDateFromInput(
+                            event.target.value
+                          )
+                        )
+                      }
+                    />
+                  </label>
+
                   <label className="quick-time">
                     <span>TIME</span>
 
@@ -3606,10 +3890,25 @@ export function ReportWorkspace() {
                   </label>
 
                   <button
+                    className="progress-now-button"
+                    type="button"
+                    title="Use current date and time"
+                    onClick={
+                      setComposerTimestampNow
+                    }
+                  >
+                    <Clock3
+                      size={14}
+                    />
+                    Now
+                  </button>
+
+                  <button
                     className="add-button"
                     type="button"
                     onClick={addProgress}
                     disabled={
+                      !entryDate.trim() ||
                       !entryTime.trim() ||
                       !entryText.trim()
                     }
@@ -3633,11 +3932,12 @@ export function ReportWorkspace() {
                       </strong>
 
                       <span>
-                        New and edited entries
-                        auto-sort by time.
-                        Manual reorder stays
-                        available when field
-                        reality needs it.
+                        Entries now keep an
+                        internal calendar date,
+                        so multi-day incidents
+                        sort correctly. The
+                        generated bagan still
+                        prints HH:mm only.
                       </span>
                     </div>
                   </div>
@@ -3681,7 +3981,7 @@ export function ReportWorkspace() {
                       <ArrowUpDown
                         size={14}
                       />
-                      Sort by time
+                      Sort timeline
                     </button>
                   </div>
                 </div>
@@ -3703,7 +4003,9 @@ export function ReportWorkspace() {
 
                         const isDuplicate =
                           duplicateTimes.has(
-                            entry.time.trim()
+                            progressDuplicateKey(
+                              entry
+                            )
                           );
 
                         return (
@@ -3754,37 +4056,78 @@ export function ReportWorkspace() {
                             </div>
 
                             {isEditing ? (
-                              <div className="timeline-edit-time">
-                                <span>
-                                  TIME
-                                </span>
+                              <div className="timeline-edit-moment">
+                                <label>
+                                  <span>
+                                    DATE
+                                  </span>
 
-                                <input
-                                  value={
-                                    editingProgressTime
-                                  }
-                                  aria-label="Edit progress time"
-                                  onChange={(
-                                    event
-                                  ) =>
-                                    setEditingProgressTime(
+                                  <input
+                                    type="date"
+                                    value={
+                                      progressDateToInput(
+                                        editingProgressDate
+                                      )
+                                    }
+                                    aria-label="Edit progress date"
+                                    onChange={(
                                       event
-                                        .target
-                                        .value
-                                    )
-                                  }
-                                />
+                                    ) =>
+                                      setEditingProgressDate(
+                                        progressDateFromInput(
+                                          event.target.value
+                                        )
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  <span>
+                                    TIME
+                                  </span>
+
+                                  <input
+                                    value={
+                                      editingProgressTime
+                                    }
+                                    aria-label="Edit progress time"
+                                    onChange={(
+                                      event
+                                    ) =>
+                                      setEditingProgressTime(
+                                        event
+                                          .target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </label>
                               </div>
                             ) : (
-                              <div className="timeline-time">
-                                {
-                                  entry.time
-                                }
+                              <div className="timeline-time timeline-moment">
+                                <strong>
+                                  {
+                                    entry.time
+                                  }
+                                </strong>
+
+                                {entry.date ? (
+                                  <small>
+                                    {
+                                      entry.date
+                                    }
+                                  </small>
+                                ) : (
+                                  <small>
+                                    legacy date
+                                  </small>
+                                )}
 
                                 {isDuplicate ? (
                                   <span
                                     className="duplicate-dot"
-                                    title="Duplicate timeline time"
+                                    title="Duplicate timeline moment"
                                   />
                                 ) : null}
                               </div>
@@ -3866,6 +4209,7 @@ export function ReportWorkspace() {
                                     type="button"
                                     title="Save update"
                                     disabled={
+                                      !editingProgressDate.trim() ||
                                       !editingProgressTime.trim() ||
                                       !editingProgressText.trim()
                                     }

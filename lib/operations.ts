@@ -1,5 +1,6 @@
 import {
   detectProgressKind,
+  progressEntryTimestamp,
   progressTimeToMinutes,
   type IncidentReport,
   type ProgressEntry,
@@ -167,8 +168,23 @@ export function parseReportDateTime(
 
 function progressTimestamp(
   report: IncidentReport,
-  time: string
+  entry: ProgressEntry
 ): number | null {
+  const explicitTimestamp =
+    progressEntryTimestamp(
+      entry
+    );
+
+  if (
+    explicitTimestamp !== null
+  ) {
+    return explicitTimestamp;
+  }
+
+  //
+  // Legacy fallback for workspace snapshots created
+  // before ProgressEntry.date existed.
+  //
   const start =
     parseReportDateTime(
       report.occurTime
@@ -176,7 +192,7 @@ function progressTimestamp(
 
   const progressMinutes =
     progressTimeToMinutes(
-      time
+      entry.time
     );
 
   if (
@@ -190,16 +206,19 @@ function progressTimestamp(
     new Date(start);
 
   const startMinutes =
-    startDate.getHours() * 60 +
+    startDate.getHours() *
+      60 +
     startDate.getMinutes();
 
   const hours =
     Math.floor(
-      progressMinutes / 60
+      progressMinutes /
+        60
     );
 
   const minutes =
-    progressMinutes % 60;
+    progressMinutes %
+    60;
 
   let candidate =
     new Date(
@@ -212,11 +231,6 @@ function progressTimestamp(
       0
     ).getTime();
 
-  //
-  // A progress clock earlier than the
-  // occur clock is treated as a midnight
-  // rollover into the next calendar day.
-  //
   if (
     progressMinutes <
     startMinutes
@@ -243,7 +257,7 @@ function latestProgress(
     const timestamp =
       progressTimestamp(
         report,
-        entry.time
+        entry
       );
 
     if (
@@ -452,8 +466,14 @@ export function buildIncidentOperationalView(
     progressCount:
       report.progress.length,
     lastActivityTime:
-      latest.entry?.time ??
-      '',
+      latest.entry
+        ? [
+            latest.entry.date,
+            latest.entry.time,
+          ]
+            .filter(Boolean)
+            .join(' ')
+        : '',
     lastActivityText:
       latest.entry?.text ??
       '',

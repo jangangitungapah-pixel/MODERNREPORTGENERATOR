@@ -398,3 +398,79 @@ describe('operational intelligence', () => {
     ).toBe('restored');
   });
 });
+
+
+describe('date-aware operational freshness', () => {
+  it('uses explicit progress dates for multi-day incident freshness', () => {
+    const incident =
+      createIncidentRecord(
+        'multi-day',
+        {
+          ...EMPTY_REPORT,
+          region: 'MANDAU',
+          ticket:
+            'INC-20260812-00000001',
+          summary:
+            'LINK DOWN',
+          occurTime:
+            '12/08/2026 16:25',
+          dispatchTime:
+            '12/08/2026 17:32',
+          pic: 'Operator',
+          rootcause:
+            'Fiber cut',
+          cutPoint:
+            'KM 7',
+          progress: [
+            {
+              id: '1',
+              date:
+                '12/08/2026',
+              time: '23:41',
+              text:
+                'Team start splicing cable',
+            },
+            {
+              id: '2',
+              date:
+                '13/08/2026',
+              time: '09:26',
+              text:
+                'Link already up.',
+            },
+          ],
+        }
+      );
+
+    const now =
+      new Date(
+        2026,
+        7,
+        14,
+        12,
+        0
+      ).getTime();
+
+    const view =
+      buildIncidentOperationalView(
+        incident,
+        now
+      );
+
+    expect(
+      view.status
+    ).toBe(
+      'restored'
+    );
+
+    expect(
+      view.ageMinutes
+    ).toBe(1021);
+
+    expect(
+      view.lastActivityTime
+    ).toBe(
+      '13/08/2026 09:26'
+    );
+  });
+});

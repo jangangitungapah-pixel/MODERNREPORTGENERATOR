@@ -189,9 +189,13 @@ export function incidentSearchText(
     report.cutPoint,
     ...report.progress.map(
       (entry) =>
-        entry.time +
-        ' ' +
-        entry.text
+        [
+          entry.date,
+          entry.time,
+          entry.text,
+        ]
+          .filter(Boolean)
+          .join(' ')
     ),
   ]
     .join(' ')
