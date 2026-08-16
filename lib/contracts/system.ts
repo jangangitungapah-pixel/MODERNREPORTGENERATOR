@@ -5,6 +5,7 @@ import {
 export const systemHealthSchema =
   z.object({
     ok: z.literal(true),
+    ready: z.boolean(),
     service:
       z.literal('reportos'),
     runtime:
@@ -15,10 +16,14 @@ export const systemHealthSchema =
       z.literal(
         'full-stack'
       ),
-    databasePhase:
-      z.literal(
-        'foundation'
-      ),
+    database: z.object({
+      binding: z.enum([
+        'ready',
+        'standby',
+      ]),
+      canonicalModel:
+        z.literal('ready'),
+    }),
     timestamp:
       z.string().datetime(),
     requestId:
