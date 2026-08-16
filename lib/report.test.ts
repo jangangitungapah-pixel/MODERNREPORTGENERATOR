@@ -1232,3 +1232,81 @@ describe('timeline sort regression', () => {
     ]);
   });
 });
+
+
+describe('composer timeline ordering contract', () => {
+  it('keeps canonical report chronology oldest first while allowing newest-first presentation', () => {
+    const canonical =
+      sortProgressChronologically(
+        [
+          {
+            id: 'newest',
+            date: '13/08/2026',
+            time: '01:53',
+            text: 'Latest update',
+          },
+          {
+            id: 'oldest',
+            date: '12/08/2026',
+            time: '23:41',
+            text: 'First update',
+          },
+          {
+            id: 'middle',
+            date: '13/08/2026',
+            time: '00:13',
+            text: 'Second update',
+          },
+        ],
+        '12/08/2026 16:25'
+      );
+
+    expect(
+      canonical.map(
+        (entry) => entry.id
+      )
+    ).toEqual([
+      'oldest',
+      'middle',
+      'newest',
+    ]);
+
+    expect(
+      [...canonical]
+        .reverse()
+        .map(
+          (entry) => entry.id
+        )
+    ).toEqual([
+      'newest',
+      'middle',
+      'oldest',
+    ]);
+
+    const output =
+      formatReport({
+        ...SAMPLE_REPORT,
+        progress: canonical,
+      });
+
+    expect(
+      output.indexOf(
+        '23:41 First update'
+      )
+    ).toBeLessThan(
+      output.indexOf(
+        '00:13 Second update'
+      )
+    );
+
+    expect(
+      output.indexOf(
+        '00:13 Second update'
+      )
+    ).toBeLessThan(
+      output.indexOf(
+        '01:53 Latest update'
+      )
+    );
+  });
+});

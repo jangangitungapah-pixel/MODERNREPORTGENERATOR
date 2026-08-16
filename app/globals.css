@@ -10752,3 +10752,24 @@ span + span::before {
     grid-column: auto;
   }
 }
+
+
+/* F10 AUTO TIMELINE ORDER */
+
+.timeline-order-chip {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  border:
+    1px solid
+    rgba(111, 92, 245, .09);
+  border-radius: 999px;
+  padding: 0 9px;
+  color: #6554cf;
+  background:
+    rgba(111, 92, 245, .055);
+  font-size: 5.8px;
+  font-weight: 830;
+  letter-spacing: .065em;
+  white-space: nowrap;
+}

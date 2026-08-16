@@ -7,9 +7,6 @@ import {
   AlertTriangle,
   Archive,
   ArchiveRestore,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   Check,
   ChevronRight,
   Clipboard,
@@ -744,6 +741,21 @@ export function ReportWorkspace() {
       [report.progress]
     );
 
+  const timelineEntriesForDisplay =
+    useMemo(
+      () =>
+        [
+          ...sortProgressChronologically(
+            report.progress,
+            report.occurTime
+          ),
+        ].reverse(),
+      [
+        report.occurTime,
+        report.progress,
+      ]
+    );
+
   const incidentRecordsForView =
     useMemo(
       () =>
@@ -1450,7 +1462,7 @@ export function ReportWorkspace() {
     entry: ProgressEntry
   ) {
     const inferredEntry =
-      inferProgressDates(
+      sortProgressChronologically(
         report.progress,
         report.occurTime
       ).find(
@@ -1524,60 +1536,6 @@ export function ReportWorkspace() {
     );
 
     cancelEditProgress();
-  }
-
-  function moveProgress(
-    id: string,
-    direction: -1 | 1
-  ) {
-    setReport((current) => {
-      const index =
-        current.progress.findIndex(
-          (entry) =>
-            entry.id === id
-        );
-
-      const targetIndex =
-        index + direction;
-
-      if (
-        index < 0 ||
-        targetIndex < 0 ||
-        targetIndex >=
-          current.progress.length
-      ) {
-        return current;
-      }
-
-      const progress = [
-        ...current.progress,
-      ];
-
-      const currentEntry =
-        progress[index];
-
-      progress[index] =
-        progress[targetIndex];
-
-      progress[targetIndex] =
-        currentEntry;
-
-      return {
-        ...current,
-        progress,
-      };
-    });
-  }
-
-  function sortTimeline() {
-    setReport((current) => ({
-      ...current,
-      progress:
-        sortProgressChronologically(
-          current.progress,
-          current.occurTime
-        ),
-    }));
   }
 
   async function copyReport() {
@@ -3945,12 +3903,12 @@ export function ReportWorkspace() {
                       </strong>
 
                       <span>
-                        Entries now keep an
-                        internal calendar date,
-                        so multi-day incidents
-                        sort correctly. The
-                        generated bagan still
-                        prints HH:mm only.
+                        Composer is always
+                        newest first, so the
+                        latest field signal stays
+                        on top. Preview and
+                        generated bagan remain
+                        oldest first.
                       </span>
                     </div>
                   </div>
@@ -3980,22 +3938,9 @@ export function ReportWorkspace() {
                       </span>
                     )}
 
-                    <button
-                      className="timeline-sort-button"
-                      type="button"
-                      disabled={
-                        report.progress
-                          .length < 2
-                      }
-                      onClick={
-                        sortTimeline
-                      }
-                    >
-                      <ArrowUpDown
-                        size={14}
-                      />
-                      Sort timeline
-                    </button>
+                    <span className="timeline-order-chip">
+                      NEWEST FIRST
+                    </span>
                   </div>
                 </div>
 
@@ -4003,7 +3948,7 @@ export function ReportWorkspace() {
                   <AnimatePresence
                     initial={false}
                   >
-                    {report.progress.map(
+                    {timelineEntriesForDisplay.map(
                       (entry, index) => {
                         const kind =
                           detectProgressKind(
@@ -4061,7 +4006,7 @@ export function ReportWorkspace() {
                               </span>
 
                               {index <
-                              report.progress
+                              timelineEntriesForDisplay
                                 .length -
                                 1 ? (
                                 <span className="timeline-line" />
@@ -4261,47 +4206,6 @@ export function ReportWorkspace() {
                                     }
                                   >
                                     <Pencil
-                                      size={13}
-                                    />
-                                  </button>
-
-                                  <button
-                                    className="timeline-action"
-                                    type="button"
-                                    title="Move update up"
-                                    disabled={
-                                      index === 0
-                                    }
-                                    onClick={() =>
-                                      moveProgress(
-                                        entry.id,
-                                        -1
-                                      )
-                                    }
-                                  >
-                                    <ArrowUp
-                                      size={13}
-                                    />
-                                  </button>
-
-                                  <button
-                                    className="timeline-action"
-                                    type="button"
-                                    title="Move update down"
-                                    disabled={
-                                      index ===
-                                      report.progress
-                                        .length -
-                                        1
-                                    }
-                                    onClick={() =>
-                                      moveProgress(
-                                        entry.id,
-                                        1
-                                      )
-                                    }
-                                  >
-                                    <ArrowDown
                                       size={13}
                                     />
                                   </button>
