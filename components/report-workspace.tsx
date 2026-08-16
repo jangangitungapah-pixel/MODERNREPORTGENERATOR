@@ -478,10 +478,6 @@ export function ReportWorkspace() {
   ] = useState<string | null>(
     null
   );
-  const [
-    archiveQuery,
-    setArchiveQuery,
-  ] = useState('');
 
   const [
     nowEpoch,
