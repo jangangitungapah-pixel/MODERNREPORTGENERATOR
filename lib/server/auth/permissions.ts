@@ -1,10 +1,11 @@
 import {
   ApiError,
-} from '@/lib/server/http/api-response';
+} from '../http/api-response';
 
-import {
-  type WorkspaceRole,
-} from '@/lib/server/workspace-service';
+export type WorkspaceRole =
+  | 'operator'
+  | 'supervisor'
+  | 'admin';
 
 const roleRank:
   Record<WorkspaceRole, number> = {
