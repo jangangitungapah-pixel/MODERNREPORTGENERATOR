@@ -19,7 +19,9 @@ import {
   FolderArchive,
   Gauge,
   Layers3,
+  Link2,
   Mail,
+  MapPin,
   Pencil,
   Plus,
   RotateCcw,
@@ -52,7 +54,10 @@ import {
   formatReport,
   parseIncidentReport,
   sortProgressChronologically,
+  type CutPointEntry,
+  type ImpactLink,
   type IncidentReport,
+  type LinkMarker,
   type ProgressEntry,
 } from '@/lib/report';
 
@@ -112,6 +117,168 @@ const PROGRESS_KIND_LABELS = {
   restored: 'Restored',
   update: 'Update',
 } as const;
+
+const LINK_MARKER_OPTIONS: Array<{
+  value: LinkMarker;
+  label: string;
+  symbol: string;
+}> = [
+  {
+    value: 'unknown',
+    label: 'Unknown',
+    symbol: '•',
+  },
+  {
+    value: 'down',
+    label: 'Down',
+    symbol: '❌',
+  },
+  {
+    value: 'warning',
+    label: 'Warning',
+    symbol: '⚠️',
+  },
+  {
+    value: 'up',
+    label: 'Up',
+    symbol: '✅',
+  },
+];
+
+function MarkerSelector({
+  value,
+  onChange,
+  compact = false,
+}: {
+  value:
+    | LinkMarker
+    | undefined;
+  onChange: (
+    value: LinkMarker
+  ) => void;
+  compact?: boolean;
+}) {
+  const current =
+    value ?? 'unknown';
+
+  return (
+    <div
+      className={
+        compact
+          ? 'marker-selector marker-selector-compact'
+          : 'marker-selector'
+      }
+      role="group"
+      aria-label="Link status"
+    >
+      {LINK_MARKER_OPTIONS.map(
+        (option) => (
+          <button
+            className={
+              current ===
+              option.value
+                ? 'marker-option marker-option-active'
+                : 'marker-option'
+            }
+            data-marker={
+              option.value
+            }
+            key={
+              option.value
+            }
+            type="button"
+            title={
+              option.label
+            }
+            aria-pressed={
+              current ===
+              option.value
+            }
+            onClick={() =>
+              onChange(
+                option.value
+              )
+            }
+          >
+            <span>
+              {
+                option.symbol
+              }
+            </span>
+
+            {!compact ? (
+              <small>
+                {
+                  option.label
+                }
+              </small>
+            ) : null}
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
+function createDispatchEntityId(
+  prefix: string
+): string {
+  if (
+    typeof crypto !==
+      'undefined' &&
+    'randomUUID' in crypto
+  ) {
+    return (
+      prefix +
+      '-' +
+      crypto.randomUUID()
+    );
+  }
+
+  return (
+    prefix +
+    '-' +
+    Date.now() +
+    '-' +
+    Math.random()
+      .toString(36)
+      .slice(2, 8)
+  );
+}
+
+function syncCutPointAggregates(
+  entries: CutPointEntry[]
+): Pick<
+  IncidentReport,
+  'rootcause' | 'cutPoint'
+> {
+  return {
+    rootcause:
+      entries
+        .map(
+          (entry) =>
+            (
+              entry.label.trim() +
+              ' ' +
+              entry.rootcause.trim()
+            ).trim()
+        )
+        .filter(Boolean)
+        .join('\n'),
+    cutPoint:
+      entries
+        .map(
+          (entry) =>
+            (
+              entry.label.trim() +
+              ' ' +
+              entry.cutPoint.trim()
+            ).trim()
+        )
+        .filter(Boolean)
+        .join('\n'),
+  };
+}
 
 type FieldProps = {
   label: string;
@@ -822,6 +989,232 @@ export function ReportWorkspace() {
           activeIncidentId,
           nextChecklist
         )
+    );
+  }
+
+  function updatePrimaryMarker(
+    marker: LinkMarker
+  ) {
+    setReport(
+      (current) => ({
+        ...current,
+        primaryMarker:
+          marker,
+      })
+    );
+  }
+
+  function updatePrimaryStatusTag(
+    value: string
+  ) {
+    setReport(
+      (current) => ({
+        ...current,
+        statusTag: value,
+      })
+    );
+  }
+
+  function addImpactLink() {
+    setReport(
+      (current) => ({
+        ...current,
+        impactLinks: [
+          ...(current.impactLinks ??
+            []),
+          {
+            id:
+              createDispatchEntityId(
+                'impact'
+              ),
+            marker: 'down',
+            region:
+              current.region,
+            statusTag:
+              current.statusTag ||
+              '[Open - Major]',
+            summary: '',
+            ticket: '',
+          },
+        ],
+      })
+    );
+  }
+
+  function updateImpactLink<
+    Key extends keyof ImpactLink
+  >(
+    id: string,
+    key: Key,
+    value: ImpactLink[Key]
+  ) {
+    setReport(
+      (current) => ({
+        ...current,
+        impactLinks:
+          (
+            current.impactLinks ??
+            []
+          ).map(
+            (entry) =>
+              entry.id === id
+                ? {
+                    ...entry,
+                    [key]:
+                      value,
+                  }
+                : entry
+          ),
+      })
+    );
+  }
+
+  function removeImpactLink(
+    id: string
+  ) {
+    setReport(
+      (current) => ({
+        ...current,
+        impactLinks:
+          (
+            current.impactLinks ??
+            []
+          ).filter(
+            (entry) =>
+              entry.id !== id
+          ),
+      })
+    );
+  }
+
+  function addCutPoint() {
+    setReport(
+      (current) => {
+        const existing =
+          current.cutPoints ??
+          [];
+
+        let next:
+          CutPointEntry[];
+
+        if (
+          existing.length === 0 &&
+          (
+            current.rootcause.trim() ||
+            current.cutPoint.trim()
+          )
+        ) {
+          //
+          // Promote the existing simple CP
+          // into CP1 instead of throwing
+          // away data when multi-CP mode
+          // is first enabled.
+          //
+          next = [
+            {
+              id:
+                createDispatchEntityId(
+                  'cp'
+                ),
+              label: 'CP1',
+              rootcause:
+                current.rootcause,
+              cutPoint:
+                current.cutPoint,
+              marker:
+                'unknown',
+            },
+          ];
+        } else {
+          next = [
+            ...existing,
+            {
+              id:
+                createDispatchEntityId(
+                  'cp'
+                ),
+              label:
+                'CP' +
+                (
+                  existing.length +
+                  1
+                ),
+              rootcause: '',
+              cutPoint: '',
+              marker:
+                'unknown',
+            },
+          ];
+        }
+
+        return {
+          ...current,
+          cutPoints: next,
+          ...syncCutPointAggregates(
+            next
+          ),
+        };
+      }
+    );
+  }
+
+  function updateCutPoint<
+    Key extends keyof CutPointEntry
+  >(
+    id: string,
+    key: Key,
+    value: CutPointEntry[Key]
+  ) {
+    setReport(
+      (current) => {
+        const next =
+          (
+            current.cutPoints ??
+            []
+          ).map(
+            (entry) =>
+              entry.id === id
+                ? {
+                    ...entry,
+                    [key]:
+                      value,
+                  }
+                : entry
+          );
+
+        return {
+          ...current,
+          cutPoints: next,
+          ...syncCutPointAggregates(
+            next
+          ),
+        };
+      }
+    );
+  }
+
+  function removeCutPoint(
+    id: string
+  ) {
+    setReport(
+      (current) => {
+        const next =
+          (
+            current.cutPoints ??
+            []
+          ).filter(
+            (entry) =>
+              entry.id !== id
+          );
+
+        return {
+          ...current,
+          cutPoints: next,
+          ...syncCutPointAggregates(
+            next
+          ),
+        };
+      }
     );
   }
 
@@ -2448,7 +2841,7 @@ export function ReportWorkspace() {
                 </div>
               </section>
 
-              <section className="section-card glass-panel">
+              <section className="section-card glass-panel dispatch-context-card">
                 <div className="section-heading">
                   <div className="section-icon section-icon-blue">
                     <Clock3 size={17} />
@@ -2464,13 +2857,34 @@ export function ReportWorkspace() {
                     </h3>
 
                     <p>
-                      Timing, ownership, and
-                      fault context.
+                      Timing, ownership, link
+                      impact, and physical cut
+                      point topology.
                     </p>
+                  </div>
+
+                  <div className="dispatch-topology-summary">
+                    <span>
+                      {
+                        (
+                          report.impactLinks ??
+                          []
+                        ).length
+                      } impact
+                    </span>
+
+                    <span>
+                      {
+                        (
+                          report.cutPoints ??
+                          []
+                        ).length
+                      } CP
+                    </span>
                   </div>
                 </div>
 
-                <div className="field-grid">
+                <div className="field-grid dispatch-core-grid">
                   <Field
                     label="Occur time"
                     hint="DD/MM/YYYY HH:mm"
@@ -2505,6 +2919,7 @@ export function ReportWorkspace() {
                     label="PIC"
                     value={report.pic}
                     placeholder="Name (area)"
+                    wide
                     onChange={(value) =>
                       updateField(
                         'pic',
@@ -2512,32 +2927,584 @@ export function ReportWorkspace() {
                       )
                     }
                   />
+                </div>
 
-                  <Field
-                    label="Cut point"
-                    value={report.cutPoint}
-                    placeholder="KM / landmark / location"
-                    onChange={(value) =>
-                      updateField(
-                        'cutPoint',
-                        value
-                      )
-                    }
-                  />
+                <div className="dispatch-topology">
+                  <section className="dispatch-topology-block">
+                    <div className="dispatch-subheading">
+                      <div>
+                        <span className="dispatch-subheading-icon">
+                          <Link2
+                            size={15}
+                          />
+                        </span>
 
-                  <Field
-                    label="Rootcause"
-                    value={report.rootcause}
-                    placeholder="Describe root cause"
-                    wide
-                    multiline
-                    onChange={(value) =>
-                      updateField(
-                        'rootcause',
-                        value
-                      )
-                    }
-                  />
+                        <div>
+                          <strong>
+                            Link impact topology
+                          </strong>
+
+                          <small>
+                            Main link and every
+                            affected child TT.
+                          </small>
+                        </div>
+                      </div>
+
+                      <button
+                        className="dispatch-add-button"
+                        type="button"
+                        onClick={
+                          addImpactLink
+                        }
+                      >
+                        <Plus
+                          size={14}
+                        />
+                        Impact link
+                      </button>
+                    </div>
+
+                    <article className="primary-link-editor">
+                      <div className="topology-card-head">
+                        <div>
+                          <span className="topology-index">
+                            MAIN LINK
+                          </span>
+
+                          <strong>
+                            {
+                              report.ticket ||
+                              'Primary incident'
+                            }
+                          </strong>
+                        </div>
+
+                        <MarkerSelector
+                          compact
+                          value={
+                            report.primaryMarker
+                          }
+                          onChange={
+                            updatePrimaryMarker
+                          }
+                        />
+                      </div>
+
+                      <div className="primary-link-grid">
+                        <label>
+                          <span>
+                            STATUS TAG
+                          </span>
+
+                          <input
+                            value={
+                              report.statusTag ??
+                              ''
+                            }
+                            placeholder="[Open - Major]"
+                            onChange={(
+                              event
+                            ) =>
+                              updatePrimaryStatusTag(
+                                event.target
+                                  .value
+                              )
+                            }
+                          />
+                        </label>
+
+                        <div className="primary-link-readonly">
+                          <span>
+                            LINK / ALARM
+                          </span>
+
+                          <strong>
+                            {
+                              report.summary ||
+                              'Use Incident Identity to define the main link.'
+                            }
+                          </strong>
+                        </div>
+                      </div>
+                    </article>
+
+                    <div className="impact-link-list">
+                      <AnimatePresence
+                        initial={false}
+                      >
+                        {(
+                          report.impactLinks ??
+                          []
+                        ).map(
+                          (
+                            impact,
+                            index
+                          ) => (
+                            <motion.article
+                              className="impact-link-editor"
+                              data-marker={
+                                impact.marker
+                              }
+                              key={
+                                impact.id
+                              }
+                              layout
+                              initial={{
+                                opacity: 0,
+                                y: 6,
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                              }}
+                              exit={{
+                                opacity: 0,
+                                scale: 0.98,
+                              }}
+                            >
+                              <div className="topology-card-head">
+                                <div>
+                                  <span className="topology-index">
+                                    IMPACT {
+                                      index + 1
+                                    }
+                                  </span>
+
+                                  <strong>
+                                    {
+                                      impact.ticket ||
+                                      'Untitled impact TT'
+                                    }
+                                  </strong>
+                                </div>
+
+                                <div className="topology-head-actions">
+                                  <MarkerSelector
+                                    compact
+                                    value={
+                                      impact.marker
+                                    }
+                                    onChange={(
+                                      marker
+                                    ) =>
+                                      updateImpactLink(
+                                        impact.id,
+                                        'marker',
+                                        marker
+                                      )
+                                    }
+                                  />
+
+                                  <button
+                                    className="topology-delete-button"
+                                    type="button"
+                                    title="Remove impact link"
+                                    onClick={() =>
+                                      removeImpactLink(
+                                        impact.id
+                                      )
+                                    }
+                                  >
+                                    <Trash2
+                                      size={13}
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="impact-link-grid">
+                                <label>
+                                  <span>
+                                    REGION
+                                  </span>
+
+                                  <input
+                                    value={
+                                      impact.region
+                                    }
+                                    placeholder="FLP_3rd_MANDAU"
+                                    onChange={(
+                                      event
+                                    ) =>
+                                      updateImpactLink(
+                                        impact.id,
+                                        'region',
+                                        event.target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  <span>
+                                    STATUS TAG
+                                  </span>
+
+                                  <input
+                                    value={
+                                      impact.statusTag
+                                    }
+                                    placeholder="[Open - Major]"
+                                    onChange={(
+                                      event
+                                    ) =>
+                                      updateImpactLink(
+                                        impact.id,
+                                        'statusTag',
+                                        event.target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label className="topology-field-wide">
+                                  <span>
+                                    IMPACT LINK / ALARM
+                                  </span>
+
+                                  <textarea
+                                    rows={2}
+                                    value={
+                                      impact.summary
+                                    }
+                                    placeholder="DOWN - NODE_A(...)<>NODE_B(...)"
+                                    onChange={(
+                                      event
+                                    ) =>
+                                      updateImpactLink(
+                                        impact.id,
+                                        'summary',
+                                        event.target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label className="topology-field-wide">
+                                  <span>
+                                    IMPACT TROUBLE TICKET
+                                  </span>
+
+                                  <input
+                                    value={
+                                      impact.ticket
+                                    }
+                                    placeholder="DATACOM-INC-YYYYMMDD-00000000"
+                                    onChange={(
+                                      event
+                                    ) =>
+                                      updateImpactLink(
+                                        impact.id,
+                                        'ticket',
+                                        event.target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </label>
+                              </div>
+                            </motion.article>
+                          )
+                        )}
+                      </AnimatePresence>
+
+                      {(
+                        report.impactLinks ??
+                        []
+                      ).length === 0 ? (
+                        <div className="topology-empty-state">
+                          <Link2
+                            size={18}
+                          />
+
+                          <div>
+                            <strong>
+                              No impact link
+                            </strong>
+
+                            <span>
+                              Keep this empty for
+                              single-link TT, or
+                              add affected child
+                              links manually.
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </section>
+
+                  <section className="dispatch-topology-block">
+                    <div className="dispatch-subheading">
+                      <div>
+                        <span className="dispatch-subheading-icon dispatch-subheading-icon-cp">
+                          <MapPin
+                            size={15}
+                          />
+                        </span>
+
+                        <div>
+                          <strong>
+                            Cut point topology
+                          </strong>
+
+                          <small>
+                            Pair each CP with its
+                            own rootcause, location,
+                            and current marker.
+                          </small>
+                        </div>
+                      </div>
+
+                      <button
+                        className="dispatch-add-button"
+                        type="button"
+                        onClick={
+                          addCutPoint
+                        }
+                      >
+                        <Plus
+                          size={14}
+                        />
+                        Add CP
+                      </button>
+                    </div>
+
+                    {(
+                      report.cutPoints ??
+                      []
+                    ).length === 0 ? (
+                      <div className="legacy-cp-editor">
+                        <div className="legacy-cp-note">
+                          <MapPin
+                            size={15}
+                          />
+
+                          <div>
+                            <strong>
+                              Single CP mode
+                            </strong>
+
+                            <span>
+                              These legacy fields
+                              remain ideal for a
+                              normal one-cut
+                              incident. Press Add
+                              CP to promote them
+                              into structured CP1.
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="field-grid">
+                          <Field
+                            label="Cut point"
+                            value={
+                              report.cutPoint
+                            }
+                            placeholder="KM / landmark / location"
+                            onChange={(value) =>
+                              updateField(
+                                'cutPoint',
+                                value
+                              )
+                            }
+                          />
+
+                          <Field
+                            label="Rootcause"
+                            value={
+                              report.rootcause
+                            }
+                            placeholder="Describe root cause"
+                            wide
+                            multiline
+                            onChange={(value) =>
+                              updateField(
+                                'rootcause',
+                                value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="cut-point-list">
+                        <AnimatePresence
+                          initial={false}
+                        >
+                          {(
+                            report.cutPoints ??
+                            []
+                          ).map(
+                            (
+                              cp,
+                              index
+                            ) => (
+                              <motion.article
+                                className="cut-point-editor"
+                                data-marker={
+                                  cp.marker
+                                }
+                                key={
+                                  cp.id
+                                }
+                                layout
+                                initial={{
+                                  opacity: 0,
+                                  y: 6,
+                                }}
+                                animate={{
+                                  opacity: 1,
+                                  y: 0,
+                                }}
+                                exit={{
+                                  opacity: 0,
+                                  scale: 0.98,
+                                }}
+                              >
+                                <div className="topology-card-head">
+                                  <label className="cp-label-editor">
+                                    <span>
+                                      CP LABEL
+                                    </span>
+
+                                    <input
+                                      value={
+                                        cp.label
+                                      }
+                                      aria-label={
+                                        'Cut point label ' +
+                                        (
+                                          index +
+                                          1
+                                        )
+                                      }
+                                      onChange={(
+                                        event
+                                      ) =>
+                                        updateCutPoint(
+                                          cp.id,
+                                          'label',
+                                          event.target
+                                            .value
+                                        )
+                                      }
+                                    />
+                                  </label>
+
+                                  <div className="topology-head-actions">
+                                    <MarkerSelector
+                                      compact
+                                      value={
+                                        cp.marker
+                                      }
+                                      onChange={(
+                                        marker
+                                      ) =>
+                                        updateCutPoint(
+                                          cp.id,
+                                          'marker',
+                                          marker
+                                        )
+                                      }
+                                    />
+
+                                    <button
+                                      className="topology-delete-button"
+                                      type="button"
+                                      title="Remove cut point"
+                                      onClick={() =>
+                                        removeCutPoint(
+                                          cp.id
+                                        )
+                                      }
+                                    >
+                                      <Trash2
+                                        size={13}
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="cut-point-grid">
+                                  <label>
+                                    <span>
+                                      ROOTCAUSE
+                                    </span>
+
+                                    <textarea
+                                      rows={2}
+                                      value={
+                                        cp.rootcause
+                                      }
+                                      placeholder="Impact Activity Drainage Project"
+                                      onChange={(
+                                        event
+                                      ) =>
+                                        updateCutPoint(
+                                          cp.id,
+                                          'rootcause',
+                                          event.target
+                                            .value
+                                        )
+                                      }
+                                    />
+                                  </label>
+
+                                  <label>
+                                    <span>
+                                      CUT POINT
+                                    </span>
+
+                                    <textarea
+                                      rows={2}
+                                      value={
+                                        cp.cutPoint
+                                      }
+                                      placeholder="KM 7,9 from GRIYAAGUNG"
+                                      onChange={(
+                                        event
+                                      ) =>
+                                        updateCutPoint(
+                                          cp.id,
+                                          'cutPoint',
+                                          event.target
+                                            .value
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                </div>
+                              </motion.article>
+                            )
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {(
+                      report.cutPoints ??
+                      []
+                    ).length > 0 ? (
+                      <div className="topology-sync-note">
+                        <ShieldCheck
+                          size={13}
+                        />
+
+                        <span>
+                          Structured CP values
+                          automatically sync to
+                          the legacy Rootcause /
+                          Cut Point report fields.
+                        </span>
+                      </div>
+                    ) : null}
+                  </section>
                 </div>
               </section>
 

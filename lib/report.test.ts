@@ -509,6 +509,81 @@ describe('parseIncidentReport', () => {
     );
   });
 
+  it('formats a manually authored dispatch topology without requiring parser input', () => {
+    const output =
+      formatReport({
+        ...SAMPLE_REPORT,
+        region:
+          'FLP_3rd_MANDAU',
+        statusTag:
+          '[Open - Major]',
+        primaryMarker:
+          'down',
+        summary:
+          '[Open - Major] DOWN - MAIN_A<>MAIN_B',
+        ticket:
+          'DATACOM-INC-20260816-00000001',
+        impactLinks: [
+          {
+            id: 'impact-manual',
+            marker: 'down',
+            region:
+              'FLP_3rd_MANDAU',
+            statusTag:
+              '[Open - Major]',
+            summary:
+              'DOWN - CHILD_A<>CHILD_B',
+            ticket:
+              'DATACOM-INC-20260816-00000002',
+          },
+        ],
+        rootcause:
+          'CP1 Drainage Project\nCP2 Still Investigation',
+        cutPoint:
+          'CP1 KM 7,9\nCP2 KM 2,1',
+        cutPoints: [
+          {
+            id: 'cp-manual-1',
+            label: 'CP1',
+            rootcause:
+              'Drainage Project',
+            cutPoint:
+              'KM 7,9',
+            marker: 'up',
+          },
+          {
+            id: 'cp-manual-2',
+            label: 'CP2',
+            rootcause:
+              'Still Investigation',
+            cutPoint:
+              'KM 2,1',
+            marker: 'down',
+          },
+        ],
+      });
+
+    expect(output).toContain(
+      '*❌[FLP_3rd_MANDAU][Open - Major] DOWN - MAIN_A<>MAIN_B - DATACOM-INC-20260816-00000001*'
+    );
+
+    expect(output).toContain(
+      '* ❌[FLP_3rd_MANDAU][Open - Major] DOWN - CHILD_A<>CHILD_B - DATACOM-INC-20260816-00000002'
+    );
+
+    expect(output).toContain(
+      'CP1 Drainage Project'
+    );
+
+    expect(output).toContain(
+      'CP1 KM 7,9✅'
+    );
+
+    expect(output).toContain(
+      'CP2 KM 2,1❌'
+    );
+  });
+
   it('reports missing signals instead of inventing data', () => {
     const result =
       parseIncidentReport(
