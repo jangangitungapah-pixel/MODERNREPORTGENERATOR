@@ -1,16 +1,8 @@
 import type { Metadata } from 'next';
 
 import {
-  FirebaseCloudRecovery,
-} from '@/components/firebase-cloud-recovery';
-
-import {
-  ReportOsCanonicalSync,
-} from '@/components/reportos-canonical-sync';
-
-import {
-  ReportOsIdentity,
-} from '@/components/reportos-identity';
+  ReportOsClientRuntime,
+} from '@/components/reportos-client-runtime';
 
 import {
   ReportOsIntelligence,
@@ -38,10 +30,8 @@ export default function RootLayout({
       <body>
         {children}
         <ReportOsSystemLink />
-        <ReportOsIdentity />
         <ReportOsIntelligence />
-        <ReportOsCanonicalSync />
-        <FirebaseCloudRecovery />
+        <ReportOsClientRuntime />
       </body>
     </html>
   );
