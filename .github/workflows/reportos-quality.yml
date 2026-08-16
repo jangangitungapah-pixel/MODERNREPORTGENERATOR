@@ -30,9 +30,6 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Production dependency audit
-        run: npm audit --omit=dev --audit-level=high
-
       - name: Typecheck
         run: npm run typecheck
 
@@ -47,3 +44,8 @@ jobs:
 
       - name: Cloudflare Worker build
         run: npm run build:worker
+
+      # Keep this blocking, but run it after application validation so an
+      # upstream transitive advisory cannot hide independent code/build regressions.
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
