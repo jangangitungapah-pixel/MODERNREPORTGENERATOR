@@ -1,8 +1,16 @@
 import type {
-  KeyEventRaw,
   SorResult,
   TracePoint,
 } from 'sor-reader';
+
+type SorKeyEvent = {
+  type: string;
+  distance: string;
+  slope: string;
+  'splice loss': string;
+  'refl loss': string;
+  comments: string;
+};
 
 export type SorEventRow = {
   number: number;
@@ -21,9 +29,9 @@ export type TraceBounds = {
   maxPower: number;
 };
 
-function isKeyEventRaw(
+function isSorKeyEvent(
   value: unknown
-): value is KeyEventRaw {
+): value is SorKeyEvent {
   if (
     typeof value !== 'object' ||
     value === null
@@ -56,14 +64,14 @@ export function extractSorEvents(
         /^event \d+$/i.test(
           key
         ) &&
-        isKeyEventRaw(
+        isSorKeyEvent(
           value
         )
     )
     .map(
       ([key, value]) => {
         const event =
-          value as KeyEventRaw;
+          value as SorKeyEvent;
 
         const number =
           Number(
