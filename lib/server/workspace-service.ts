@@ -136,7 +136,8 @@ async function projectWorkspace({
       .prepare(
         `SELECT id
         FROM incidents
-        WHERE workspace_id = ?`
+        WHERE workspace_id = ?
+          AND deleted_at IS NULL`
       )
       .bind(context.id)
       .all<{
@@ -166,11 +167,21 @@ async function projectWorkspace({
       statements.push(
         db
           .prepare(
-            `DELETE FROM incidents
+            `UPDATE incidents
+            SET
+              lifecycle = 'archived',
+              revision = revision + 1,
+              deleted_at = ?,
+              updated_at = ?,
+              updated_by = ?
             WHERE id = ?
-              AND workspace_id = ?`
+              AND workspace_id = ?
+              AND deleted_at IS NULL`
           )
           .bind(
+            now,
+            now,
+            principal.uid,
             row.id,
             context.id
           )
