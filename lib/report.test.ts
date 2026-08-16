@@ -315,6 +315,200 @@ describe('parseIncidentReport', () => {
     ).toBe(100);
   });
 
+  it('parses multiple impact links and paired CP rootcause / cut point blocks', () => {
+    const raw = [
+      '*✅[FLP_3rd_MANDAU][Open - Major] DOWN - 12JKU0387_GADING_BLVD_MT(01JKU069)<>12JKU0198_GRIYAAGUNGPADEMANGANTIMUR_PL(090342) - DATACOM-INC-20260812-00022703*',
+      'Impact Link :',
+      '* ❌[FLP_3rd_MANDAU][Open - Major] DOWN - 12JKU0464_MALANG_KULON_JKU_PL(01JKU698)<>12JKU0387_GADING_BLVD_MT(01JKU069) - DATACOM-INC-20260812-00028616',
+      '* ❌[FLP_3rd_MANDAU][Open - Major] DOWN - 12JKU0387_GADING_BLVD_MT(01JKU069)<>12JKU0373_KRS_MNDRIN_PL(01JKU321) - DATACOM-INC-20260812-00028457',
+      '',
+      'Occur Time =2026-08-12 16:25',
+      'Dispacth Time = 2026-08-12 17:32',
+      'PIC = Iman(Jakarta)',
+      'Rootcause =',
+      'CP1 Impact Activity Drainage Project',
+      'CP2 Impact Activity Drainage Project',
+      'CP3 Still Investigation',
+      'Cut Point =',
+      'CP1 KM 7,9 from GRIYAAGUNG✅',
+      'CP2 KM 7,3 from GRIYAAGUNG❌',
+      'CP3 KM 1,9 from GADING_BLVD❌',
+      '',
+      'Update Progress',
+      '17:40 We already open TT MDU-20260812-0000035819, coordination with team',
+      '23:41 TX GADING_BLVD Receive Power -9.88 & OTRD from JC nearest CP, still cut 678 meter toward GRIYAAGUNG (CP1)',
+      '00:13 Team continue trace CP',
+      '09:26 GADING_BLVD <> GRIYAAGUNG LInk UP✅',
+      '16:38 team progress kupas kabel sisi KRS_MNDRIN GADING_BLVD <> KRS_MNDRIN',
+    ].join('\n');
+
+    const result =
+      parseIncidentReport(
+        raw
+      );
+
+    expect(
+      result.report.region
+    ).toBe(
+      'FLP_3rd_MANDAU'
+    );
+
+    expect(
+      result.report.ticket
+    ).toBe(
+      'DATACOM-INC-20260812-00022703'
+    );
+
+    expect(
+      result.report.primaryMarker
+    ).toBe('up');
+
+    expect(
+      result.report.statusTag
+    ).toBe(
+      '[Open - Major]'
+    );
+
+    expect(
+      result.report.impactLinks
+    ).toHaveLength(2);
+
+    expect(
+      result.report.impactLinks?.map(
+        (entry) =>
+          entry.ticket
+      )
+    ).toEqual([
+      'DATACOM-INC-20260812-00028616',
+      'DATACOM-INC-20260812-00028457',
+    ]);
+
+    expect(
+      result.report.impactLinks?.every(
+        (entry) =>
+          entry.marker ===
+          'down'
+      )
+    ).toBe(true);
+
+    expect(
+      result.report.occurTime
+    ).toBe(
+      '12/08/2026 16:25'
+    );
+
+    expect(
+      result.report.dispatchTime
+    ).toBe(
+      '12/08/2026 17:32'
+    );
+
+    expect(
+      result.report.cutPoints
+    ).toHaveLength(3);
+
+    expect(
+      result.report.cutPoints?.[0]
+    ).toEqual(
+      expect.objectContaining({
+        label: 'CP1',
+        rootcause:
+          'Impact Activity Drainage Project',
+        cutPoint:
+          'KM 7,9 from GRIYAAGUNG',
+        marker: 'up',
+      })
+    );
+
+    expect(
+      result.report.cutPoints?.[1]
+    ).toEqual(
+      expect.objectContaining({
+        label: 'CP2',
+        rootcause:
+          'Impact Activity Drainage Project',
+        cutPoint:
+          'KM 7,3 from GRIYAAGUNG',
+        marker: 'down',
+      })
+    );
+
+    expect(
+      result.report.cutPoints?.[2]
+    ).toEqual(
+      expect.objectContaining({
+        label: 'CP3',
+        rootcause:
+          'Still Investigation',
+        cutPoint:
+          'KM 1,9 from GADING_BLVD',
+        marker: 'down',
+      })
+    );
+
+    expect(
+      result.report.progress.map(
+        (entry) =>
+          entry.time
+      )
+    ).toEqual([
+      '17:40',
+      '23:41',
+      '00:13',
+      '09:26',
+      '16:38',
+    ]);
+
+    expect(
+      result.confidence
+    ).toBe(100);
+  });
+
+  it('formats structured impact links and CP blocks back into the report', () => {
+    const parsed =
+      parseIncidentReport(
+        [
+          '*✅[FLP_3rd_MANDAU][Open - Major] DOWN - MAIN_A<>MAIN_B - DATACOM-INC-20260812-00022703*',
+          'Impact Link :',
+          '* ❌[FLP_3rd_MANDAU][Open - Major] DOWN - IMPACT_A<>IMPACT_B - DATACOM-INC-20260812-00028616',
+          'Occur Time = 2026-08-12 16:25',
+          'Dispacth Time = 2026-08-12 17:32',
+          'PIC = Iman(Jakarta)',
+          'Rootcause =',
+          'CP1 Drainage Project',
+          'Cut Point =',
+          'CP1 KM 7,9✅',
+          'Update Progress',
+          '17:40 Team prepare tools',
+        ].join('\n')
+      );
+
+    const output =
+      formatReport(
+        parsed.report
+      );
+
+    expect(output).toContain(
+      '*✅[FLP_3rd_MANDAU][Open - Major] DOWN - MAIN_A<>MAIN_B - DATACOM-INC-20260812-00022703*'
+    );
+
+    expect(output).toContain(
+      'Impact Link :'
+    );
+
+    expect(output).toContain(
+      '* ❌[FLP_3rd_MANDAU][Open - Major] DOWN - IMPACT_A<>IMPACT_B - DATACOM-INC-20260812-00028616'
+    );
+
+    expect(output).toContain(
+      'Rootcause = \nCP1 Drainage Project'
+    );
+
+    expect(output).toContain(
+      'Cut Point = \nCP1 KM 7,9✅'
+    );
+  });
+
   it('reports missing signals instead of inventing data', () => {
     const result =
       parseIncidentReport(
@@ -418,6 +612,64 @@ describe('timeline operations engine', () => {
       'late',
       'early',
       'middle',
+    ]);
+  });
+
+  it('keeps a cross-midnight timeline in operational order', () => {
+    const sorted =
+      sortProgressChronologically([
+        {
+          id: 'a',
+          time: '23:41',
+          text: 'Before midnight',
+        },
+        {
+          id: 'b',
+          time: '00:13',
+          text: 'After midnight',
+        },
+        {
+          id: 'c',
+          time: '01:53',
+          text: 'Continue after midnight',
+        },
+      ]);
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.time
+      )
+    ).toEqual([
+      '23:41',
+      '00:13',
+      '01:53',
+    ]);
+  });
+
+  it('still corrects small same-day out-of-order additions', () => {
+    const sorted =
+      sortProgressChronologically([
+        {
+          id: 'a',
+          time: '20:18',
+          text: 'Later',
+        },
+        {
+          id: 'b',
+          time: '19:30',
+          text: 'Forgotten earlier update',
+        },
+      ]);
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.time
+      )
+    ).toEqual([
+      '19:30',
+      '20:18',
     ]);
   });
 

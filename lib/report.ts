@@ -4,6 +4,29 @@ export type ProgressEntry = {
   text: string;
 };
 
+export type LinkMarker =
+  | 'up'
+  | 'down'
+  | 'warning'
+  | 'unknown';
+
+export type ImpactLink = {
+  id: string;
+  marker: LinkMarker;
+  region: string;
+  statusTag: string;
+  summary: string;
+  ticket: string;
+};
+
+export type CutPointEntry = {
+  id: string;
+  label: string;
+  rootcause: string;
+  cutPoint: string;
+  marker: LinkMarker;
+};
+
 export type IncidentReport = {
   region: string;
   summary: string;
@@ -14,6 +37,10 @@ export type IncidentReport = {
   rootcause: string;
   cutPoint: string;
   progress: ProgressEntry[];
+  primaryMarker?: LinkMarker;
+  statusTag?: string;
+  impactLinks?: ImpactLink[];
+  cutPoints?: CutPointEntry[];
 };
 
 export const EMPTY_REPORT: IncidentReport = {
@@ -26,6 +53,10 @@ export const EMPTY_REPORT: IncidentReport = {
   rootcause: '',
   cutPoint: '',
   progress: [],
+  primaryMarker: 'unknown',
+  statusTag: '',
+  impactLinks: [],
+  cutPoints: [],
 };
 
 export const SAMPLE_REPORT: IncidentReport = {
@@ -113,28 +144,173 @@ export const SAMPLE_REPORT: IncidentReport = {
 };
 
 export function formatReport(report: IncidentReport): string {
-  const header =
-    '*[' +
-    report.region.trim() +
-    '] ' +
-    report.summary.trim() +
-    ', [TT : ' +
-    report.ticket.trim() +
-    ']*';
+  const markerSymbol = (
+    marker: LinkMarker | undefined
+  ): string => {
+    if (marker === 'up') {
+      return '✅';
+    }
 
-  const progressLines = report.progress
-    .filter((entry) => entry.time.trim() || entry.text.trim())
-    .map((entry) =>
-      (entry.time.trim() + ' ' + entry.text.trim()).trim()
+    if (marker === 'down') {
+      return '❌';
+    }
+
+    if (marker === 'warning') {
+      return '⚠️';
+    }
+
+    return '';
+  };
+
+  const statusTag =
+    report.statusTag?.trim() ??
+    '';
+
+  const operationalSummary =
+    statusTag &&
+    report.summary
+      .trim()
+      .startsWith(statusTag)
+      ? report.summary
+          .trim()
+          .slice(
+            statusTag.length
+          )
+          .trim()
+      : report.summary.trim();
+
+  const usesOperationalHeader =
+    Boolean(statusTag) &&
+    /(?:^|-)(?:[A-Z0-9_]+-)*INC-\d{8}-\d+$/i.test(
+      report.ticket.trim()
     );
+
+  const header =
+    usesOperationalHeader
+      ? (
+          '*' +
+          markerSymbol(
+            report.primaryMarker
+          ) +
+          '[' +
+          report.region.trim() +
+          ']' +
+          statusTag +
+          ' ' +
+          operationalSummary +
+          ' - ' +
+          report.ticket.trim() +
+          '*'
+        )
+      : (
+          '*[' +
+          report.region.trim() +
+          '] ' +
+          report.summary.trim() +
+          ', [TT : ' +
+          report.ticket.trim() +
+          ']*'
+        );
+
+  const impactLinks =
+    report.impactLinks ??
+    [];
+
+  const impactLines =
+    impactLinks.map(
+      (impact) =>
+        (
+          '* ' +
+          markerSymbol(
+            impact.marker
+          ) +
+          '[' +
+          impact.region.trim() +
+          ']' +
+          impact.statusTag.trim() +
+          ' ' +
+          impact.summary.trim() +
+          ' - ' +
+          impact.ticket.trim()
+        ).trimEnd()
+    );
+
+  const cutPoints =
+    report.cutPoints ??
+    [];
+
+  const rootcauseLines =
+    cutPoints.length > 0
+      ? [
+          'Rootcause = ',
+          ...cutPoints.map(
+            (entry) =>
+              (
+                entry.label.trim() +
+                ' ' +
+                entry.rootcause.trim()
+              ).trim()
+          ),
+        ]
+      : [
+          'Rootcause = ' +
+          report.rootcause.trim(),
+        ];
+
+  const cutPointLines =
+    cutPoints.length > 0
+      ? [
+          'Cut Point = ',
+          ...cutPoints.map(
+            (entry) =>
+              (
+                entry.label.trim() +
+                ' ' +
+                entry.cutPoint.trim() +
+                markerSymbol(
+                  entry.marker
+                )
+              ).trim()
+          ),
+        ]
+      : [
+          'Cut Point = ' +
+          report.cutPoint.trim(),
+        ];
+
+  const progressLines =
+    report.progress
+      .filter(
+        (entry) =>
+          entry.time.trim() ||
+          entry.text.trim()
+      )
+      .map(
+        (entry) =>
+          (
+            entry.time.trim() +
+            ' ' +
+            entry.text.trim()
+          ).trim()
+      );
 
   return [
     header,
-    'Occur Time = ' + report.occurTime.trim(),
-    'Dispacth Time = ' + report.dispatchTime.trim(),
-    'PIC = ' + report.pic.trim(),
-    'Rootcause = ' + report.rootcause.trim(),
-    'Cut Point = ' + report.cutPoint.trim(),
+    ...(impactLines.length > 0
+      ? [
+          'Impact Link :',
+          ...impactLines,
+          '',
+        ]
+      : []),
+    'Occur Time = ' +
+      report.occurTime.trim(),
+    'Dispacth Time = ' +
+      report.dispatchTime.trim(),
+    'PIC = ' +
+      report.pic.trim(),
+    ...rootcauseLines,
+    ...cutPointLines,
     '',
     'Update Progress  ',
     ...progressLines,
@@ -274,18 +450,338 @@ function parseProgressEntries(
   return entries;
 }
 
+function linkMarkerFromText(
+  value: string
+): LinkMarker {
+  if (value.includes('✅')) {
+    return 'up';
+  }
+
+  if (value.includes('❌')) {
+    return 'down';
+  }
+
+  if (
+    value.includes('⚠️') ||
+    value.includes('⚠')
+  ) {
+    return 'warning';
+  }
+
+  return 'unknown';
+}
+
+function stripLinkMarkers(
+  value: string
+): string {
+  return value
+    .replace(
+      /✅|❌|⚠️|⚠/g,
+      ''
+    )
+    .trim();
+}
+
+function normalizeReportDateTime(
+  value: string
+): string {
+  const cleaned =
+    cleanImportedValue(
+      value
+    );
+
+  const isoLike =
+    cleaned.match(
+      /^(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2})$/
+    );
+
+  if (!isoLike) {
+    return cleaned;
+  }
+
+  return (
+    isoLike[3] +
+    '/' +
+    isoLike[2] +
+    '/' +
+    isoLike[1] +
+    ' ' +
+    isoLike[4].padStart(
+      2,
+      '0'
+    ) +
+    ':' +
+    isoLike[5]
+  );
+}
+
+function parseOperationalTitle(
+  value: string,
+  index: number
+): ImpactLink | null {
+  const cleaned =
+    value
+      .trim()
+      .replace(
+        /^\*+\s*/,
+        ''
+      )
+      .replace(
+        /\s*\*+$/,
+        ''
+      )
+      .replace(
+        /^[-•]\s*/,
+        ''
+      )
+      .trim();
+
+  const marker =
+    linkMarkerFromText(
+      cleaned
+    );
+
+  const withoutMarker =
+    stripLinkMarkers(
+      cleaned
+    );
+
+  const match =
+    withoutMarker.match(
+      /^\[([^\]]+)\]\s*(\[[^\]]+\])?\s*(.*?)\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*$/i
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    id:
+      'impact-' +
+      String(index + 1).padStart(
+        3,
+        '0'
+      ),
+    marker,
+    region:
+      cleanImportedValue(
+        match[1]
+      ),
+    statusTag:
+      cleanImportedValue(
+        match[2] ??
+          ''
+      ),
+    summary:
+      cleanImportedValue(
+        match[3]
+      ),
+    ticket:
+      cleanImportedValue(
+        match[4]
+      ),
+  };
+}
+
+function extractOperationalImpactLinks(
+  metadataRaw: string
+): ImpactLink[] {
+  const blockMatch =
+    metadataRaw.match(
+      /\bImpact\s*Link\s*:\s*([\s\S]*?)(?=\s*Occur\s*Time\s*=|$)/i
+    );
+
+  if (!blockMatch) {
+    return [];
+  }
+
+  const normalizedBlock =
+    blockMatch[1]
+      .replace(
+        /\s+(?=(?:\*?\s*)?(?:✅|❌|⚠️|⚠)?\s*\[[^\]]+\]\s*\[[^\]]+\])/g,
+        '\n'
+      )
+      .trim();
+
+  return normalizedBlock
+    .split('\n')
+    .map(
+      (line) => line.trim()
+    )
+    .filter(Boolean)
+    .map(
+      (line, index) =>
+        parseOperationalTitle(
+          line,
+          index
+        )
+    )
+    .filter(
+      (
+        entry
+      ): entry is ImpactLink =>
+        entry !== null
+    );
+}
+
+type ParsedCpValue = {
+  label: string;
+  value: string;
+  marker: LinkMarker;
+};
+
+function parseCpValues(
+  raw: string
+): ParsedCpValue[] {
+  const normalized =
+    raw
+      .replace(
+        /\s+/g,
+        ' '
+      )
+      .trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const pattern =
+    /\b(CP\s*\d+)\s*(.*?)(?=\s+\bCP\s*\d+\b|$)/gi;
+
+  const values:
+    ParsedCpValue[] = [];
+
+  let match:
+    RegExpExecArray | null;
+
+  while (
+    (match =
+      pattern.exec(
+        normalized
+      )) !== null
+  ) {
+    const marker =
+      linkMarkerFromText(
+        match[2]
+      );
+
+    values.push({
+      label:
+        match[1]
+          .replace(
+            /\s+/g,
+            ''
+          )
+          .toUpperCase(),
+      value:
+        cleanImportedValue(
+          stripLinkMarkers(
+            match[2]
+          )
+        ),
+      marker,
+    });
+  }
+
+  return values;
+}
+
+function buildCutPointEntries(
+  rootcauseRaw: string,
+  cutPointRaw: string
+): CutPointEntry[] {
+  const rootcauseValues =
+    parseCpValues(
+      rootcauseRaw
+    );
+
+  const cutPointValues =
+    parseCpValues(
+      cutPointRaw
+    );
+
+  if (
+    rootcauseValues.length === 0 &&
+    cutPointValues.length === 0
+  ) {
+    return [];
+  }
+
+  const labels =
+    Array.from(
+      new Set([
+        ...rootcauseValues.map(
+          (entry) =>
+            entry.label
+        ),
+        ...cutPointValues.map(
+          (entry) =>
+            entry.label
+        ),
+      ])
+    );
+
+  return labels.map(
+    (label, index) => {
+      const rootcause =
+        rootcauseValues.find(
+          (entry) =>
+            entry.label ===
+            label
+        );
+
+      const cutPoint =
+        cutPointValues.find(
+          (entry) =>
+            entry.label ===
+            label
+        );
+
+      return {
+        id:
+          'cp-' +
+          String(index + 1).padStart(
+            3,
+            '0'
+          ),
+        label,
+        rootcause:
+          rootcause?.value ??
+          '',
+        cutPoint:
+          cutPoint?.value ??
+          '',
+        marker:
+          cutPoint?.marker ??
+          rootcause?.marker ??
+          'unknown',
+      };
+    }
+  );
+}
+
 export function parseIncidentReport(
   raw: string
 ): IncidentParseResult {
-  const normalized = raw
-    .replace(/\u00a0/g, ' ')
-    .replace(/\r/g, '')
-    .trim();
+  const normalized =
+    raw
+      .replace(
+        /\u00a0/g,
+        ' '
+      )
+      .replace(
+        /\r/g,
+        ''
+      )
+      .trim();
 
-  const report: IncidentReport = {
-    ...EMPTY_REPORT,
-    progress: [],
-  };
+  const report:
+    IncidentReport = {
+      ...EMPTY_REPORT,
+      progress: [],
+      impactLinks: [],
+      cutPoints: [],
+    };
 
   if (!normalized) {
     return {
@@ -327,48 +823,42 @@ export function parseIncidentReport(
     progressMarkerMatch
       ? normalized.slice(
           progressMarkerMatch.index +
-            progressMarkerMatch[0].length
+            progressMarkerMatch[0]
+              .length
         )
       : '';
 
-  //
-  // Compress metadata first.
-  //
-  // This allows the parser to understand
-  // copied text even when the browser,
-  // WhatsApp, or another tool destroys
-  // its original line breaks.
-  //
   const compactMetadata =
     metadataRaw
-      .replace(/\n+/g, ' ')
-      .replace(/[ \t]+/g, ' ')
+      .replace(
+        /\n+/g,
+        ' '
+      )
+      .replace(
+        /[ \t]+/g,
+        ' '
+      )
       .trim();
 
-  const metadataLines =
-    compactMetadata
-      .replace(
-        /\s+(?=(?:Occur\s*Time|(?:Dispacth|Dispatch)\s*Time|PIC|Root\s*Cause|Rootcause|Cut\s*Point)\s*=)/gi,
-        '\n'
-      )
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+  const headerBoundary =
+    compactMetadata.search(
+      /\s+(?=(?:Impact\s*Link\s*:|Occur\s*Time\s*=))/i
+    );
 
   const header =
-    metadataLines[0] ?? '';
+    (
+      headerBoundary >= 0
+        ? compactMetadata.slice(
+            0,
+            headerBoundary
+          )
+        : compactMetadata
+    ).trim();
 
   const completeHeader =
     header.match(
       /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*,?\s*\[TT\s*:\s*([^\]]+)\]\s*\*?\s*$/i
     );
-
-  const operationalHeader =
-    completeHeader
-      ? null
-      : header.match(
-          /^\*?\s*\[([^\]]+)\]\s*(\[[^\]]+\])?\s*(.*?)\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*\*?\s*$/i
-        );
 
   if (completeHeader) {
     report.region =
@@ -388,167 +878,184 @@ export function parseIncidentReport(
       cleanImportedValue(
         completeHeader[3]
       );
-  } else if (operationalHeader) {
-    report.region =
-      cleanImportedValue(
-        operationalHeader[1]
-      );
-
-    const operationalState =
-      cleanImportedValue(
-        operationalHeader[2] ??
-          ''
-      );
-
-    const operationalSummary =
-      cleanImportedValue(
-        operationalHeader[3]
-      ).replace(
-        /,\s*$/,
-        ''
-      );
-
-    report.summary =
-      [
-        operationalState,
-        operationalSummary,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-
-    report.ticket =
-      cleanImportedValue(
-        operationalHeader[4]
-      );
   } else {
-    //
-    // Graceful partial header support.
-    //
-    // Example:
-    // [MANDAU] LINK DOWN ...
-    //
-    const partialHeader =
-      header.match(
-        /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*\*?$/
+    const operationalHeader =
+      parseOperationalTitle(
+        header,
+        0
       );
 
-    if (partialHeader) {
+    if (operationalHeader) {
       report.region =
-        cleanImportedValue(
-          partialHeader[1]
-        );
+        operationalHeader.region;
+
+      report.statusTag =
+        operationalHeader.statusTag;
+
+      report.primaryMarker =
+        operationalHeader.marker;
 
       report.summary =
-        cleanImportedValue(
-          partialHeader[2]
-        );
-    }
+        [
+          operationalHeader.statusTag,
+          operationalHeader.summary,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
 
-    const looseBracketTicket =
-      compactMetadata.match(
-        /\[TT\s*:\s*([^\]]+)\]/i
-      );
-
-    if (looseBracketTicket) {
       report.ticket =
-        cleanImportedValue(
-          looseBracketTicket[1]
-        );
+        operationalHeader.ticket;
     } else {
-      //
-      // Operational headlines often use:
-      //
-      // ... - DATACOM-INC-YYYYMMDD-NNNNNNNN
-      //
-      // Keep the whole ticket namespace instead of
-      // stripping DATACOM / other future prefixes.
-      //
-      const looseOperationalTicket =
-        header.match(
-          /\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*\*?\s*$/i
+      const partialHeader =
+        stripLinkMarkers(
+          header
+        ).match(
+          /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*\*?$/
         );
 
-      if (looseOperationalTicket) {
+      if (partialHeader) {
+        report.region =
+          cleanImportedValue(
+            partialHeader[1]
+          );
+
+        report.summary =
+          cleanImportedValue(
+            partialHeader[2]
+          );
+      }
+
+      const looseBracketTicket =
+        compactMetadata.match(
+          /\[TT\s*:\s*([^\]]+)\]/i
+        );
+
+      if (looseBracketTicket) {
         report.ticket =
           cleanImportedValue(
-            looseOperationalTicket[1]
+            looseBracketTicket[1]
           );
+      } else {
+        const looseOperationalTicket =
+          header.match(
+            /\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*\*?\s*$/i
+          );
+
+        if (
+          looseOperationalTicket
+        ) {
+          report.ticket =
+            cleanImportedValue(
+              looseOperationalTicket[1]
+            );
+        }
       }
     }
   }
 
-  for (
-    const line of
-    metadataLines.slice(1)
-  ) {
-    const equalsIndex =
-      line.indexOf('=');
+  report.impactLinks =
+    extractOperationalImpactLinks(
+      metadataRaw
+    );
 
-    if (equalsIndex < 0) {
-      continue;
-    }
+  const occurMatch =
+    compactMetadata.match(
+      /\bOccur\s*Time\s*=\s*(.*?)(?=\s+(?:Dispacth|Dispatch)\s*Time\s*=|$)/i
+    );
 
-    const label =
-      line
-        .slice(
-          0,
-          equalsIndex
-        )
-        .trim();
+  const dispatchMatch =
+    compactMetadata.match(
+      /\b(?:Dispacth|Dispatch)\s*Time\s*=\s*(.*?)(?=\s+PIC\s*=|$)/i
+    );
 
-    const value =
+  const picMatch =
+    compactMetadata.match(
+      /\bPIC\s*=\s*(.*?)(?=\s+(?:Root\s*Cause|Rootcause)\s*=|\s+Cut\s*Point\s*=|$)/i
+    );
+
+  const rootcauseMatch =
+    compactMetadata.match(
+      /\b(?:Root\s*Cause|Rootcause)\s*=\s*(.*?)(?=\s+Cut\s*Point\s*=|$)/i
+    );
+
+  const cutPointMatch =
+    compactMetadata.match(
+      /\bCut\s*Point\s*=\s*(.*?)$/i
+    );
+
+  if (occurMatch) {
+    report.occurTime =
+      normalizeReportDateTime(
+        occurMatch[1]
+      );
+  }
+
+  if (dispatchMatch) {
+    report.dispatchTime =
+      normalizeReportDateTime(
+        dispatchMatch[1]
+      );
+  }
+
+  if (picMatch) {
+    report.pic =
       cleanImportedValue(
-        line.slice(
-          equalsIndex + 1
+        picMatch[1]
+      );
+  }
+
+  const rootcauseRaw =
+    rootcauseMatch?.[1] ??
+    '';
+
+  const cutPointRaw =
+    cutPointMatch?.[1] ??
+    '';
+
+  report.cutPoints =
+    buildCutPointEntries(
+      rootcauseRaw,
+      cutPointRaw
+    );
+
+  if (
+    report.cutPoints.length >
+    0
+  ) {
+    report.rootcause =
+      report.cutPoints
+        .map(
+          (entry) =>
+            (
+              entry.label +
+              ' ' +
+              entry.rootcause
+            ).trim()
         )
+        .join('\n');
+
+    report.cutPoint =
+      report.cutPoints
+        .map(
+          (entry) =>
+            (
+              entry.label +
+              ' ' +
+              entry.cutPoint
+            ).trim()
+        )
+        .join('\n');
+  } else {
+    report.rootcause =
+      cleanImportedValue(
+        rootcauseRaw
       );
 
-    if (
-      /^Occur\s*Time$/i.test(
-        label
-      )
-    ) {
-      report.occurTime = value;
-      continue;
-    }
-
-    if (
-      /^(?:Dispacth|Dispatch)\s*Time$/i.test(
-        label
-      )
-    ) {
-      report.dispatchTime =
-        value;
-
-      continue;
-    }
-
-    if (
-      /^PIC$/i.test(
-        label
-      )
-    ) {
-      report.pic = value;
-      continue;
-    }
-
-    if (
-      /^(?:Rootcause|Root\s*Cause)$/i.test(
-        label
-      )
-    ) {
-      report.rootcause = value;
-      continue;
-    }
-
-    if (
-      /^Cut\s*Point$/i.test(
-        label
-      )
-    ) {
-      report.cutPoint = value;
-    }
+    report.cutPoint =
+      cleanImportedValue(
+        cutPointRaw
+      );
   }
 
   report.progress =
@@ -591,7 +1098,8 @@ export function parseIncidentReport(
     ],
     [
       'progress',
-      report.progress.length > 0
+      report.progress.length >
+      0
         ? 'detected'
         : '',
     ],
@@ -601,7 +1109,8 @@ export function parseIncidentReport(
     signals
       .filter(
         ([, value]) =>
-          value.trim().length > 0
+          value.trim().length >
+          0
       )
       .map(
         ([name]) => name
@@ -611,7 +1120,8 @@ export function parseIncidentReport(
     signals
       .filter(
         ([, value]) =>
-          value.trim().length === 0
+          value.trim().length ===
+          0
       )
       .map(
         ([name]) => name
@@ -622,7 +1132,8 @@ export function parseIncidentReport(
       (
         detectedFields.length /
         signals.length
-      ) * 100
+      ) *
+        100
     );
 
   return {
@@ -680,44 +1191,104 @@ export function progressTimeToMinutes(
 export function sortProgressChronologically(
   entries: ProgressEntry[]
 ): ProgressEntry[] {
+  let dayOffset = 0;
+
+  let previousClockMinutes:
+    number | null = null;
+
   return entries
-    .map((entry, index) => ({
-      entry,
-      index,
-      minutes:
-        progressTimeToMinutes(
-          entry.time
-        ),
-    }))
-    .sort((left, right) => {
-      if (
-        left.minutes === null &&
-        right.minutes === null
-      ) {
-        return left.index - right.index;
-      }
+    .map(
+      (entry, index) => {
+        const clockMinutes =
+          progressTimeToMinutes(
+            entry.time
+          );
 
-      if (left.minutes === null) {
-        return 1;
-      }
+        if (
+          clockMinutes !== null &&
+          previousClockMinutes !== null &&
+          (
+            previousClockMinutes -
+            clockMinutes
+          ) >
+            12 * 60
+        ) {
+          //
+          // Large backward jump means the
+          // timeline crossed midnight.
+          //
+          dayOffset += 1;
+        }
 
-      if (right.minutes === null) {
-        return -1;
-      }
+        const timelineMinutes =
+          clockMinutes === null
+            ? null
+            : (
+                clockMinutes +
+                dayOffset * 24 * 60
+              );
 
-      if (
-        left.minutes ===
-        right.minutes
-      ) {
-        return left.index - right.index;
-      }
+        if (
+          clockMinutes !== null
+        ) {
+          previousClockMinutes =
+            clockMinutes;
+        }
 
-      return (
-        left.minutes -
-        right.minutes
-      );
-    })
-    .map(({ entry }) => entry);
+        return {
+          entry,
+          index,
+          timelineMinutes,
+        };
+      }
+    )
+    .sort(
+      (left, right) => {
+        if (
+          left.timelineMinutes ===
+            null &&
+          right.timelineMinutes ===
+            null
+        ) {
+          return (
+            left.index -
+            right.index
+          );
+        }
+
+        if (
+          left.timelineMinutes ===
+          null
+        ) {
+          return 1;
+        }
+
+        if (
+          right.timelineMinutes ===
+          null
+        ) {
+          return -1;
+        }
+
+        if (
+          left.timelineMinutes ===
+          right.timelineMinutes
+        ) {
+          return (
+            left.index -
+            right.index
+          );
+        }
+
+        return (
+          left.timelineMinutes -
+          right.timelineMinutes
+        );
+      }
+    )
+    .map(
+      ({ entry }) => entry
+    );
 }
 
 export function duplicateProgressTimes(

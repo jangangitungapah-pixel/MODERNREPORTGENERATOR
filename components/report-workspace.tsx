@@ -778,10 +778,23 @@ export function ReportWorkspace() {
     key: Key,
     value: IncidentReport[Key]
   ) {
-    setReport((current) => ({
-      ...current,
-      [key]: value,
-    }));
+    setReport((current) => {
+      if (
+        key === 'rootcause' ||
+        key === 'cutPoint'
+      ) {
+        return {
+          ...current,
+          [key]: value,
+          cutPoints: [],
+        };
+      }
+
+      return {
+        ...current,
+        [key]: value,
+      };
+    });
   }
 
   function addProgress() {

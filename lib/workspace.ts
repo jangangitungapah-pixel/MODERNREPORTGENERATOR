@@ -38,6 +38,18 @@ function cloneReport(
         ...entry,
       })
     ),
+    impactLinks:
+      report.impactLinks?.map(
+        (entry) => ({
+          ...entry,
+        })
+      ),
+    cutPoints:
+      report.cutPoints?.map(
+        (entry) => ({
+          ...entry,
+        })
+      ),
   };
 }
 
