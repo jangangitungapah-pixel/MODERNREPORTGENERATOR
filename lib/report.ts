@@ -1808,21 +1808,111 @@ export function inferProgressDates(
   );
 }
 
+function materializeProgressDatesForSort(
+  entries: ProgressEntry[],
+  anchorDateTime: string
+): ProgressEntry[] {
+  const anchor =
+    progressAnchor(
+      anchorDateTime
+    );
+
+  if (!anchor) {
+    return entries.map(
+      (entry) => ({
+        ...entry,
+      })
+    );
+  }
+
+  return entries.map(
+    (entry) => {
+      const explicitDate =
+        parseProgressDateParts(
+          entry.date ??
+            ''
+        );
+
+      if (explicitDate) {
+        return {
+          ...entry,
+          date:
+            formatProgressDate(
+              new Date(
+                explicitDate.year,
+                explicitDate.month -
+                  1,
+                explicitDate.day,
+                0,
+                0,
+                0,
+                0
+              )
+            ),
+        };
+      }
+
+      const clockMinutes =
+        progressTimeToMinutes(
+          entry.time
+        );
+
+      if (
+        clockMinutes === null
+      ) {
+        return {
+          ...entry,
+        };
+      }
+
+      //
+      // Legacy entries have only HH:mm. Resolve each one
+      // independently from the incident occur time so a
+      // manual array reorder cannot redefine chronology.
+      //
+      // Example:
+      // Occur 16:25
+      // 23:41 => occur date
+      // 00:13 => next date
+      //
+      const resolvedDate =
+        new Date(
+          anchor.date.year,
+          anchor.date.month -
+            1,
+          anchor.date.day +
+            (
+              clockMinutes <
+              anchor.clockMinutes
+                ? 1
+                : 0
+            ),
+          0,
+          0,
+          0,
+          0
+        );
+
+      return {
+        ...entry,
+        date:
+          formatProgressDate(
+            resolvedDate
+          ),
+      };
+    }
+  );
+}
+
 export function sortProgressChronologically(
   entries: ProgressEntry[],
   anchorDateTime = ''
 ): ProgressEntry[] {
   const normalized =
-    anchorDateTime.trim()
-      ? inferProgressDates(
-          entries,
-          anchorDateTime
-        )
-      : entries.map(
-          (entry) => ({
-            ...entry,
-          })
-        );
+    materializeProgressDatesForSort(
+      entries,
+      anchorDateTime
+    );
 
   const withTimestamp =
     normalized.map(

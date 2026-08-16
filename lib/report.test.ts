@@ -1093,3 +1093,142 @@ describe('date-aware progress timeline', () => {
     );
   });
 });
+
+
+describe('timeline sort regression', () => {
+  it('restores legacy same-day entries after manual reorder', () => {
+    const sorted =
+      sortProgressChronologically(
+        [
+          {
+            ...SAMPLE_REPORT
+              .progress[2],
+          },
+          {
+            ...SAMPLE_REPORT
+              .progress[0],
+          },
+          {
+            ...SAMPLE_REPORT
+              .progress[1],
+          },
+        ],
+        SAMPLE_REPORT.occurTime
+      );
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.id
+      )
+    ).toEqual([
+      'p01',
+      'p02',
+      'p03',
+    ]);
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.date
+      )
+    ).toEqual([
+      '15/08/2026',
+      '15/08/2026',
+      '15/08/2026',
+    ]);
+  });
+
+  it('restores a scrambled legacy midnight rollover independently of array order', () => {
+    const sorted =
+      sortProgressChronologically(
+        [
+          {
+            id: 'after-midnight-2',
+            time: '01:53',
+            text:
+              'Team continue repair',
+          },
+          {
+            id: 'before-midnight',
+            time: '23:41',
+            text:
+              'Team checking',
+          },
+          {
+            id: 'after-midnight-1',
+            time: '00:13',
+            text:
+              'Team found cut point',
+          },
+        ],
+        '12/08/2026 16:25'
+      );
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.id
+      )
+    ).toEqual([
+      'before-midnight',
+      'after-midnight-1',
+      'after-midnight-2',
+    ]);
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.date
+      )
+    ).toEqual([
+      '12/08/2026',
+      '13/08/2026',
+      '13/08/2026',
+    ]);
+  });
+
+  it('keeps explicit multi-day dates authoritative', () => {
+    const sorted =
+      sortProgressChronologically(
+        [
+          {
+            id: 'day-three',
+            date:
+              '14/08/2026',
+            time: '08:00',
+            text:
+              'Day three',
+          },
+          {
+            id: 'day-one',
+            date:
+              '12/08/2026',
+            time: '22:00',
+            text:
+              'Day one',
+          },
+          {
+            id: 'day-two',
+            date:
+              '13/08/2026',
+            time: '08:00',
+            text:
+              'Day two',
+          },
+        ],
+        '12/08/2026 16:25'
+      );
+
+    expect(
+      sorted.map(
+        (entry) =>
+          entry.id
+      )
+    ).toEqual([
+      'day-one',
+      'day-two',
+      'day-three',
+    ]);
+  });
+});
