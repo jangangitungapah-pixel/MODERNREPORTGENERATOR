@@ -7,7 +7,7 @@ import {
 import type {
   SorResult,
   TracePoint,
-} from 'sor-reader';
+} from 'sor-reader/browser';
 
 import {
   downsampleTrace,

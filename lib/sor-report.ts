@@ -1,7 +1,7 @@
 import type {
   SorResult,
   TracePoint,
-} from 'sor-reader';
+} from 'sor-reader/browser';
 
 type SorKeyEvent = {
   type: string;

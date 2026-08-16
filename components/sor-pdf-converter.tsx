@@ -27,7 +27,7 @@ import {
 import type {
   SorResult,
   TracePoint,
-} from 'sor-reader';
+} from 'sor-reader/browser';
 
 import {
   downsampleTrace,
@@ -316,7 +316,7 @@ export function SorPdfConverter() {
         parseSor,
       } =
         await import(
-          'sor-reader'
+          'sor-reader/browser'
         );
 
       const result =
