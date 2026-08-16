@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   SAMPLE_REPORT,
   completionScore,
+  detectProgressKind,
+  duplicateProgressTimes,
   formatReport,
   parseIncidentReport,
+  progressTimeToMinutes,
+  sortProgressChronologically,
 } from './report';
 
 describe('formatReport', () => {
@@ -192,5 +196,165 @@ describe('parseIncidentReport', () => {
     expect(
       result.confidence
     ).toBeLessThan(100);
+  });
+});
+
+
+describe('timeline operations engine', () => {
+  it('converts valid HH:mm values into minutes', () => {
+    expect(
+      progressTimeToMinutes(
+        '14:30'
+      )
+    ).toBe(870);
+
+    expect(
+      progressTimeToMinutes(
+        '23:59'
+      )
+    ).toBe(1439);
+
+    expect(
+      progressTimeToMinutes(
+        '24:00'
+      )
+    ).toBeNull();
+
+    expect(
+      progressTimeToMinutes(
+        '14:75'
+      )
+    ).toBeNull();
+  });
+
+  it('sorts timeline entries chronologically without mutating the source', () => {
+    const entries = [
+      {
+        id: 'late',
+        time: '22:01',
+        text: 'Link already up.',
+      },
+      {
+        id: 'early',
+        time: '14:30',
+        text: 'Open TT',
+      },
+      {
+        id: 'middle',
+        time: '17:36',
+        text: 'Closure progress',
+      },
+    ];
+
+    const sorted =
+      sortProgressChronologically(
+        entries
+      );
+
+    expect(
+      sorted.map(
+        (entry) => entry.id
+      )
+    ).toEqual([
+      'early',
+      'middle',
+      'late',
+    ]);
+
+    expect(
+      entries.map(
+        (entry) => entry.id
+      )
+    ).toEqual([
+      'late',
+      'early',
+      'middle',
+    ]);
+  });
+
+  it('keeps invalid time values after valid chronological entries', () => {
+    const sorted =
+      sortProgressChronologically([
+        {
+          id: 'unknown',
+          time: 'TBD',
+          text: 'Waiting update',
+        },
+        {
+          id: 'valid',
+          time: '09:15',
+          text: 'Team OTW',
+        },
+      ]);
+
+    expect(
+      sorted.map(
+        (entry) => entry.id
+      )
+    ).toEqual([
+      'valid',
+      'unknown',
+    ]);
+  });
+
+  it('detects duplicate valid timeline times', () => {
+    expect(
+      duplicateProgressTimes([
+        {
+          id: 'a',
+          time: '14:30',
+          text: 'One',
+        },
+        {
+          id: 'b',
+          time: '14:30',
+          text: 'Two',
+        },
+        {
+          id: 'c',
+          time: '15:00',
+          text: 'Three',
+        },
+        {
+          id: 'd',
+          time: 'invalid',
+          text: 'Four',
+        },
+      ])
+    ).toEqual([
+      '14:30',
+    ]);
+  });
+
+  it('classifies operational progress from its wording', () => {
+    expect(
+      detectProgressKind(
+        'Team OTW last history KM 22 ETA 90 min'
+      )
+    ).toBe('dispatch');
+
+    expect(
+      detectProgressKind(
+        'Team patrol on location found burnt cable'
+      )
+    ).toBe('onsite');
+
+    expect(
+      detectProgressKind(
+        'Progress Closure Splicing Side Majalengka'
+      )
+    ).toBe('repair');
+
+    expect(
+      detectProgressKind(
+        'We Already Open TT and Team prepare tools'
+      )
+    ).toBe('coordination');
+
+    expect(
+      detectProgressKind(
+        'Link already up.'
+      )
+    ).toBe('restored');
   });
 });

@@ -2,7 +2,11 @@
 
 import {
   Activity,
+  AlertTriangle,
   Archive,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Check,
   ChevronRight,
   Clipboard,
@@ -12,12 +16,14 @@ import {
   FileText,
   Gauge,
   Layers3,
+  Pencil,
   Plus,
   RotateCcw,
   ShieldCheck,
   Sparkles,
   Trash2,
   WandSparkles,
+  X,
 } from 'lucide-react';
 
 import {
@@ -36,14 +42,27 @@ import {
   EMPTY_REPORT,
   SAMPLE_REPORT,
   completionScore,
+  detectProgressKind,
+  duplicateProgressTimes,
   formatReport,
   parseIncidentReport,
+  sortProgressChronologically,
   type IncidentReport,
+  type ProgressEntry,
 } from '@/lib/report';
 
 const STORAGE_KEY = 'reportos:draft:v1';
 
 type MobilePane = 'compose' | 'preview';
+
+const PROGRESS_KIND_LABELS = {
+  coordination: 'Coordination',
+  dispatch: 'Dispatch',
+  onsite: 'On site',
+  repair: 'Repair',
+  restored: 'Restored',
+  update: 'Update',
+} as const;
 
 type FieldProps = {
   label: string;
@@ -149,6 +168,23 @@ export function ReportWorkspace() {
     detail: string;
   } | null>(null);
 
+  const [
+    editingProgressId,
+    setEditingProgressId,
+  ] = useState<string | null>(
+    null
+  );
+
+  const [
+    editingProgressTime,
+    setEditingProgressTime,
+  ] = useState('');
+
+  const [
+    editingProgressText,
+    setEditingProgressText,
+  ] = useState('');
+
   useEffect(() => {
     let cancelled = false;
 
@@ -199,6 +235,17 @@ export function ReportWorkspace() {
     [report]
   );
 
+  const duplicateTimes =
+    useMemo(
+      () =>
+        new Set(
+          duplicateProgressTimes(
+            report.progress
+          )
+        ),
+      [report.progress]
+    );
+
   function updateField<
     Key extends keyof IncidentReport
   >(
@@ -212,26 +259,35 @@ export function ReportWorkspace() {
   }
 
   function addProgress() {
-    const time = entryTime.trim();
-    const text = entryText.trim();
+    const time =
+      entryTime.trim();
+
+    const text =
+      entryText.trim();
 
     if (!time || !text) return;
 
-    setReport((current) => ({
-      ...current,
-      progress: [
-        ...current.progress,
-        {
-          id:
-            typeof crypto !== 'undefined' &&
-            'randomUUID' in crypto
-              ? crypto.randomUUID()
-              : String(Date.now()),
-          time,
-          text,
-        },
-      ],
-    }));
+    setReport((current) => {
+      const nextEntry = {
+        id:
+          typeof crypto !==
+            'undefined' &&
+          'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : String(Date.now()),
+        time,
+        text,
+      };
+
+      return {
+        ...current,
+        progress:
+          sortProgressChronologically([
+            ...current.progress,
+            nextEntry,
+          ]),
+      };
+    });
 
     setEntryTime('');
     setEntryText('');
@@ -240,9 +296,129 @@ export function ReportWorkspace() {
   function removeProgress(id: string) {
     setReport((current) => ({
       ...current,
-      progress: current.progress.filter(
-        (entry) => entry.id !== id
-      ),
+      progress:
+        current.progress.filter(
+          (entry) =>
+            entry.id !== id
+        ),
+    }));
+
+    if (
+      editingProgressId === id
+    ) {
+      setEditingProgressId(
+        null
+      );
+    }
+  }
+
+  function beginEditProgress(
+    entry: ProgressEntry
+  ) {
+    setEditingProgressId(
+      entry.id
+    );
+
+    setEditingProgressTime(
+      entry.time
+    );
+
+    setEditingProgressText(
+      entry.text
+    );
+  }
+
+  function cancelEditProgress() {
+    setEditingProgressId(
+      null
+    );
+
+    setEditingProgressTime('');
+    setEditingProgressText('');
+  }
+
+  function saveEditProgress() {
+    if (
+      !editingProgressId ||
+      !editingProgressTime.trim() ||
+      !editingProgressText.trim()
+    ) {
+      return;
+    }
+
+    setReport((current) => ({
+      ...current,
+      progress:
+        sortProgressChronologically(
+          current.progress.map(
+            (entry) =>
+              entry.id ===
+              editingProgressId
+                ? {
+                    ...entry,
+                    time:
+                      editingProgressTime.trim(),
+                    text:
+                      editingProgressText.trim(),
+                  }
+                : entry
+          )
+        ),
+    }));
+
+    cancelEditProgress();
+  }
+
+  function moveProgress(
+    id: string,
+    direction: -1 | 1
+  ) {
+    setReport((current) => {
+      const index =
+        current.progress.findIndex(
+          (entry) =>
+            entry.id === id
+        );
+
+      const targetIndex =
+        index + direction;
+
+      if (
+        index < 0 ||
+        targetIndex < 0 ||
+        targetIndex >=
+          current.progress.length
+      ) {
+        return current;
+      }
+
+      const progress = [
+        ...current.progress,
+      ];
+
+      const currentEntry =
+        progress[index];
+
+      progress[index] =
+        progress[targetIndex];
+
+      progress[targetIndex] =
+        currentEntry;
+
+      return {
+        ...current,
+        progress,
+      };
+    });
+  }
+
+  function sortTimeline() {
+    setReport((current) => ({
+      ...current,
+      progress:
+        sortProgressChronologically(
+          current.progress
+        ),
     }));
   }
 
@@ -265,12 +441,14 @@ export function ReportWorkspace() {
 
   function resetToSample() {
     setReport(SAMPLE_REPORT);
+    cancelEditProgress();
   }
 
   function clearReport() {
     setReport(EMPTY_REPORT);
     setEntryTime('');
     setEntryText('');
+    cancelEditProgress();
   }
 
   async function pasteFromClipboard() {
@@ -338,9 +516,17 @@ export function ReportWorkspace() {
       return;
     }
 
-    setReport(result.report);
+    setReport({
+      ...result.report,
+      progress:
+        sortProgressChronologically(
+          result.report.progress
+        ),
+    });
+
     setEntryTime('');
     setEntryText('');
+    cancelEditProgress();
 
     setImportFeedback({
       tone:
@@ -982,74 +1168,356 @@ export function ReportWorkspace() {
                   </button>
                 </div>
 
+                <div className="timeline-intelligence-bar">
+                  <div className="timeline-intelligence-copy">
+                    <span className="timeline-intelligence-icon">
+                      <Activity
+                        size={14}
+                      />
+                    </span>
+
+                    <div>
+                      <strong>
+                        Timeline intelligence
+                      </strong>
+
+                      <span>
+                        New and edited entries
+                        auto-sort by time.
+                        Manual reorder stays
+                        available when field
+                        reality needs it.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="timeline-intelligence-actions">
+                    {duplicateTimes.size >
+                    0 ? (
+                      <span className="duplicate-time-alert">
+                        <AlertTriangle
+                          size={13}
+                        />
+
+                        {
+                          duplicateTimes.size
+                        } duplicate time
+                        {duplicateTimes.size >
+                        1
+                          ? 's'
+                          : ''}
+                      </span>
+                    ) : (
+                      <span className="timeline-clean-chip">
+                        <Check
+                          size={12}
+                        />
+                        Timeline clean
+                      </span>
+                    )}
+
+                    <button
+                      className="timeline-sort-button"
+                      type="button"
+                      disabled={
+                        report.progress
+                          .length < 2
+                      }
+                      onClick={
+                        sortTimeline
+                      }
+                    >
+                      <ArrowUpDown
+                        size={14}
+                      />
+                      Sort by time
+                    </button>
+                  </div>
+                </div>
+
                 <div className="timeline-list">
                   <AnimatePresence
                     initial={false}
                   >
                     {report.progress.map(
-                      (entry, index) => (
-                        <motion.div
-                          className="timeline-row"
-                          key={entry.id}
-                          layout
-                          initial={{
-                            opacity: 0,
-                            y: 8,
-                          }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                          }}
-                          exit={{
-                            opacity: 0,
-                            scale: 0.98,
-                          }}
-                        >
-                          <div
-                            className="timeline-rail"
-                            aria-hidden="true"
-                          >
-                            <span className="timeline-node">
-                              {String(
-                                index + 1
-                              ).padStart(
-                                2,
-                                '0'
-                              )}
-                            </span>
+                      (entry, index) => {
+                        const kind =
+                          detectProgressKind(
+                            entry.text
+                          );
 
-                            {index <
-                            report.progress
-                              .length -
-                              1 ? (
-                              <span className="timeline-line" />
-                            ) : null}
-                          </div>
+                        const isEditing =
+                          editingProgressId ===
+                          entry.id;
 
-                          <div className="timeline-time">
-                            {entry.time}
-                          </div>
+                        const isDuplicate =
+                          duplicateTimes.has(
+                            entry.time.trim()
+                          );
 
-                          <p>
-                            {entry.text}
-                          </p>
-
-                          <button
-                            className="row-delete"
-                            type="button"
-                            title="Delete update"
-                            onClick={() =>
-                              removeProgress(
-                                entry.id
-                              )
+                        return (
+                          <motion.div
+                            className="timeline-row timeline-row-f2"
+                            data-kind={
+                              kind
                             }
+                            data-duplicate={
+                              isDuplicate
+                                ? 'true'
+                                : 'false'
+                            }
+                            key={entry.id}
+                            layout
+                            initial={{
+                              opacity: 0,
+                              y: 8,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                            }}
+                            exit={{
+                              opacity: 0,
+                              scale: 0.98,
+                            }}
                           >
-                            <Trash2
-                              size={15}
-                            />
-                          </button>
-                        </motion.div>
-                      )
+                            <div
+                              className="timeline-rail"
+                              aria-hidden="true"
+                            >
+                              <span className="timeline-node">
+                                {String(
+                                  index + 1
+                                ).padStart(
+                                  2,
+                                  '0'
+                                )}
+                              </span>
+
+                              {index <
+                              report.progress
+                                .length -
+                                1 ? (
+                                <span className="timeline-line" />
+                              ) : null}
+                            </div>
+
+                            {isEditing ? (
+                              <div className="timeline-edit-time">
+                                <span>
+                                  TIME
+                                </span>
+
+                                <input
+                                  value={
+                                    editingProgressTime
+                                  }
+                                  aria-label="Edit progress time"
+                                  onChange={(
+                                    event
+                                  ) =>
+                                    setEditingProgressTime(
+                                      event
+                                        .target
+                                        .value
+                                    )
+                                  }
+                                />
+                              </div>
+                            ) : (
+                              <div className="timeline-time">
+                                {
+                                  entry.time
+                                }
+
+                                {isDuplicate ? (
+                                  <span
+                                    className="duplicate-dot"
+                                    title="Duplicate timeline time"
+                                  />
+                                ) : null}
+                              </div>
+                            )}
+
+                            <div className="timeline-entry-main">
+                              <div className="timeline-entry-meta">
+                                <span
+                                  className="timeline-kind-chip"
+                                  data-kind={
+                                    kind
+                                  }
+                                >
+                                  {
+                                    PROGRESS_KIND_LABELS[
+                                      kind
+                                    ]
+                                  }
+                                </span>
+
+                                {isDuplicate ? (
+                                  <span className="timeline-duplicate-label">
+                                    Same time detected
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {isEditing ? (
+                                <textarea
+                                  className="timeline-edit-text"
+                                  value={
+                                    editingProgressText
+                                  }
+                                  aria-label="Edit progress text"
+                                  rows={2}
+                                  onChange={(
+                                    event
+                                  ) =>
+                                    setEditingProgressText(
+                                      event
+                                        .target
+                                        .value
+                                    )
+                                  }
+                                  onKeyDown={(
+                                    event
+                                  ) => {
+                                    if (
+                                      event.key ===
+                                        'Enter' &&
+                                      (event.ctrlKey ||
+                                        event.metaKey)
+                                    ) {
+                                      saveEditProgress();
+                                    }
+
+                                    if (
+                                      event.key ===
+                                      'Escape'
+                                    ) {
+                                      cancelEditProgress();
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <p>
+                                  {
+                                    entry.text
+                                  }
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="timeline-row-actions">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    className="timeline-action timeline-action-save"
+                                    type="button"
+                                    title="Save update"
+                                    disabled={
+                                      !editingProgressTime.trim() ||
+                                      !editingProgressText.trim()
+                                    }
+                                    onClick={
+                                      saveEditProgress
+                                    }
+                                  >
+                                    <Check
+                                      size={14}
+                                    />
+                                  </button>
+
+                                  <button
+                                    className="timeline-action"
+                                    type="button"
+                                    title="Cancel edit"
+                                    onClick={
+                                      cancelEditProgress
+                                    }
+                                  >
+                                    <X
+                                      size={14}
+                                    />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    className="timeline-action"
+                                    type="button"
+                                    title="Edit update"
+                                    onClick={() =>
+                                      beginEditProgress(
+                                        entry
+                                      )
+                                    }
+                                  >
+                                    <Pencil
+                                      size={13}
+                                    />
+                                  </button>
+
+                                  <button
+                                    className="timeline-action"
+                                    type="button"
+                                    title="Move update up"
+                                    disabled={
+                                      index === 0
+                                    }
+                                    onClick={() =>
+                                      moveProgress(
+                                        entry.id,
+                                        -1
+                                      )
+                                    }
+                                  >
+                                    <ArrowUp
+                                      size={13}
+                                    />
+                                  </button>
+
+                                  <button
+                                    className="timeline-action"
+                                    type="button"
+                                    title="Move update down"
+                                    disabled={
+                                      index ===
+                                      report.progress
+                                        .length -
+                                        1
+                                    }
+                                    onClick={() =>
+                                      moveProgress(
+                                        entry.id,
+                                        1
+                                      )
+                                    }
+                                  >
+                                    <ArrowDown
+                                      size={13}
+                                    />
+                                  </button>
+
+                                  <button
+                                    className="timeline-action timeline-action-delete"
+                                    type="button"
+                                    title="Delete update"
+                                    onClick={() =>
+                                      removeProgress(
+                                        entry.id
+                                      )
+                                    }
+                                  >
+                                    <Trash2
+                                      size={13}
+                                    />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      }
                     )}
                   </AnimatePresence>
 

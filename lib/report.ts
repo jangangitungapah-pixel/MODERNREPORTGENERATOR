@@ -575,6 +575,193 @@ export function parseIncidentReport(
   };
 }
 
+export type ProgressKind =
+  | 'coordination'
+  | 'dispatch'
+  | 'onsite'
+  | 'repair'
+  | 'restored'
+  | 'update';
+
+export function progressTimeToMinutes(
+  time: string
+): number | null {
+  const match =
+    time
+      .trim()
+      .match(
+        /^(\d{1,2}):(\d{2})$/
+      );
+
+  if (!match) {
+    return null;
+  }
+
+  const hours =
+    Number(match[1]);
+
+  const minutes =
+    Number(match[2]);
+
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+export function sortProgressChronologically(
+  entries: ProgressEntry[]
+): ProgressEntry[] {
+  return entries
+    .map((entry, index) => ({
+      entry,
+      index,
+      minutes:
+        progressTimeToMinutes(
+          entry.time
+        ),
+    }))
+    .sort((left, right) => {
+      if (
+        left.minutes === null &&
+        right.minutes === null
+      ) {
+        return left.index - right.index;
+      }
+
+      if (left.minutes === null) {
+        return 1;
+      }
+
+      if (right.minutes === null) {
+        return -1;
+      }
+
+      if (
+        left.minutes ===
+        right.minutes
+      ) {
+        return left.index - right.index;
+      }
+
+      return (
+        left.minutes -
+        right.minutes
+      );
+    })
+    .map(({ entry }) => entry);
+}
+
+export function duplicateProgressTimes(
+  entries: ProgressEntry[]
+): string[] {
+  const counts =
+    new Map<string, number>();
+
+  for (const entry of entries) {
+    const time =
+      entry.time.trim();
+
+    if (
+      progressTimeToMinutes(
+        time
+      ) === null
+    ) {
+      continue;
+    }
+
+    counts.set(
+      time,
+      (counts.get(time) ?? 0) + 1
+    );
+  }
+
+  return Array.from(
+    counts.entries()
+  )
+    .filter(
+      ([, count]) =>
+        count > 1
+    )
+    .map(([time]) => time)
+    .sort(
+      (left, right) =>
+        (
+          progressTimeToMinutes(
+            left
+          ) ?? 0
+        ) -
+        (
+          progressTimeToMinutes(
+            right
+          ) ?? 0
+        )
+    );
+}
+
+export function detectProgressKind(
+  text: string
+): ProgressKind {
+  const normalized =
+    text
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  if (
+    /\b(link|service|traffic)\b.*\b(up|normal|restore|restored|recovery|recovered)\b/.test(
+      normalized
+    ) ||
+    /\balready\s+up\b/.test(
+      normalized
+    )
+  ) {
+    return 'restored';
+  }
+
+  if (
+    /\b(otw|on the way|eta|depart|dispatch|menuju)\b/.test(
+      normalized
+    )
+  ) {
+    return 'dispatch';
+  }
+
+  if (
+    /\b(on location|arrive|arrived|patrol|partol|found|inspection|checking location)\b/.test(
+      normalized
+    )
+  ) {
+    return 'onsite';
+  }
+
+  if (
+    /\b(splic|splice|splicing|striping|stripping|closure|jumper|repair|joint|jointer|cable|extinguish)\w*\b/.test(
+      normalized
+    )
+  ) {
+    return 'repair';
+  }
+
+  if (
+    /\b(open tt|prepare tools|prepare tool|escalat|coordinate|coordination|clearance|permit)\w*\b/.test(
+      normalized
+    )
+  ) {
+    return 'coordination';
+  }
+
+  return 'update';
+}
+
 export function completionScore(report: IncidentReport): number {
   const values = [
     report.region,
