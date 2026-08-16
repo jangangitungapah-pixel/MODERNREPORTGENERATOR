@@ -122,7 +122,8 @@
   cursor: pointer;
 }
 
-.actions button:last-child {
+.actions .signIn {
+  grid-column: 1 / -1;
   color: #fff;
   border-color: transparent;
   background: linear-gradient(135deg, #7b87ba, #6470a6);
