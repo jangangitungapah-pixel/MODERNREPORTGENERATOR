@@ -218,21 +218,57 @@ export function formatReport(report: IncidentReport): string {
 
   const impactLines =
     impactLinks.map(
-      (impact) =>
-        (
+      (impact) => {
+        const region =
+          impact.region.trim();
+
+        const statusTag =
+          impact.statusTag.trim();
+
+        const summary =
+          impact.summary.trim();
+
+        const ticket =
+          impact.ticket.trim();
+
+        const structuredPrefix =
+          (
+            region
+              ? '[' +
+                region +
+                ']'
+              : ''
+          ) +
+          statusTag;
+
+        const body =
+          [
+            structuredPrefix,
+            summary,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .trim();
+
+        const content =
+          ticket
+            ? (
+                body
+                  ? body +
+                    ' - ' +
+                    ticket
+                  : ticket
+              )
+            : body;
+
+        return (
           '* ' +
           markerSymbol(
             impact.marker
           ) +
-          '[' +
-          impact.region.trim() +
-          ']' +
-          impact.statusTag.trim() +
-          ' ' +
-          impact.summary.trim() +
-          ' - ' +
-          impact.ticket.trim()
-        ).trimEnd()
+          content
+        ).trimEnd();
+      }
     );
 
   const cutPoints =
@@ -583,6 +619,151 @@ function parseOperationalTitle(
   };
 }
 
+function parseFlexibleImpactLink(
+  value: string,
+  index: number
+): ImpactLink | null {
+  const cleaned =
+    value
+      .trim()
+      .replace(
+        /^\*+\s*/,
+        ''
+      )
+      .replace(
+        /\s*\*+$/,
+        ''
+      )
+      .replace(
+        /^[-•]\s*/,
+        ''
+      )
+      .trim();
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const marker =
+    linkMarkerFromText(
+      cleaned
+    );
+
+  let body =
+    stripLinkMarkers(
+      cleaned
+    );
+
+  let ticket = '';
+
+  const ticketMatch =
+    body.match(
+      /(?:\s+-\s+|\s+)((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*$/i
+    );
+
+  if (ticketMatch) {
+    ticket =
+      cleanImportedValue(
+        ticketMatch[1]
+      );
+
+    body =
+      body
+        .slice(
+          0,
+          ticketMatch.index
+        )
+        .replace(
+          /\s+-\s*$/,
+          ''
+        )
+        .trim();
+  }
+
+  let region = '';
+  let statusTag = '';
+  let summary = body;
+
+  const doubleBracket =
+    body.match(
+      /^\[([^\]]+)\]\s*(\[[^\]]+\])\s*(.*)$/i
+    );
+
+  if (doubleBracket) {
+    region =
+      cleanImportedValue(
+        doubleBracket[1]
+      );
+
+    statusTag =
+      cleanImportedValue(
+        doubleBracket[2]
+      );
+
+    summary =
+      cleanImportedValue(
+        doubleBracket[3]
+      );
+  } else {
+    const singleBracket =
+      body.match(
+        /^\[([^\]]+)\]\s*(.*)$/i
+      );
+
+    if (singleBracket) {
+      const bracketValue =
+        cleanImportedValue(
+          singleBracket[1]
+        );
+
+      const remainder =
+        cleanImportedValue(
+          singleBracket[2]
+        );
+
+      if (
+        /\b(open|close|closed|major|minor|critical|warning)\b/i.test(
+          bracketValue
+        )
+      ) {
+        statusTag =
+          '[' +
+          bracketValue +
+          ']';
+      } else {
+        region =
+          bracketValue;
+      }
+
+      summary =
+        remainder;
+    }
+  }
+
+  if (
+    !region &&
+    !statusTag &&
+    !summary &&
+    !ticket
+  ) {
+    return null;
+  }
+
+  return {
+    id:
+      'impact-' +
+      String(index + 1).padStart(
+        3,
+        '0'
+      ),
+    marker,
+    region,
+    statusTag,
+    summary,
+    ticket,
+  };
+}
+
 function extractOperationalImpactLinks(
   metadataRaw: string
 ): ImpactLink[] {
@@ -595,23 +776,39 @@ function extractOperationalImpactLinks(
     return [];
   }
 
-  const normalizedBlock =
+  const rawBlock =
     blockMatch[1]
       .replace(
-        /\s+(?=(?:\*?\s*)?(?:✅|❌|⚠️|⚠)?\s*\[[^\]]+\]\s*\[[^\]]+\])/g,
+        /\r/g,
+        ''
+      )
+      .trim();
+
+  if (!rawBlock) {
+    return [];
+  }
+
+  const normalizedBlock =
+    rawBlock
+      .replace(
+        /[ \t]+(?=\*\s*(?:✅|❌|⚠️|⚠)?)/g,
         '\n'
       )
       .trim();
 
-  return normalizedBlock
-    .split('\n')
-    .map(
-      (line) => line.trim()
-    )
-    .filter(Boolean)
+  const lines =
+    normalizedBlock
+      .split('\n')
+      .map(
+        (line) =>
+          line.trim()
+      )
+      .filter(Boolean);
+
+  return lines
     .map(
       (line, index) =>
-        parseOperationalTitle(
+        parseFlexibleImpactLink(
           line,
           index
         )

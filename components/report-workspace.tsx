@@ -1027,12 +1027,10 @@ export function ReportWorkspace() {
               createDispatchEntityId(
                 'impact'
               ),
-            marker: 'down',
-            region:
-              current.region,
-            statusTag:
-              current.statusTag ||
-              '[Open - Major]',
+            marker:
+              'unknown',
+            region: '',
+            statusTag: '',
             summary: '',
             ticket: '',
           },
@@ -2945,8 +2943,9 @@ export function ReportWorkspace() {
                           </strong>
 
                           <small>
-                            Main link and every
-                            affected child TT.
+                            Freeform affected links.
+                            Region, status tag, and
+                            child TT are optional.
                           </small>
                         </div>
                       </div>
@@ -3116,7 +3115,7 @@ export function ReportWorkspace() {
                               <div className="impact-link-grid">
                                 <label>
                                   <span>
-                                    REGION
+                                    REGION · OPTIONAL
                                   </span>
 
                                   <input
@@ -3139,7 +3138,7 @@ export function ReportWorkspace() {
 
                                 <label>
                                   <span>
-                                    STATUS TAG
+                                    STATUS TAG · OPTIONAL
                                   </span>
 
                                   <input
@@ -3162,7 +3161,7 @@ export function ReportWorkspace() {
 
                                 <label className="topology-field-wide">
                                   <span>
-                                    IMPACT LINK / ALARM
+                                    IMPACT HEADLINE / LINK
                                   </span>
 
                                   <textarea
@@ -3170,7 +3169,7 @@ export function ReportWorkspace() {
                                     value={
                                       impact.summary
                                     }
-                                    placeholder="DOWN - NODE_A(...)<>NODE_B(...)"
+                                    placeholder="Freeform: DOWN - A<>B / Degrade backbone / affected service..."
                                     onChange={(
                                       event
                                     ) =>
@@ -3186,7 +3185,7 @@ export function ReportWorkspace() {
 
                                 <label className="topology-field-wide">
                                   <span>
-                                    IMPACT TROUBLE TICKET
+                                    IMPACT TROUBLE TICKET · OPTIONAL
                                   </span>
 
                                   <input
@@ -3227,10 +3226,11 @@ export function ReportWorkspace() {
                             </strong>
 
                             <span>
-                              Keep this empty for
-                              single-link TT, or
-                              add affected child
-                              links manually.
+                              Add any affected link
+                              in whatever operational
+                              format you receive.
+                              Structured metadata is
+                              optional.
                             </span>
                           </div>
                         </div>

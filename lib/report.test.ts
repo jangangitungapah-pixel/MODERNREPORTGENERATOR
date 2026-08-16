@@ -584,6 +584,143 @@ describe('parseIncidentReport', () => {
     );
   });
 
+  it('supports freeform Impact Link rows without FLP region or status tags', () => {
+    const output =
+      formatReport({
+        ...SAMPLE_REPORT,
+        impactLinks: [
+          {
+            id: 'freeform-1',
+            marker: 'down',
+            region: '',
+            statusTag: '',
+            summary:
+              'BACKBONE JAKARTA<>BEKASI DEGRADED',
+            ticket: '',
+          },
+          {
+            id: 'freeform-2',
+            marker: 'warning',
+            region: 'MANDAU',
+            statusTag: '',
+            summary:
+              'High attenuation A<>B',
+            ticket:
+              'INC-20260816-00000123',
+          },
+          {
+            id: 'freeform-3',
+            marker: 'down',
+            region: '',
+            statusTag:
+              '[Open - Major]',
+            summary:
+              'DOWN - METRO_A<>METRO_B',
+            ticket: '',
+          },
+        ],
+      });
+
+    expect(output).toContain(
+      '* ❌BACKBONE JAKARTA<>BEKASI DEGRADED'
+    );
+
+    expect(output).toContain(
+      '* ⚠️[MANDAU] High attenuation A<>B - INC-20260816-00000123'
+    );
+
+    expect(output).toContain(
+      '* ❌[Open - Major] DOWN - METRO_A<>METRO_B'
+    );
+
+    expect(output).not.toContain(
+      '[]'
+    );
+  });
+
+  it('parses mixed flexible Impact Link formats in one incident', () => {
+    const raw = [
+      '*[MANDAU] MAIN LINK DOWN, [TT : INC-20260816-00000001]*',
+      'Impact Link :',
+      '* ❌BACKBONE JAKARTA<>BEKASI DEGRADED',
+      '* ⚠️[MANDAU] High attenuation A<>B - INC-20260816-00000123',
+      '* ❌[Open - Major] DOWN - METRO_A<>METRO_B',
+      '* ✅[FLP_3rd_MANDAU][Open - Major] DOWN - NODE_A<>NODE_B - DATACOM-INC-20260816-00000124',
+      'Occur Time = 16/08/2026 10:00',
+      'Dispacth Time = 16/08/2026 10:15',
+      'PIC = Operator',
+      'Rootcause = Still Investigation',
+      'Cut Point = Still Investigation',
+      'Update Progress',
+      '10:20 Team checking',
+    ].join('\n');
+
+    const result =
+      parseIncidentReport(
+        raw
+      );
+
+    expect(
+      result.report.impactLinks
+    ).toHaveLength(4);
+
+    expect(
+      result.report.impactLinks?.[0]
+    ).toEqual(
+      expect.objectContaining({
+        marker: 'down',
+        region: '',
+        statusTag: '',
+        summary:
+          'BACKBONE JAKARTA<>BEKASI DEGRADED',
+        ticket: '',
+      })
+    );
+
+    expect(
+      result.report.impactLinks?.[1]
+    ).toEqual(
+      expect.objectContaining({
+        marker:
+          'warning',
+        region:
+          'MANDAU',
+        statusTag: '',
+        summary:
+          'High attenuation A<>B',
+        ticket:
+          'INC-20260816-00000123',
+      })
+    );
+
+    expect(
+      result.report.impactLinks?.[2]
+    ).toEqual(
+      expect.objectContaining({
+        region: '',
+        statusTag:
+          '[Open - Major]',
+        summary:
+          'DOWN - METRO_A<>METRO_B',
+        ticket: '',
+      })
+    );
+
+    expect(
+      result.report.impactLinks?.[3]
+    ).toEqual(
+      expect.objectContaining({
+        marker: 'up',
+        region:
+          'FLP_3rd_MANDAU',
+        statusTag:
+          '[Open - Major]',
+        ticket:
+          'DATACOM-INC-20260816-00000124',
+      })
+    );
+  });
+
   it('reports missing signals instead of inventing data', () => {
     const result =
       parseIncidentReport(
