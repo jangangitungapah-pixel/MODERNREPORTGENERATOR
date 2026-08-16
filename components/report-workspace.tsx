@@ -115,6 +115,9 @@ const WORKSPACE_STORAGE_KEY =
   'reportos:workspace:v1';
 
 type MobilePane = 'compose' | 'preview';
+type TimelineSortOrder =
+  | 'newest'
+  | 'oldest';
 type WorkspaceMode =
   | 'compose'
   | 'operations'
@@ -414,6 +417,13 @@ export function ReportWorkspace() {
 
   const [mobilePane, setMobilePane] =
     useState<MobilePane>('compose');
+
+  const [
+    timelineSortOrder,
+    setTimelineSortOrder,
+  ] = useState<TimelineSortOrder>(
+    'newest'
+  );
 
   const [
     workspaceMode,
@@ -743,16 +753,24 @@ export function ReportWorkspace() {
 
   const timelineEntriesForDisplay =
     useMemo(
-      () =>
-        [
-          ...sortProgressChronologically(
+      () => {
+        const chronological =
+          sortProgressChronologically(
             report.progress,
             report.occurTime
-          ),
-        ].reverse(),
+          );
+
+        return timelineSortOrder ===
+          'newest'
+          ? [
+              ...chronological,
+            ].reverse()
+          : chronological;
+      },
       [
         report.occurTime,
         report.progress,
+        timelineSortOrder,
       ]
     );
 
@@ -3903,12 +3921,12 @@ export function ReportWorkspace() {
                       </strong>
 
                       <span>
-                        Composer is always
-                        newest first, so the
-                        latest field signal stays
-                        on top. Preview and
-                        generated bagan remain
-                        oldest first.
+                        Choose how the Composer
+                        timeline is displayed.
+                        This does not change the
+                        chronological order used
+                        by Preview or generated
+                        bagan.
                       </span>
                     </div>
                   </div>
@@ -3938,9 +3956,53 @@ export function ReportWorkspace() {
                       </span>
                     )}
 
-                    <span className="timeline-order-chip">
-                      NEWEST FIRST
-                    </span>
+                    <div
+                      className="timeline-sort-selector"
+                      role="group"
+                      aria-label="Timeline display order"
+                    >
+                      <button
+                        className={
+                          timelineSortOrder ===
+                          'newest'
+                            ? 'timeline-sort-option timeline-sort-option-active'
+                            : 'timeline-sort-option'
+                        }
+                        type="button"
+                        aria-pressed={
+                          timelineSortOrder ===
+                          'newest'
+                        }
+                        onClick={() =>
+                          setTimelineSortOrder(
+                            'newest'
+                          )
+                        }
+                      >
+                        Newest first
+                      </button>
+
+                      <button
+                        className={
+                          timelineSortOrder ===
+                          'oldest'
+                            ? 'timeline-sort-option timeline-sort-option-active'
+                            : 'timeline-sort-option'
+                        }
+                        type="button"
+                        aria-pressed={
+                          timelineSortOrder ===
+                          'oldest'
+                        }
+                        onClick={() =>
+                          setTimelineSortOrder(
+                            'oldest'
+                          )
+                        }
+                      >
+                        Oldest first
+                      </button>
+                    </div>
                   </div>
                 </div>
 
