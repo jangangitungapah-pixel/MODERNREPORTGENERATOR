@@ -178,27 +178,21 @@ async function syncCurrentLocalState({
 }
 
 export function FirebaseCloudRecovery() {
-  const [
-    status,
-    setStatus,
-  ] = useState<CloudStatus>(
-    'starting'
-  );
+  const [status, setStatus] =
+    useState<CloudStatus>(
+      'starting'
+    );
 
   const [uid, setUid] =
     useState('');
 
-  const [
-    drawerOpen,
-    setDrawerOpen,
-  ] = useState(false);
+  const [drawerOpen, setDrawerOpen] =
+    useState(false);
 
-  const [
-    snapshots,
-    setSnapshots,
-  ] = useState<
-    CloudSnapshotSummary[]
-  >([]);
+  const [snapshots, setSnapshots] =
+    useState<
+      CloudSnapshotSummary[]
+    >([]);
 
   const [
     lastSyncLabel,
@@ -244,9 +238,7 @@ export function FirebaseCloudRecovery() {
         );
 
       if (!cancelled) {
-        setSnapshots(
-          next
-        );
+        setSnapshots(next);
       }
     }
 
@@ -260,8 +252,7 @@ export function FirebaseCloudRecovery() {
         return;
       }
 
-      syncBusyRef.current =
-        true;
+      syncBusyRef.current = true;
 
       try {
         const result =
@@ -284,10 +275,13 @@ export function FirebaseCloudRecovery() {
           previousImpactRef.current =
             result.impactRaw;
 
-          setStatus(
-            'ready'
+          setCloudWorkspaceAvailable(
+            Boolean(
+              result.workspaceRaw
+            )
           );
 
+          setStatus('ready');
           setLastSyncLabel(
             formatClock(
               clientNow()
@@ -304,10 +298,7 @@ export function FirebaseCloudRecovery() {
         }
       } catch (error) {
         if (!cancelled) {
-          setStatus(
-            'error'
-          );
-
+          setStatus('error');
           setErrorMessage(
             error instanceof Error
               ? error.message
@@ -315,8 +306,7 @@ export function FirebaseCloudRecovery() {
           );
         }
       } finally {
-        syncBusyRef.current =
-          false;
+        syncBusyRef.current = false;
       }
     }
 
@@ -331,9 +321,7 @@ export function FirebaseCloudRecovery() {
           return;
         }
 
-        setUid(
-          user.uid
-        );
+        setUid(user.uid);
 
         const cloud =
           await loadCloudWorkspace(
@@ -344,12 +332,6 @@ export function FirebaseCloudRecovery() {
           return;
         }
 
-        setCloudWorkspaceAvailable(
-          Boolean(
-            cloud.workspaceRaw
-          )
-        );
-
         const localWorkspace =
           readLocal(
             WORKSPACE_STORAGE_KEY
@@ -359,6 +341,12 @@ export function FirebaseCloudRecovery() {
           readLocal(
             IMPACT_STORAGE_KEY
           );
+
+        setCloudWorkspaceAvailable(
+          Boolean(
+            cloud.workspaceRaw
+          )
+        );
 
         if (
           !localWorkspace &&
@@ -393,17 +381,17 @@ export function FirebaseCloudRecovery() {
           );
         }
 
+        // Keep the cloud copy as the comparison base.
+        // When Firestore is empty, null forces the
+        // existing local workspace to seed the cloud
+        // immediately on first launch.
         previousWorkspaceRef.current =
-          cloud.workspaceRaw ??
-          localWorkspace;
+          cloud.workspaceRaw;
 
         previousImpactRef.current =
-          cloud.impactRaw ??
-          localImpact;
+          cloud.impactRaw;
 
-        setStatus(
-          'syncing'
-        );
+        setStatus('syncing');
 
         await performSync(
           user.uid
@@ -413,10 +401,7 @@ export function FirebaseCloudRecovery() {
           return;
         }
 
-        setStatus(
-          'ready'
-        );
-
+        setStatus('ready');
         setLastSyncLabel(
           formatClock(
             clientNow()
@@ -438,10 +423,7 @@ export function FirebaseCloudRecovery() {
           );
       } catch (error) {
         if (!cancelled) {
-          setStatus(
-            'error'
-          );
-
+          setStatus('error');
           setErrorMessage(
             error instanceof Error
               ? error.message
@@ -457,9 +439,7 @@ export function FirebaseCloudRecovery() {
       cancelled = true;
 
       if (timer) {
-        window.clearInterval(
-          timer
-        );
+        window.clearInterval(timer);
       }
     };
   }, []);
@@ -469,9 +449,7 @@ export function FirebaseCloudRecovery() {
       return;
     }
 
-    setStatus(
-      'syncing'
-    );
+    setStatus('syncing');
 
     try {
       const result =
@@ -489,9 +467,13 @@ export function FirebaseCloudRecovery() {
       previousImpactRef.current =
         result.impactRaw;
 
-      if (
-        result.snapshotCreated
-      ) {
+      setCloudWorkspaceAvailable(
+        Boolean(
+          result.workspaceRaw
+        )
+      );
+
+      if (result.snapshotCreated) {
         setSnapshots(
           await listCloudSnapshots(
             uid
@@ -504,7 +486,6 @@ export function FirebaseCloudRecovery() {
           clientNow()
         )
       );
-
       setErrorMessage('');
       setStatus('ready');
     } catch (error) {
@@ -524,9 +505,7 @@ export function FirebaseCloudRecovery() {
 
     try {
       const cloud =
-        await loadCloudWorkspace(
-          uid
-        );
+        await loadCloudWorkspace(uid);
 
       if (!cloud.workspaceRaw) {
         return;
@@ -606,9 +585,7 @@ export function FirebaseCloudRecovery() {
       );
 
       setSnapshots(
-        await listCloudSnapshots(
-          uid
-        )
+        await listCloudSnapshots(uid)
       );
     } catch (error) {
       setStatus('error');
@@ -634,10 +611,8 @@ export function FirebaseCloudRecovery() {
         <span className="cloud-recovery-trigger-icon">
           {status === 'error' ? (
             <CloudOff size={15} />
-          ) : status ===
-            'syncing' ||
-            status ===
-              'starting' ? (
+          ) : status === 'syncing' ||
+            status === 'starting' ? (
             <RefreshCw
               className="cloud-recovery-spin"
               size={15}
@@ -673,16 +648,12 @@ export function FirebaseCloudRecovery() {
         <div
           className="cloud-recovery-overlay"
           role="presentation"
-          onMouseDown={(
-            event
-          ) => {
+          onMouseDown={(event) => {
             if (
               event.target ===
               event.currentTarget
             ) {
-              setDrawerOpen(
-                false
-              );
+              setDrawerOpen(false);
             }
           }}
         >
@@ -695,26 +666,18 @@ export function FirebaseCloudRecovery() {
             <header className="cloud-recovery-head">
               <div>
                 <span className="cloud-recovery-head-icon">
-                  <DatabaseBackup
-                    size={18}
-                  />
+                  <DatabaseBackup size={18} />
                 </span>
 
                 <div>
                   <span className="cloud-recovery-kicker">
                     FIREBASE / FIRESTORE
                   </span>
-
-                  <h2>
-                    Cloud recovery
-                  </h2>
-
+                  <h2>Cloud recovery</h2>
                   <p>
                     Local autosave stays active.
-                    Firestore adds a protected
-                    cloud copy and safety
-                    snapshots for destructive
-                    changes.
+                    Firestore adds a protected cloud
+                    copy and immutable safety snapshots.
                   </p>
                 </div>
               </div>
@@ -723,9 +686,7 @@ export function FirebaseCloudRecovery() {
                 type="button"
                 title="Close"
                 onClick={() =>
-                  setDrawerOpen(
-                    false
-                  )
+                  setDrawerOpen(false)
                 }
               >
                 <X size={16} />
@@ -738,13 +699,9 @@ export function FirebaseCloudRecovery() {
                 data-status={status}
               >
                 {status === 'error' ? (
-                  <CloudOff
-                    size={17}
-                  />
+                  <CloudOff size={17} />
                 ) : (
-                  <ShieldCheck
-                    size={17}
-                  />
+                  <ShieldCheck size={17} />
                 )}
               </span>
 
@@ -756,7 +713,6 @@ export function FirebaseCloudRecovery() {
                       ? 'Cloud unavailable — local draft preserved'
                       : 'Preparing cloud protection'}
                 </strong>
-
                 <span>
                   {uid
                     ? 'Firebase UID ' +
@@ -772,27 +728,19 @@ export function FirebaseCloudRecovery() {
                   void manualSync()
                 }
               >
-                <RefreshCw
-                  size={13}
-                />
+                <RefreshCw size={13} />
                 Sync now
               </button>
             </div>
 
             {errorMessage ? (
               <div className="cloud-recovery-error">
-                <CloudOff
-                  size={14}
-                />
-
+                <CloudOff size={14} />
                 <div>
                   <strong>
                     Firebase needs attention
                   </strong>
-
-                  <span>
-                    {errorMessage}
-                  </span>
+                  <span>{errorMessage}</span>
                 </div>
               </div>
             ) : null}
@@ -800,29 +748,21 @@ export function FirebaseCloudRecovery() {
             <section className="cloud-recovery-section">
               <div className="cloud-recovery-section-head">
                 <div>
-                  <span>
-                    CURRENT CLOUD STATE
-                  </span>
-
-                  <strong>
-                    Full workspace copy
-                  </strong>
+                  <span>CURRENT CLOUD STATE</span>
+                  <strong>Full workspace copy</strong>
                 </div>
 
                 {cloudWorkspaceAvailable ? (
                   <span className="cloud-recovery-available">
-                    <Check
-                      size={11}
-                    />
+                    <Check size={11} />
                     AVAILABLE
                   </span>
                 ) : null}
               </div>
 
               <p>
-                Restore the last cloud workspace
-                if the local browser draft was
-                overwritten or reset.
+                Restore the last cloud workspace if
+                the local browser draft was overwritten.
               </p>
 
               <button
@@ -836,9 +776,7 @@ export function FirebaseCloudRecovery() {
                   void restoreCurrentCloud()
                 }
               >
-                <RotateCcw
-                  size={14}
-                />
+                <RotateCcw size={14} />
                 Restore cloud workspace
               </button>
             </section>
@@ -846,112 +784,83 @@ export function FirebaseCloudRecovery() {
             <section className="cloud-recovery-section cloud-recovery-snapshot-section">
               <div className="cloud-recovery-section-head">
                 <div>
-                  <span>
-                    SAFETY HISTORY
-                  </span>
-
-                  <strong>
-                    Recovery snapshots
-                  </strong>
+                  <span>SAFETY HISTORY</span>
+                  <strong>Recovery snapshots</strong>
                 </div>
-
                 <span className="cloud-recovery-count">
                   {snapshots.length}
                 </span>
               </div>
 
               <p>
-                ReportOS creates immutable
-                incident snapshots when it sees
-                a destructive reset, clear, or
-                major data reduction.
+                Reset, Clear, and destructive data
+                reductions preserve the previous active
+                incident here before cloud state changes.
               </p>
 
               <div className="cloud-recovery-snapshot-list">
-                {snapshots.map(
-                  (snapshot) => (
-                    <article
-                      key={
-                        snapshot.id
-                      }
-                    >
-                      <div className="cloud-recovery-snapshot-main">
-                        <span>
-                          {formatSnapshotDate(
-                            snapshot.clientCreatedAt
-                          )}
-                        </span>
+                {snapshots.map((snapshot) => (
+                  <article key={snapshot.id}>
+                    <div className="cloud-recovery-snapshot-main">
+                      <span>
+                        {formatSnapshotDate(
+                          snapshot.clientCreatedAt
+                        )}
+                      </span>
+                      <strong>
+                        {snapshot.ticket ||
+                          snapshot.region ||
+                          'Untitled incident'}
+                      </strong>
+                      <p>
+                        {snapshot.summary ||
+                          snapshot.reason}
+                      </p>
+                      <small>
+                        {snapshot.progressCount}{' '}
+                        updates · {snapshot.reason}
+                      </small>
+                    </div>
 
-                        <strong>
-                          {snapshot.ticket ||
-                            snapshot.region ||
-                            'Untitled incident'}
-                        </strong>
+                    <div className="cloud-recovery-snapshot-actions">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void restoreSnapshot(
+                            snapshot.id
+                          )
+                        }
+                      >
+                        <RotateCcw size={12} />
+                        Restore
+                      </button>
 
-                        <p>
-                          {snapshot.summary ||
-                            snapshot.reason}
-                        </p>
+                      <button
+                        className="cloud-recovery-delete"
+                        type="button"
+                        title="Delete snapshot"
+                        onClick={() =>
+                          void removeSnapshot(
+                            snapshot.id
+                          )
+                        }
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </article>
+                ))}
 
-                        <small>
-                          {snapshot.progressCount}{' '}
-                          updates ·{' '}
-                          {snapshot.reason}
-                        </small>
-                      </div>
-
-                      <div className="cloud-recovery-snapshot-actions">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void restoreSnapshot(
-                              snapshot.id
-                            )
-                          }
-                        >
-                          <RotateCcw
-                            size={12}
-                          />
-                          Restore
-                        </button>
-
-                        <button
-                          className="cloud-recovery-delete"
-                          type="button"
-                          title="Delete snapshot"
-                          onClick={() =>
-                            void removeSnapshot(
-                              snapshot.id
-                            )
-                          }
-                        >
-                          <Trash2
-                            size={12}
-                          />
-                        </button>
-                      </div>
-                    </article>
-                  )
-                )}
-
-                {snapshots.length ===
-                0 ? (
+                {snapshots.length === 0 ? (
                   <div className="cloud-recovery-empty">
-                    <ShieldCheck
-                      size={20}
-                    />
-
+                    <ShieldCheck size={20} />
                     <strong>
                       No recovery snapshot yet
                     </strong>
-
                     <span>
-                      Normal autosave is already
-                      protected in the current
-                      cloud workspace. Safety
-                      history appears after a
-                      destructive change is
-                      detected.
+                      Current cloud autosave is already
+                      active. Safety history appears after
+                      a protected destructive action.
                     </span>
                   </div>
                 ) : null}
@@ -959,13 +868,11 @@ export function FirebaseCloudRecovery() {
             </section>
 
             <footer className="cloud-recovery-footnote">
-              Anonymous Firebase Auth protects
-              this browser with its own UID. Do
-              not clear browser/site identity if
-              you need long-term access from this
-              anonymous account; a permanent
-              sign-in provider can be linked later
-              for cross-device recovery.
+              Anonymous Firebase Auth protects this
+              browser with its own UID. For cross-device
+              recovery later, link this anonymous account
+              to a permanent sign-in provider instead of
+              clearing browser/site identity.
             </footer>
           </aside>
         </div>
