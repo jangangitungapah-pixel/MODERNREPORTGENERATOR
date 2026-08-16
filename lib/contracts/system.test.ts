@@ -12,19 +12,24 @@ describe(
   'system health contract',
   () => {
     it(
-      'accepts the ReportOS full-stack health envelope',
+      'accepts a live ReportOS runtime whose database is ready',
       () => {
         expect(
           systemHealthSchema.parse({
             ok: true,
+            ready: true,
             service:
               'reportos',
             runtime:
               'cloudflare-workers',
             architecture:
               'full-stack',
-            databasePhase:
-              'foundation',
+            database: {
+              binding:
+                'ready',
+              canonicalModel:
+                'ready',
+            },
             timestamp:
               '2026-08-16T10:00:00.000Z',
             requestId:
@@ -32,19 +37,52 @@ describe(
           })
         ).toEqual({
           ok: true,
+          ready: true,
           service:
             'reportos',
           runtime:
             'cloudflare-workers',
           architecture:
             'full-stack',
-          databasePhase:
-            'foundation',
+          database: {
+            binding:
+              'ready',
+            canonicalModel:
+              'ready',
+          },
           timestamp:
             '2026-08-16T10:00:00.000Z',
           requestId:
             'health-test',
         });
+      }
+    );
+
+    it(
+      'distinguishes app liveness from an unbound database',
+      () => {
+        expect(
+          systemHealthSchema.parse({
+            ok: true,
+            ready: false,
+            service:
+              'reportos',
+            runtime:
+              'cloudflare-workers',
+            architecture:
+              'full-stack',
+            database: {
+              binding:
+                'standby',
+              canonicalModel:
+                'ready',
+            },
+            timestamp:
+              '2026-08-16T10:00:00.000Z',
+            requestId:
+              'health-test',
+          }).ready
+        ).toBe(false);
       }
     );
   }
