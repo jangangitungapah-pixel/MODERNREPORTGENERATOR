@@ -7,6 +7,9 @@ import {
 } from 'react';
 
 import Link from 'next/link';
+import {
+  useRouter,
+} from 'next/navigation';
 
 import {
   Activity,
@@ -64,6 +67,9 @@ function bytesLabel(
 }
 
 export function SystemConsole() {
+  const router =
+    useRouter();
+
   const [
     session,
     setSession,
@@ -163,7 +169,17 @@ export function SystemConsole() {
     );
 
   useEffect(() => {
-    void refresh();
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void refresh();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   const restore = async (
@@ -180,7 +196,8 @@ export function SystemConsole() {
       setConfirmId(null);
       await refresh();
 
-      window.location.href = '/';
+      router.push('/');
+      router.refresh();
     } catch (restoreError) {
       setError(
         restoreError instanceof Error
