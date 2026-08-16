@@ -139,8 +139,15 @@ export async function requireFirebasePrincipal(
   const user =
     body.users?.[0];
 
+  if (!user) {
+    throw new AuthenticationError(
+      'AUTH_INVALID_USER',
+      'Authenticated user could not be resolved.'
+    );
+  }
+
   const uid =
-    typeof user?.localId ===
+    typeof user.localId ===
       'string'
       ? user.localId.trim()
       : '';
