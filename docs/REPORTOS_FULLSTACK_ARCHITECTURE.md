@@ -1,6 +1,14 @@
 # ReportOS Full-Stack Architecture
 
-ReportOS is a Next.js full-stack incident operations platform designed to run on the Cloudflare Workers Free plan with Firebase Authentication on Spark and Cloudflare D1 as its canonical server database.
+ReportOS is a Next.js full-stack incident operations platform running on Cloudflare Workers Free with Firebase Authentication on Spark, Cloudflare D1 as the canonical server database, Firestore as a recovery safety plane, and localStorage as an offline/browser safety cache.
+
+Production URL:
+
+```text
+https://reportos.reportosnoc.workers.dev
+```
+
+Firebase Hosting is retired and is not part of the production delivery path.
 
 ## Architecture
 
@@ -37,7 +45,7 @@ Browser safety plane
         +-- conflict-safe reconciliation
         +-- BroadcastChannel multi-tab propagation
         +-- offline fallback
-        +-- transitional Firebase Firestore recovery
+        +-- Firebase Firestore recovery
 ```
 
 ## Runtime
@@ -46,10 +54,11 @@ Browser safety plane
 - Cloudflare Workers through `@opennextjs/cloudflare`
 - dynamic Route Handlers
 - React Server Components remain available to normal Next.js pages
+- browser-only Firebase services are isolated from Worker SSR and mounted client-side
 - OpenNext Worker build is validated in Linux CI
 - production and development Next.js generated types are isolated
 
-The app no longer uses `output: 'export'`.
+The app does not use `output: 'export'` and does not use Firebase Hosting.
 
 ## Identity
 
@@ -59,7 +68,9 @@ Browser requests obtain a Firebase ID token. Server routes resolve the token aga
 
 A UID supplied through request JSON, query parameters, browser storage or arbitrary headers is never accepted as identity.
 
-Anonymous Firebase users remain the frictionless default. The UI can link the current anonymous user to Google with `linkWithPopup`; successful linking preserves the existing Firebase UID so D1 workspace ownership does not change.
+Anonymous Firebase users remain the frictionless default. The UI can link the current anonymous user to Google with `linkWithPopup`; successful linking preserves the existing Firebase UID so D1 workspace ownership does not change. A linked Google identity can also be selected with `signInWithPopup` on another browser/device and then resolve the same UID/workspace.
+
+Google linking/sign-in is an optional interactive identity capability; the core ReportOS production path remains fully usable with anonymous Firebase Authentication.
 
 ## Authorization
 
@@ -109,7 +120,7 @@ Every successful canonical save also projects the workspace into relational D1 t
 
 Child identity is scoped by `(incident_id, id)`, so generated IDs such as `p01` can safely appear in multiple incidents.
 
-Removed incidents are intercepted by a D1 soft-delete trigger. Their normalized history remains available for retention/audit use while normal incident APIs filter `deleted_at IS NULL`.
+Removed incidents are soft-deleted explicitly by the server projection service. The incident row is marked `lifecycle = 'archived'` and receives `deleted_at`; normal incident APIs filter `deleted_at IS NULL`. ReportOS does not depend on a multi-statement SQLite trigger for this behavior.
 
 The canonical revision envelope remains the recovery source of truth if normalized projection ever needs to be rebuilt.
 
@@ -128,7 +139,20 @@ The global canonical sync controller:
 9. polls server revisions for cross-device freshness
 10. broadcasts revision changes across tabs with `BroadcastChannel`
 
-If the D1 binding is unavailable, the controller switches to `SERVER STANDBY`; it never clears local state. Existing Firestore recovery remains available as an additional transition safety plane.
+If the D1 binding is unavailable, the controller switches to `SERVER STANDBY`; it never clears local state. Firestore recovery remains available as an additional safety plane.
+
+## Firestore Recovery Safety Plane
+
+Firestore is not canonical storage. It remains a browser recovery layer scoped by Firebase UID.
+
+Security rules enforce:
+
+- users can only read/write documents below their own UID
+- recovery snapshots are immutable after creation
+- snapshots can be explicitly deleted by their owner
+- unmatched Firestore paths are denied
+
+Production acceptance validates owner access, cross-UID denial, snapshot immutability, and cleanup against the live Firebase project.
 
 ## Server APIs
 
@@ -191,9 +215,9 @@ Current checks include:
 - revision conflicts require explicit resolution
 - canonical overwrite produces a recovery snapshot
 - System Console provides restore controls
-- existing Firestore cloud recovery remains active during D1 rollout
+- Firestore cloud recovery remains available as a second safety layer
 - global application error boundary does not clear local drafts
-- deleted normalized incidents are soft deleted
+- deleted normalized incidents are soft deleted by the application service
 
 ## Security Controls
 
@@ -228,8 +252,9 @@ SOR/PDF processing remains browser-local and does not require object storage.
 
 ## CI Quality Boundary
 
-Latest revisions are validated with:
+Every revision on `main` is validated with:
 
+- clean `npm ci`
 - production dependency audit at high severity
 - TypeScript route-aware typecheck
 - ESLint
@@ -239,10 +264,44 @@ Latest revisions are validated with:
 
 Workflow concurrency cancels superseded `main` runs so only the latest revision consumes CI time.
 
-## Infrastructure Activation Boundary
+## Production Acceptance Boundary
 
-The repository contains the full application and D1 schema, but a production D1 database must still be created in the target Cloudflare account and bound as `DB` before canonical server persistence can become live.
+The reusable command is:
 
-Do not invent or commit a fake D1 database ID.
+```text
+npm run acceptance:production
+```
 
-Until a real binding exists, ReportOS intentionally degrades to its browser + Firestore safety planes instead of risking data loss.
+The live acceptance harness validates:
+
+- Worker health and D1 readiness
+- production homepage HTTP 200
+- Firebase anonymous authentication
+- authenticated workspace bootstrap
+- first canonical D1 revision
+- normalized incident/timeline/impact/cut-point/closure projection
+- canonical revision increments
+- stale-write `REVISION_CONFLICT`
+- recovery snapshot creation and restore
+- audit trail
+- soft-delete visibility rules
+- Firestore owner read/write
+- Firestore cross-UID denial
+- immutable Firestore recovery snapshots
+
+The harness uses isolated synthetic identities and ends its D1 test workspace with no active incident. Firestore test documents are deleted after validation.
+
+## Production Activation State
+
+Production infrastructure is active:
+
+- Worker name: `reportos`
+- Workers.dev account subdomain: `reportosnoc.workers.dev`
+- production URL: `https://reportos.reportosnoc.workers.dev`
+- D1 database: `reportos-db`
+- Worker binding: `DB`
+- D1 migration chain `0000`, `0001`, and `0002` applied
+- `/api/health` reports `ready: true`
+- Firebase Hosting configuration removed
+
+At this point infrastructure, persistence, recovery, authorization, build, and runtime foundations are production concerns rather than pending implementation work. Future work can focus on product features, UI, UX, performance tuning, and optional integrations without changing the canonical architecture.
