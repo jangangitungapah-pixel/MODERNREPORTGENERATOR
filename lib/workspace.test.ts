@@ -15,6 +15,7 @@ import {
   filterIncidents,
   serializeWorkspace,
   setIncidentArchived,
+  setIncidentClosureChecklist,
   sortIncidentsByUpdatedAt,
   upsertIncidentReport,
   type WorkspaceSnapshot,
@@ -235,5 +236,81 @@ describe('incident workspace', () => {
         'not-json'
       )
     ).toBeNull();
+  });
+
+  it('persists closure checklist state per incident', () => {
+    const first =
+      createIncidentRecord(
+        'first',
+        SAMPLE_REPORT
+      );
+
+    const second =
+      createIncidentRecord(
+        'second',
+        EMPTY_REPORT
+      );
+
+    const checklist = {
+      ...first.closureChecklist,
+      statementUpWag: true,
+    };
+
+    const next =
+      setIncidentClosureChecklist(
+        [first, second],
+        'first',
+        checklist,
+        '2026-08-16T10:00:00.000Z'
+      );
+
+    expect(
+      next[0].closureChecklist
+        .statementUpWag
+    ).toBe(true);
+
+    expect(
+      next[1].closureChecklist
+        .statementUpWag
+    ).toBe(false);
+  });
+
+  it('migrates legacy F3 incidents that do not have closure checklist data', () => {
+    const legacy =
+      JSON.stringify({
+        version: 1,
+        activeIncidentId:
+          'legacy',
+        incidents: [
+          {
+            id: 'legacy',
+            status: 'active',
+            createdAt:
+              '2026-08-16T06:00:00.000Z',
+            updatedAt:
+              '2026-08-16T06:00:00.000Z',
+            report:
+              SAMPLE_REPORT,
+          },
+        ],
+      });
+
+    const migrated =
+      deserializeWorkspace(
+        legacy
+      );
+
+    expect(
+      migrated?.incidents[0]
+        .closureChecklist
+    ).toEqual({
+      statementUpWag: false,
+      matoaClearance: {
+        statusTt: false,
+        eventAndPhoto: false,
+        rfo: false,
+      },
+      sentClosedEmail: false,
+    });
   });
 });

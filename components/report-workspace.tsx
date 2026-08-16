@@ -62,6 +62,7 @@ import {
   serializeWorkspace,
   setIncidentArchived,
   sortIncidentsByUpdatedAt,
+  setIncidentClosureChecklist,
   upsertIncidentReport,
   type IncidentRecord,
 } from '@/lib/workspace';
@@ -72,6 +73,18 @@ import {
   operationalStatusLabel,
   workspaceOperationalSummary,
 } from '@/lib/operations';
+
+import {
+  CLOSURE_ATOMIC_TASK_COUNT,
+  closureChecklistComplete,
+  closureChecklistCompletedCount,
+  closureChecklistScore,
+  createDefaultClosureChecklist,
+  matoaClearanceComplete,
+  matoaClearanceCompletedCount,
+  toggleClosureChecklistTask,
+  type ClosureTaskKey,
+} from '@/lib/closure';
 
 const STORAGE_KEY = 'reportos:draft:v1';
 const WORKSPACE_STORAGE_KEY =
@@ -564,6 +577,42 @@ export function ReportWorkspace() {
         activeIncidentId
     );
 
+  const activeClosureChecklist =
+    activeIncident?.closureChecklist ??
+    createDefaultClosureChecklist();
+
+  const activeClosureCompleted =
+    closureChecklistCompletedCount(
+      activeClosureChecklist
+    );
+
+  const activeClosureScore =
+    closureChecklistScore(
+      activeClosureChecklist
+    );
+
+  const activeClosureComplete =
+    closureChecklistComplete(
+      activeClosureChecklist
+    );
+
+  const activeMatoaComplete =
+    matoaClearanceComplete(
+      activeClosureChecklist
+    );
+
+  const activeMatoaCompleted =
+    matoaClearanceCompletedCount(
+      activeClosureChecklist
+    );
+
+  const activeOperationalView =
+    operationalViews.find(
+      (view) =>
+        view.incidentId ===
+        activeIncidentId
+    );
+
   const activeIncidentCount =
     incidentRecordsForView.filter(
       (incident) =>
@@ -697,6 +746,29 @@ export function ReportWorkspace() {
         target.status !==
           'archived'
       )
+    );
+  }
+
+  function toggleClosureTask(
+    task: ClosureTaskKey
+  ) {
+    if (!activeIncidentId) {
+      return;
+    }
+
+    const nextChecklist =
+      toggleClosureChecklistTask(
+        activeClosureChecklist,
+        task
+      );
+
+    setIncidentRecords(
+      (current) =>
+        setIncidentClosureChecklist(
+          current,
+          activeIncidentId,
+          nextChecklist
+        )
     );
   }
 
@@ -1317,7 +1389,9 @@ export function ReportWorkspace() {
                     </strong>
 
                     <small>
-                      Active records restored
+                      {
+                        operationalSummary.closurePending
+                      } pending closure
                     </small>
                   </div>
                 </article>
@@ -1471,7 +1545,13 @@ export function ReportWorkspace() {
                                 }
                               </span>
 
-                              {item.criticalAttention ? (
+                              {item.closurePending ? (
+                                <span className="operations-attention-chip operations-closure-chip">
+                                  CLOSURE PENDING · {
+                                    item.closureScore
+                                  }%
+                                </span>
+                              ) : item.criticalAttention ? (
                                 <span className="operations-attention-chip">
                                   CRITICAL FRESHNESS
                                 </span>
@@ -2791,6 +2871,330 @@ export function ReportWorkspace() {
                       </span>
                     </div>
                   ) : null}
+                </div>
+              </section>
+
+              <section className="section-card glass-panel closure-readiness-card">
+                <div className="section-heading closure-heading">
+                  <div className="section-icon closure-section-icon">
+                    <ShieldCheck
+                      size={17}
+                    />
+                  </div>
+
+                  <div>
+                    <span className="section-index">
+                      04
+                    </span>
+
+                    <h3>
+                      Closure readiness
+                    </h3>
+
+                    <p>
+                      Administrative tasks that
+                      must follow operational
+                      restoration.
+                    </p>
+                  </div>
+
+                  <div
+                    className="closure-score"
+                    data-complete={
+                      activeClosureComplete
+                        ? 'true'
+                        : 'false'
+                    }
+                  >
+                    <strong>
+                      {
+                        activeClosureScore
+                      }%
+                    </strong>
+
+                    <span>
+                      {
+                        activeClosureCompleted
+                      }/{CLOSURE_ATOMIC_TASK_COUNT}
+                    </span>
+                  </div>
+                </div>
+
+                {activeOperationalView?.status ===
+                  'restored' &&
+                !activeClosureComplete ? (
+                  <div className="closure-warning">
+                    <AlertTriangle
+                      size={15}
+                    />
+
+                    <div>
+                      <strong>
+                        Link restored · closure
+                        administration incomplete
+                      </strong>
+
+                      <span>
+                        ReportOS will keep this
+                        incident visible as
+                        Closure Pending until
+                        every task below is done.
+                      </span>
+                    </div>
+                  </div>
+                ) : activeClosureComplete ? (
+                  <div className="closure-ready-banner">
+                    <Check
+                      size={15}
+                    />
+
+                    <div>
+                      <strong>
+                        Administrative closure
+                        complete
+                      </strong>
+
+                      <span>
+                        All five atomic closure
+                        tasks are finished.
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="closure-checklist">
+                  <button
+                    className="closure-task"
+                    data-checked={
+                      activeClosureChecklist.statementUpWag
+                        ? 'true'
+                        : 'false'
+                    }
+                    type="button"
+                    onClick={() =>
+                      toggleClosureTask(
+                        'statementUpWag'
+                      )
+                    }
+                  >
+                    <span className="closure-checkbox">
+                      {activeClosureChecklist.statementUpWag ? (
+                        <Check
+                          size={13}
+                        />
+                      ) : null}
+                    </span>
+
+                    <span className="closure-task-copy">
+                      <strong>
+                        Statement Up WAG
+                      </strong>
+
+                      <small>
+                        Confirm restoration
+                        statement has been
+                        delivered to WAG.
+                      </small>
+                    </span>
+
+                    <span className="closure-task-state">
+                      {activeClosureChecklist.statementUpWag
+                        ? 'DONE'
+                        : 'PENDING'}
+                    </span>
+                  </button>
+
+                  <div
+                    className="closure-group"
+                    data-complete={
+                      activeMatoaComplete
+                        ? 'true'
+                        : 'false'
+                    }
+                  >
+                    <div className="closure-group-head">
+                      <span className="closure-checkbox closure-checkbox-parent">
+                        {activeMatoaComplete ? (
+                          <Check
+                            size={13}
+                          />
+                        ) : (
+                          <span>
+                            {
+                              activeMatoaCompleted
+                            }/3
+                          </span>
+                        )}
+                      </span>
+
+                      <span className="closure-task-copy">
+                        <strong>
+                          Matoa Clearance
+                        </strong>
+
+                        <small>
+                          Three supporting
+                          clearance requirements.
+                        </small>
+                      </span>
+
+                      <span className="closure-task-state">
+                        {activeMatoaComplete
+                          ? 'DONE'
+                          : 'IN PROGRESS'}
+                      </span>
+                    </div>
+
+                    <div className="closure-subtasks">
+                      <button
+                        className="closure-subtask"
+                        data-checked={
+                          activeClosureChecklist.matoaClearance.statusTt
+                            ? 'true'
+                            : 'false'
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleClosureTask(
+                            'matoaStatusTt'
+                          )
+                        }
+                      >
+                        <span className="closure-checkbox">
+                          {activeClosureChecklist.matoaClearance.statusTt ? (
+                            <Check
+                              size={12}
+                            />
+                          ) : null}
+                        </span>
+
+                        <span>
+                          Status TT
+                        </span>
+                      </button>
+
+                      <button
+                        className="closure-subtask"
+                        data-checked={
+                          activeClosureChecklist.matoaClearance.eventAndPhoto
+                            ? 'true'
+                            : 'false'
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleClosureTask(
+                            'matoaEventAndPhoto'
+                          )
+                        }
+                      >
+                        <span className="closure-checkbox">
+                          {activeClosureChecklist.matoaClearance.eventAndPhoto ? (
+                            <Check
+                              size={12}
+                            />
+                          ) : null}
+                        </span>
+
+                        <span>
+                          Event and Photo
+                        </span>
+                      </button>
+
+                      <button
+                        className="closure-subtask"
+                        data-checked={
+                          activeClosureChecklist.matoaClearance.rfo
+                            ? 'true'
+                            : 'false'
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleClosureTask(
+                            'matoaRfo'
+                          )
+                        }
+                      >
+                        <span className="closure-checkbox">
+                          {activeClosureChecklist.matoaClearance.rfo ? (
+                            <Check
+                              size={12}
+                            />
+                          ) : null}
+                        </span>
+
+                        <span>
+                          RFO
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    className="closure-task"
+                    data-checked={
+                      activeClosureChecklist.sentClosedEmail
+                        ? 'true'
+                        : 'false'
+                    }
+                    type="button"
+                    onClick={() =>
+                      toggleClosureTask(
+                        'sentClosedEmail'
+                      )
+                    }
+                  >
+                    <span className="closure-checkbox">
+                      {activeClosureChecklist.sentClosedEmail ? (
+                        <Check
+                          size={13}
+                        />
+                      ) : null}
+                    </span>
+
+                    <span className="closure-task-copy">
+                      <strong>
+                        Sent Closed Email
+                      </strong>
+
+                      <small>
+                        Confirm final closed
+                        notification email has
+                        been sent.
+                      </small>
+                    </span>
+
+                    <span className="closure-task-state">
+                      {activeClosureChecklist.sentClosedEmail
+                        ? 'DONE'
+                        : 'PENDING'}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="closure-footer">
+                  <span>
+                    {activeClosureComplete
+                      ? 'Ready for administrative close.'
+                      : (
+                          CLOSURE_ATOMIC_TASK_COUNT -
+                          activeClosureCompleted
+                        ) +
+                        ' closure task' +
+                        (
+                          CLOSURE_ATOMIC_TASK_COUNT -
+                          activeClosureCompleted ===
+                          1
+                            ? ''
+                            : 's'
+                        ) +
+                        ' remaining.'}
+                  </span>
+
+                  <strong>
+                    {
+                      activeClosureScore
+                    }% READY
+                  </strong>
                 </div>
               </section>
             </section>

@@ -258,4 +258,78 @@ describe('operational intelligence', () => {
       )
     ).toBe('—');
   });
+
+  it('flags restored incidents whose administrative closure is incomplete', () => {
+    const incident =
+      createIncidentRecord(
+        'restored-open-admin',
+        SAMPLE_REPORT
+      );
+
+    const view =
+      buildIncidentOperationalView(
+        incident,
+        new Date(
+          2026,
+          7,
+          16,
+          13,
+          0
+        ).getTime()
+      );
+
+    expect(
+      view.status
+    ).toBe('restored');
+
+    expect(
+      view.closureScore
+    ).toBe(0);
+
+    expect(
+      view.closurePending
+    ).toBe(true);
+  });
+
+  it('clears closure pending when all administrative tasks are complete', () => {
+    const incident =
+      createIncidentRecord(
+        'restored-closed-admin',
+        SAMPLE_REPORT
+      );
+
+    incident.closureChecklist = {
+      statementUpWag: true,
+      matoaClearance: {
+        statusTt: true,
+        eventAndPhoto: true,
+        rfo: true,
+      },
+      sentClosedEmail: true,
+    };
+
+    const view =
+      buildIncidentOperationalView(
+        incident,
+        new Date(
+          2026,
+          7,
+          16,
+          13,
+          0
+        ).getTime()
+      );
+
+    expect(
+      view.closureScore
+    ).toBe(100);
+
+    expect(
+      view.closureComplete
+    ).toBe(true);
+
+    expect(
+      view.closurePending
+    ).toBe(false);
+  });
 });

@@ -11,6 +11,11 @@ import {
   type IncidentRecord,
 } from './workspace';
 
+import {
+  closureChecklistComplete,
+  closureChecklistScore,
+} from './closure';
+
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;
 
@@ -33,6 +38,9 @@ export type OperationalIncidentView = {
   staleMinutes: number | null;
   needsAttention: boolean;
   criticalAttention: boolean;
+  closureScore: number;
+  closureComplete: boolean;
+  closurePending: boolean;
   progressCount: number;
   lastActivityTime: string;
   lastActivityText: string;
@@ -44,6 +52,7 @@ export type WorkspaceOperationalSummary = {
   restored: number;
   attention: number;
   critical: number;
+  closurePending: number;
   averageRunningAgeMinutes:
     number | null;
 };
@@ -350,6 +359,22 @@ export function buildIncidentOperationalView(
           )
         );
 
+  const closureScore =
+    closureChecklistScore(
+      incident.closureChecklist
+    );
+
+  const closureComplete =
+    closureChecklistComplete(
+      incident.closureChecklist
+    );
+
+  const closurePending =
+    incident.status ===
+      'active' &&
+    status === 'restored' &&
+    !closureComplete;
+
   const running =
     incident.status ===
       'active' &&
@@ -383,6 +408,9 @@ export function buildIncidentOperationalView(
     staleMinutes,
     needsAttention,
     criticalAttention,
+    closureScore,
+    closureComplete,
+    closurePending,
     progressCount:
       report.progress.length,
     lastActivityTime:
@@ -432,6 +460,15 @@ export function buildWorkspaceOperationalViews(
           right.needsAttention
         ) {
           return left.needsAttention
+            ? -1
+            : 1;
+        }
+
+        if (
+          left.closurePending !==
+          right.closurePending
+        ) {
+          return left.closurePending
             ? -1
             : 1;
         }
@@ -500,6 +537,12 @@ export function workspaceOperationalSummary(
         view.criticalAttention
     );
 
+  const closurePending =
+    active.filter(
+      (view) =>
+        view.closurePending
+    );
+
   const runningAges =
     running
       .map(
@@ -536,6 +579,8 @@ export function workspaceOperationalSummary(
       attention.length,
     critical:
       critical.length,
+    closurePending:
+      closurePending.length,
     averageRunningAgeMinutes,
   };
 }

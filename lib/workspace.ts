@@ -3,6 +3,12 @@ import {
   type IncidentReport,
 } from './report';
 
+import {
+  createDefaultClosureChecklist,
+  isClosureChecklist,
+  type ClosureChecklist,
+} from './closure';
+
 export type IncidentLifecycle =
   | 'active'
   | 'archived';
@@ -13,6 +19,7 @@ export type IncidentRecord = {
   createdAt: string;
   updatedAt: string;
   report: IncidentReport;
+  closureChecklist: ClosureChecklist;
 };
 
 export type WorkspaceSnapshot = {
@@ -34,6 +41,17 @@ function cloneReport(
   };
 }
 
+function cloneClosureChecklist(
+  checklist: ClosureChecklist
+): ClosureChecklist {
+  return {
+    ...checklist,
+    matoaClearance: {
+      ...checklist.matoaClearance,
+    },
+  };
+}
+
 export function createIncidentRecord(
   id: string,
   report: IncidentReport =
@@ -48,6 +66,8 @@ export function createIncidentRecord(
     updatedAt: now,
     report:
       cloneReport(report),
+    closureChecklist:
+      createDefaultClosureChecklist(),
   };
 }
 
@@ -77,6 +97,10 @@ export function upsertIncidentReport(
           updatedAt: now,
           report:
             cloneReport(report),
+          closureChecklist:
+            cloneClosureChecklist(
+              incident.closureChecklist
+            ),
         };
       }
     );
@@ -93,6 +117,28 @@ export function upsertIncidentReport(
     ),
     ...next,
   ];
+}
+
+export function setIncidentClosureChecklist(
+  incidents: IncidentRecord[],
+  incidentId: string,
+  checklist: ClosureChecklist,
+  now: string =
+    new Date().toISOString()
+): IncidentRecord[] {
+  return incidents.map(
+    (incident) =>
+      incident.id === incidentId
+        ? {
+            ...incident,
+            updatedAt: now,
+            closureChecklist:
+              cloneClosureChecklist(
+                checklist
+              ),
+          }
+        : incident
+  );
 }
 
 export function setIncidentArchived(
@@ -250,9 +296,9 @@ function isIncidentReport(
   );
 }
 
-function isIncidentRecord(
+function isIncidentRecordShape(
   value: unknown
-): value is IncidentRecord {
+): boolean {
   if (
     typeof value !== 'object' ||
     value === null
@@ -282,8 +328,52 @@ function isIncidentRecord(
     ) &&
     isIncidentReport(
       incident.report
+    ) &&
+    (
+      incident.closureChecklist ===
+        undefined ||
+      isClosureChecklist(
+        incident.closureChecklist
+      )
     )
   );
+}
+
+function normalizeIncidentRecord(
+  value: unknown
+): IncidentRecord {
+  const incident =
+    value as {
+      id: string;
+      status: IncidentLifecycle;
+      createdAt: string;
+      updatedAt: string;
+      report: IncidentReport;
+      closureChecklist?: unknown;
+    };
+
+  return {
+    id:
+      incident.id,
+    status:
+      incident.status,
+    createdAt:
+      incident.createdAt,
+    updatedAt:
+      incident.updatedAt,
+    report:
+      cloneReport(
+        incident.report
+      ),
+    closureChecklist:
+      isClosureChecklist(
+        incident.closureChecklist
+      )
+        ? cloneClosureChecklist(
+            incident.closureChecklist
+          )
+        : createDefaultClosureChecklist(),
+  };
 }
 
 export function serializeWorkspace(
@@ -330,21 +420,23 @@ export function deserializeWorkspace(
         snapshot.incidents
       ) ||
       !snapshot.incidents.every(
-        isIncidentRecord
+        isIncidentRecordShape
       )
     ) {
       return null;
     }
 
+    const incidents =
+      snapshot.incidents.map(
+        normalizeIncidentRecord
+      );
+
     if (
-      snapshot.incidents.length >
+      incidents.length >
         0 &&
-      !snapshot.incidents.some(
+      !incidents.some(
         (incident) =>
-          (
-            incident as
-              IncidentRecord
-          ).id ===
+          incident.id ===
           snapshot.activeIncidentId
       )
     ) {
@@ -355,9 +447,7 @@ export function deserializeWorkspace(
       version: 1,
       activeIncidentId:
         snapshot.activeIncidentId,
-      incidents:
-        snapshot.incidents as
-          IncidentRecord[],
+      incidents,
     };
   } catch {
     return null;
