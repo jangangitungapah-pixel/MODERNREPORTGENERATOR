@@ -5,15 +5,15 @@ import {
 } from '@/components/firebase-cloud-recovery';
 
 import {
-  FirebaseDestructiveGuard,
-} from '@/components/firebase-destructive-guard';
+  ReportOsCanonicalSync,
+} from '@/components/reportos-canonical-sync';
 
 import './globals.css';
 import './cloud-recovery.css';
 
 export const metadata: Metadata = {
-  title: 'ReportOS — Incident Report Workspace',
-  description: 'A premium incident reporting workspace for NOC operations.',
+  title: 'ReportOS — Incident Operations Platform',
+  description: 'A professional full-stack incident operations platform for NOC workflows.',
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <FirebaseDestructiveGuard />
+        <ReportOsCanonicalSync />
         <FirebaseCloudRecovery />
       </body>
     </html>
