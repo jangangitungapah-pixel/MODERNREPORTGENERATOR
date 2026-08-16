@@ -3,8 +3,10 @@ import {
 } from 'drizzle-kit';
 
 export default defineConfig({
-  schema:
+  schema: [
     './lib/server/db/schema.ts',
+    './lib/server/db/state-schema.ts',
+  ],
   out:
     './drizzle',
   dialect:
