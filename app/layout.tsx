@@ -15,6 +15,7 @@ import {
 import './globals.css';
 import './cloud-recovery.css';
 import './ui-overhaul.css';
+import './ui-overhaul-detail.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Operations Platform',
