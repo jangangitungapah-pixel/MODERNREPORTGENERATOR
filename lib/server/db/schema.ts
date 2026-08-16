@@ -1,698 +1,393 @@
 import {
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
-export const appUsers =
-  sqliteTable(
-    'app_users',
-    {
-      uid:
-        text('uid')
-          .primaryKey(),
-      email:
-        text('email'),
-      displayName:
-        text(
-          'display_name'
-        ),
-      role:
-        text(
-          'role',
-          {
-            enum: [
-              'operator',
-              'supervisor',
-              'admin',
-            ],
-          }
-        )
-          .notNull()
-          .default(
-            'operator'
-          ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-    }
-  );
+export const appUsers = sqliteTable(
+  'app_users',
+  {
+    uid: text('uid').primaryKey(),
+    email: text('email'),
+    displayName: text('display_name'),
+    role: text('role', {
+      enum: [
+        'operator',
+        'supervisor',
+        'admin',
+      ],
+    })
+      .notNull()
+      .default('operator'),
+    createdAt: integer('created_at')
+      .notNull(),
+    updatedAt: integer('updated_at')
+      .notNull(),
+  }
+);
 
-export const workspaces =
-  sqliteTable(
-    'workspaces',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      ownerUid:
-        text(
-          'owner_uid'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      name:
-        text('name')
-          .notNull(),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-    },
-    (table) => [
-      index(
-        'idx_workspaces_owner'
-      ).on(
-        table.ownerUid
-      ),
-    ]
-  );
+export const workspaces = sqliteTable(
+  'workspaces',
+  {
+    id: text('id').primaryKey(),
+    ownerUid: text('owner_uid')
+      .notNull()
+      .references(() => appUsers.uid, {
+        onDelete: 'cascade',
+      }),
+    name: text('name').notNull(),
+    createdAt: integer('created_at')
+      .notNull(),
+    updatedAt: integer('updated_at')
+      .notNull(),
+  },
+  (table) => [
+    index('idx_workspaces_owner').on(
+      table.ownerUid
+    ),
+  ]
+);
 
 export const workspaceMembers =
   sqliteTable(
     'workspace_members',
     {
-      workspaceId:
-        text(
-          'workspace_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              workspaces.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      uid:
-        text('uid')
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      role:
-        text(
-          'role',
-          {
-            enum: [
-              'operator',
-              'supervisor',
-              'admin',
-            ],
-          }
-        )
-          .notNull()
-          .default(
-            'operator'
-          ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
+      workspaceId: text('workspace_id')
+        .notNull()
+        .references(() => workspaces.id, {
+          onDelete: 'cascade',
+        }),
+      uid: text('uid')
+        .notNull()
+        .references(() => appUsers.uid, {
+          onDelete: 'cascade',
+        }),
+      role: text('role', {
+        enum: [
+          'operator',
+          'supervisor',
+          'admin',
+        ],
+      })
+        .notNull()
+        .default('operator'),
+      createdAt: integer('created_at')
+        .notNull(),
     },
     (table) => [
-      uniqueIndex(
-        'uq_workspace_member'
-      ).on(
+      uniqueIndex('uq_workspace_member').on(
         table.workspaceId,
         table.uid
       ),
-      index(
-        'idx_workspace_member_uid'
-      ).on(
+      index('idx_workspace_member_uid').on(
         table.uid
       ),
     ]
   );
 
-export const incidents =
-  sqliteTable(
-    'incidents',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      workspaceId:
-        text(
-          'workspace_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              workspaces.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      lifecycle:
-        text(
-          'lifecycle',
-          {
-            enum: [
-              'active',
-              'archived',
-            ],
-          }
-        )
-          .notNull()
-          .default(
-            'active'
-          ),
-      region:
-        text('region')
-          .notNull()
-          .default(''),
-      summary:
-        text('summary')
-          .notNull()
-          .default(''),
-      ticket:
-        text('ticket')
-          .notNull()
-          .default(''),
-      occurTime:
-        text(
-          'occur_time'
-        )
-          .notNull()
-          .default(''),
-      dispatchTime:
-        text(
-          'dispatch_time'
-        )
-          .notNull()
-          .default(''),
-      pic:
-        text('pic')
-          .notNull()
-          .default(''),
-      rootcause:
-        text(
-          'rootcause'
-        )
-          .notNull()
-          .default(''),
-      cutPoint:
-        text(
-          'cut_point'
-        )
-          .notNull()
-          .default(''),
-      primaryMarker:
-        text(
-          'primary_marker'
-        ),
-      statusTag:
-        text(
-          'status_tag'
-        ),
-      revision:
-        integer(
-          'revision'
-        )
-          .notNull()
-          .default(1),
-      createdBy:
-        text(
-          'created_by'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid
-          ),
-      updatedBy:
-        text(
-          'updated_by'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid
-          ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-      deletedAt:
-        integer(
-          'deleted_at'
-        ),
-    },
-    (table) => [
-      index(
-        'idx_incidents_workspace_updated'
-      ).on(
-        table.workspaceId,
-        table.updatedAt
-      ),
-      index(
-        'idx_incidents_ticket'
-      ).on(
-        table.ticket
-      ),
-      index(
-        'idx_incidents_lifecycle'
-      ).on(
-        table.workspaceId,
-        table.lifecycle
-      ),
-    ]
-  );
+export const incidents = sqliteTable(
+  'incidents',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: 'cascade',
+      }),
+    lifecycle: text('lifecycle', {
+      enum: ['active', 'archived'],
+    })
+      .notNull()
+      .default('active'),
+    region: text('region')
+      .notNull()
+      .default(''),
+    summary: text('summary')
+      .notNull()
+      .default(''),
+    ticket: text('ticket')
+      .notNull()
+      .default(''),
+    occurTime: text('occur_time')
+      .notNull()
+      .default(''),
+    dispatchTime: text('dispatch_time')
+      .notNull()
+      .default(''),
+    pic: text('pic')
+      .notNull()
+      .default(''),
+    rootcause: text('rootcause')
+      .notNull()
+      .default(''),
+    cutPoint: text('cut_point')
+      .notNull()
+      .default(''),
+    primaryMarker: text('primary_marker'),
+    statusTag: text('status_tag'),
+    revision: integer('revision')
+      .notNull()
+      .default(1),
+    createdBy: text('created_by')
+      .notNull()
+      .references(() => appUsers.uid),
+    updatedBy: text('updated_by')
+      .notNull()
+      .references(() => appUsers.uid),
+    createdAt: integer('created_at')
+      .notNull(),
+    updatedAt: integer('updated_at')
+      .notNull(),
+    deletedAt: integer('deleted_at'),
+  },
+  (table) => [
+    index('idx_incidents_workspace_updated').on(
+      table.workspaceId,
+      table.updatedAt
+    ),
+    index('idx_incidents_ticket').on(
+      table.ticket
+    ),
+    index('idx_incidents_lifecycle').on(
+      table.workspaceId,
+      table.lifecycle
+    ),
+  ]
+);
 
-export const progressEntries =
-  sqliteTable(
-    'progress_entries',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      incidentId:
-        text(
-          'incident_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              incidents.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      date:
-        text('date'),
-      time:
-        text('time')
-          .notNull(),
-      text:
-        text('text')
-          .notNull(),
-      kind:
-        text('kind'),
-      position:
-        integer(
-          'position'
-        )
-          .notNull()
-          .default(0),
-      createdBy:
-        text(
-          'created_by'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid
-          ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-    },
-    (table) => [
-      index(
-        'idx_progress_incident_position'
-      ).on(
+export const progressEntries = sqliteTable(
+  'progress_entries',
+  {
+    id: text('id').notNull(),
+    incidentId: text('incident_id')
+      .notNull()
+      .references(() => incidents.id, {
+        onDelete: 'cascade',
+      }),
+    date: text('date'),
+    time: text('time').notNull(),
+    text: text('text').notNull(),
+    kind: text('kind'),
+    position: integer('position')
+      .notNull()
+      .default(0),
+    createdBy: text('created_by')
+      .notNull()
+      .references(() => appUsers.uid),
+    createdAt: integer('created_at')
+      .notNull(),
+    updatedAt: integer('updated_at')
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
         table.incidentId,
-        table.position
-      ),
-    ]
-  );
+        table.id,
+      ],
+    }),
+    index('idx_progress_incident_position').on(
+      table.incidentId,
+      table.position
+    ),
+  ]
+);
 
-export const impactLinks =
-  sqliteTable(
-    'impact_links',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      incidentId:
-        text(
-          'incident_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              incidents.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      marker:
-        text('marker')
-          .notNull()
-          .default(
-            'unknown'
-          ),
-      region:
-        text('region')
-          .notNull()
-          .default(''),
-      statusTag:
-        text(
-          'status_tag'
-        )
-          .notNull()
-          .default(''),
-      summary:
-        text('summary')
-          .notNull()
-          .default(''),
-      ticket:
-        text('ticket')
-          .notNull()
-          .default(''),
-      position:
-        integer(
-          'position'
-        )
-          .notNull()
-          .default(0),
-    },
-    (table) => [
-      index(
-        'idx_impact_incident_position'
-      ).on(
+export const impactLinks = sqliteTable(
+  'impact_links',
+  {
+    id: text('id').notNull(),
+    incidentId: text('incident_id')
+      .notNull()
+      .references(() => incidents.id, {
+        onDelete: 'cascade',
+      }),
+    marker: text('marker')
+      .notNull()
+      .default('unknown'),
+    region: text('region')
+      .notNull()
+      .default(''),
+    statusTag: text('status_tag')
+      .notNull()
+      .default(''),
+    summary: text('summary')
+      .notNull()
+      .default(''),
+    ticket: text('ticket')
+      .notNull()
+      .default(''),
+    position: integer('position')
+      .notNull()
+      .default(0),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
         table.incidentId,
-        table.position
-      ),
-    ]
-  );
+        table.id,
+      ],
+    }),
+    index('idx_impact_incident_position').on(
+      table.incidentId,
+      table.position
+    ),
+  ]
+);
 
-export const cutPoints =
-  sqliteTable(
-    'cut_points',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      incidentId:
-        text(
-          'incident_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              incidents.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      label:
-        text('label')
-          .notNull(),
-      rootcause:
-        text(
-          'rootcause'
-        )
-          .notNull()
-          .default(''),
-      cutPoint:
-        text(
-          'cut_point'
-        )
-          .notNull()
-          .default(''),
-      marker:
-        text('marker')
-          .notNull()
-          .default(
-            'unknown'
-          ),
-      position:
-        integer(
-          'position'
-        )
-          .notNull()
-          .default(0),
-    },
-    (table) => [
-      index(
-        'idx_cut_point_incident_position'
-      ).on(
+export const cutPoints = sqliteTable(
+  'cut_points',
+  {
+    id: text('id').notNull(),
+    incidentId: text('incident_id')
+      .notNull()
+      .references(() => incidents.id, {
+        onDelete: 'cascade',
+      }),
+    label: text('label').notNull(),
+    rootcause: text('rootcause')
+      .notNull()
+      .default(''),
+    cutPoint: text('cut_point')
+      .notNull()
+      .default(''),
+    marker: text('marker')
+      .notNull()
+      .default('unknown'),
+    position: integer('position')
+      .notNull()
+      .default(0),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
         table.incidentId,
-        table.position
-      ),
-    ]
-  );
+        table.id,
+      ],
+    }),
+    index('idx_cut_point_incident_position').on(
+      table.incidentId,
+      table.position
+    ),
+  ]
+);
 
-export const closureStates =
-  sqliteTable(
-    'closure_states',
-    {
-      incidentId:
-        text(
-          'incident_id'
-        )
-          .primaryKey()
-          .references(
-            () =>
-              incidents.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      statementUpWag:
-        integer(
-          'statement_up_wag',
-          {
-            mode: 'boolean',
-          }
-        )
-          .notNull()
-          .default(false),
-      matoaStatusTt:
-        integer(
-          'matoa_status_tt',
-          {
-            mode: 'boolean',
-          }
-        )
-          .notNull()
-          .default(false),
-      matoaEventAndPhoto:
-        integer(
-          'matoa_event_and_photo',
-          {
-            mode: 'boolean',
-          }
-        )
-          .notNull()
-          .default(false),
-      matoaRfo:
-        integer(
-          'matoa_rfo',
-          {
-            mode: 'boolean',
-          }
-        )
-          .notNull()
-          .default(false),
-      sentClosedEmail:
-        integer(
-          'sent_closed_email',
-          {
-            mode: 'boolean',
-          }
-        )
-          .notNull()
-          .default(false),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-    }
-  );
+export const closureStates = sqliteTable(
+  'closure_states',
+  {
+    incidentId: text('incident_id')
+      .primaryKey()
+      .references(() => incidents.id, {
+        onDelete: 'cascade',
+      }),
+    statementUpWag: integer(
+      'statement_up_wag',
+      { mode: 'boolean' }
+    )
+      .notNull()
+      .default(false),
+    matoaStatusTt: integer(
+      'matoa_status_tt',
+      { mode: 'boolean' }
+    )
+      .notNull()
+      .default(false),
+    matoaEventAndPhoto: integer(
+      'matoa_event_and_photo',
+      { mode: 'boolean' }
+    )
+      .notNull()
+      .default(false),
+    matoaRfo: integer(
+      'matoa_rfo',
+      { mode: 'boolean' }
+    )
+      .notNull()
+      .default(false),
+    sentClosedEmail: integer(
+      'sent_closed_email',
+      { mode: 'boolean' }
+    )
+      .notNull()
+      .default(false),
+    updatedAt: integer('updated_at')
+      .notNull(),
+  }
+);
 
-export const recoverySnapshots =
-  sqliteTable(
-    'recovery_snapshots',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      workspaceId:
-        text(
-          'workspace_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              workspaces.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      incidentId:
-        text(
-          'incident_id'
-        ),
-      reason:
-        text('reason')
-          .notNull(),
-      payloadJson:
-        text(
-          'payload_json'
-        )
-          .notNull(),
-      createdBy:
-        text(
-          'created_by'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid
-          ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-      expiresAt:
-        integer(
-          'expires_at'
-        ),
-    },
-    (table) => [
-      index(
-        'idx_recovery_workspace_created'
-      ).on(
-        table.workspaceId,
-        table.createdAt
-      ),
-    ]
-  );
+export const recoverySnapshots = sqliteTable(
+  'recovery_snapshots',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: 'cascade',
+      }),
+    incidentId: text('incident_id'),
+    reason: text('reason').notNull(),
+    payloadJson: text('payload_json')
+      .notNull(),
+    createdBy: text('created_by')
+      .notNull()
+      .references(() => appUsers.uid),
+    createdAt: integer('created_at')
+      .notNull(),
+    expiresAt: integer('expires_at'),
+  },
+  (table) => [
+    index('idx_recovery_workspace_created').on(
+      table.workspaceId,
+      table.createdAt
+    ),
+  ]
+);
 
-export const auditEvents =
-  sqliteTable(
-    'audit_events',
-    {
-      id:
-        text('id')
-          .primaryKey(),
-      workspaceId:
-        text(
-          'workspace_id'
-        )
-          .notNull()
-          .references(
-            () =>
-              workspaces.id,
-            {
-              onDelete:
-                'cascade',
-            }
-          ),
-      incidentId:
-        text(
-          'incident_id'
-        ),
-      actorUid:
-        text(
-          'actor_uid'
-        )
-          .notNull()
-          .references(
-            () =>
-              appUsers.uid
-          ),
-      action:
-        text('action')
-          .notNull(),
-      entityType:
-        text(
-          'entity_type'
-        )
-          .notNull(),
-      entityId:
-        text(
-          'entity_id'
-        )
-          .notNull(),
-      beforeJson:
-        text(
-          'before_json'
-        ),
-      afterJson:
-        text(
-          'after_json'
-        ),
-      requestId:
-        text(
-          'request_id'
-        ),
-      createdAt:
-        integer(
-          'created_at'
-        ).notNull(),
-    },
-    (table) => [
-      index(
-        'idx_audit_workspace_created'
-      ).on(
-        table.workspaceId,
-        table.createdAt
-      ),
-      index(
-        'idx_audit_incident_created'
-      ).on(
-        table.incidentId,
-        table.createdAt
-      ),
-    ]
-  );
+export const auditEvents = sqliteTable(
+  'audit_events',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: 'cascade',
+      }),
+    incidentId: text('incident_id'),
+    actorUid: text('actor_uid')
+      .notNull()
+      .references(() => appUsers.uid),
+    action: text('action').notNull(),
+    entityType: text('entity_type')
+      .notNull(),
+    entityId: text('entity_id')
+      .notNull(),
+    beforeJson: text('before_json'),
+    afterJson: text('after_json'),
+    requestId: text('request_id'),
+    createdAt: integer('created_at')
+      .notNull(),
+  },
+  (table) => [
+    index('idx_audit_workspace_created').on(
+      table.workspaceId,
+      table.createdAt
+    ),
+    index('idx_audit_incident_created').on(
+      table.incidentId,
+      table.createdAt
+    ),
+  ]
+);
 
-export const syncMetadata =
-  sqliteTable(
-    'sync_metadata',
-    {
-      key:
-        text('key')
-          .primaryKey(),
-      value:
-        text('value')
-          .notNull(),
-      updatedAt:
-        integer(
-          'updated_at'
-        ).notNull(),
-    }
-  );
+export const syncMetadata = sqliteTable(
+  'sync_metadata',
+  {
+    key: text('key').primaryKey(),
+    value: text('value').notNull(),
+    updatedAt: integer('updated_at')
+      .notNull(),
+  }
+);
