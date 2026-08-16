@@ -13,6 +13,7 @@ import {
   createIncidentRecord,
   deserializeWorkspace,
   filterIncidents,
+  removeIncident,
   serializeWorkspace,
   setIncidentArchived,
   setIncidentClosureChecklist,
@@ -84,6 +85,34 @@ describe('incident workspace', () => {
           item.id === 'two'
       )?.report.ticket
     ).toBe('INC-NEW');
+  });
+
+  it('removes exactly one incident without mutating the remaining records', () => {
+    const first =
+      createIncidentRecord(
+        'first',
+        SAMPLE_REPORT
+      );
+
+    const second =
+      createIncidentRecord(
+        'second',
+        EMPTY_REPORT
+      );
+
+    const next =
+      removeIncident(
+        [first, second],
+        'first'
+      );
+
+    expect(next).toHaveLength(1);
+    expect(next[0].id).toBe(
+      'second'
+    );
+    expect(next[0]).toBe(
+      second
+    );
   });
 
   it('archives and restores an incident', () => {

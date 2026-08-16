@@ -174,6 +174,16 @@ export function setIncidentArchived(
   );
 }
 
+export function removeIncident(
+  incidents: IncidentRecord[],
+  incidentId: string
+): IncidentRecord[] {
+  return incidents.filter(
+    (incident) =>
+      incident.id !== incidentId
+  );
+}
+
 export function incidentSearchText(
   incident: IncidentRecord
 ): string {

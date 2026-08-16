@@ -443,6 +443,37 @@ export async function syncCloudWorkspace({
     }
   }
 
+  const currentIncidentIds =
+    new Set(
+      workspace.incidents.map(
+        (incident) =>
+          incident.id
+      )
+    );
+
+  const deletedIncidents =
+    previous?.incidents.filter(
+      (incident) =>
+        !currentIncidentIds.has(
+          incident.id
+        )
+    ) ?? [];
+
+  for (
+    const deletedIncident of
+    deletedIncidents
+  ) {
+    snapshotCreated =
+      (
+        await createIncidentSnapshot(
+          uid,
+          deletedIncident,
+          'Safety snapshot before TT deletion'
+        )
+      ) ||
+      snapshotCreated;
+  }
+
   const batch =
     writeBatch(
       firestoreDb
@@ -506,6 +537,21 @@ export async function syncCloudWorkspace({
       {
         merge: true,
       }
+    );
+  }
+
+  for (
+    const deletedIncident of
+    deletedIncidents
+  ) {
+    batch.delete(
+      doc(
+        firestoreDb,
+        'users',
+        uid,
+        'incidents',
+        deletedIncident.id
+      )
     );
   }
 

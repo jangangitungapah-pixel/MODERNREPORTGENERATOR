@@ -12650,3 +12650,225 @@ span + span::before {
     max-width: 150px;
   }
 }
+
+
+/* SAFE DELETE TT */
+
+.vault-delete-action {
+  display: inline-flex;
+  min-height: 31px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border:
+    1px solid
+    rgba(190, 78, 78, .09);
+  border-radius: 8px;
+  padding: 0 9px;
+  color: #a26464;
+  background:
+    rgba(190, 78, 78, .04);
+  font: inherit;
+  font-size: 6.2px;
+  font-weight: 740;
+  cursor: pointer;
+}
+
+.vault-delete-action:hover {
+  border-color:
+    rgba(190, 78, 78, .18);
+  background:
+    rgba(190, 78, 78, .075);
+}
+
+.delete-tt-overlay {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  backdrop-filter:
+    blur(12px);
+  background:
+    rgba(38, 42, 57, .18);
+}
+
+.delete-tt-dialog {
+  width:
+    min(
+      430px,
+      100%
+    );
+  border:
+    1px solid
+    rgba(190, 78, 78, .09);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow:
+    0 24px 70px
+    rgba(42, 38, 59, .18);
+  background:
+    rgba(255, 255, 255, .93);
+}
+
+.delete-tt-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 12px;
+  color: #a55e5e;
+  background:
+    rgba(190, 78, 78, .07);
+}
+
+.delete-tt-copy {
+  margin-top: 13px;
+}
+
+.delete-tt-copy > span {
+  color: #b16a6a;
+  font-size: 5.7px;
+  font-weight: 870;
+  letter-spacing: .1em;
+}
+
+.delete-tt-copy h3 {
+  margin: 5px 0 0;
+  color: #596176;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+.delete-tt-copy p {
+  margin: 7px 0 0;
+  color: #9299a9;
+  font-size: 6.6px;
+  line-height: 1.55;
+}
+
+.delete-tt-target {
+  display: grid;
+  gap: 3px;
+  margin-top: 13px;
+  border:
+    1px solid
+    rgba(43, 49, 74, .06);
+  border-radius: 11px;
+  padding: 10px 11px;
+  background:
+    rgba(248, 249, 252, .72);
+}
+
+.delete-tt-target > span {
+  color: #a0a6b3;
+  font-size: 5.4px;
+  font-weight: 820;
+  letter-spacing: .07em;
+}
+
+.delete-tt-target strong {
+  color: #626a7e;
+  font-size: 8px;
+}
+
+.delete-tt-target small {
+  color: #9ba1af;
+  font-size: 6px;
+}
+
+.delete-tt-current-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 9px;
+  border:
+    1px solid
+    rgba(212, 150, 65, .10);
+  border-radius: 10px;
+  padding: 8px 9px;
+  color: #8d6d42;
+  background:
+    rgba(212, 150, 65, .055);
+  font-size: 6.2px;
+  line-height: 1.45;
+}
+
+.delete-tt-current-warning svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.delete-tt-actions {
+  display: grid;
+  grid-template-columns:
+    1fr
+    1fr;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.delete-tt-actions button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 6.5px;
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.delete-tt-cancel {
+  border:
+    1px solid
+    rgba(43, 49, 74, .07);
+  color: #747c8e;
+  background:
+    rgba(247, 248, 251, .8);
+}
+
+.delete-tt-confirm {
+  border:
+    1px solid
+    rgba(184, 70, 70, .12);
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #b96868,
+      #a95656
+    );
+  box-shadow:
+    0 8px 18px
+    rgba(164, 75, 75, .14);
+}
+
+@media (max-width: 700px) {
+  .vault-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .vault-delete-action,
+  .vault-secondary-action,
+  .vault-open-action {
+    flex: 1 1 auto;
+  }
+
+  .delete-tt-overlay {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .delete-tt-dialog {
+    border-radius:
+      18px
+      18px
+      14px
+      14px;
+  }
+}

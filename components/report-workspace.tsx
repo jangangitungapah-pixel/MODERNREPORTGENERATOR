@@ -68,6 +68,7 @@ import {
   createIncidentRecord,
   deserializeWorkspace,
   filterIncidents,
+  removeIncident,
   serializeWorkspace,
   setIncidentArchived,
   sortIncidentsByUpdatedAt,
@@ -466,6 +467,17 @@ export function ReportWorkspace() {
     setActiveIncidentId,
   ] = useState('');
 
+  const [
+    archiveQuery,
+    setArchiveQuery,
+  ] = useState('');
+
+  const [
+    deleteIncidentTargetId,
+    setDeleteIncidentTargetId,
+  ] = useState<string | null>(
+    null
+  );
   const [
     archiveQuery,
     setArchiveQuery,
@@ -926,6 +938,15 @@ export function ReportWorkspace() {
         activeIncidentId
     );
 
+  const deleteIncidentTarget =
+    deleteIncidentTargetId
+      ? incidentRecordsForView.find(
+          (incident) =>
+            incident.id ===
+            deleteIncidentTargetId
+        )
+      : undefined;
+
   const activeClosureChecklist =
     activeIncident?.closureChecklist ??
     createDefaultClosureChecklist();
@@ -1126,6 +1147,82 @@ export function ReportWorkspace() {
     cancelEditProgress();
     setWorkspaceMode('compose');
     setMobilePane('compose');
+  }
+
+  function requestDeleteIncident(
+    incidentId: string
+  ) {
+    setDeleteIncidentTargetId(
+      incidentId
+    );
+  }
+
+  function cancelDeleteIncident() {
+    setDeleteIncidentTargetId(
+      null
+    );
+  }
+
+  function confirmDeleteIncident() {
+    if (
+      !deleteIncidentTargetId
+    ) {
+      return;
+    }
+
+    const current =
+      snapshotCurrentIncident();
+
+    let remaining =
+      removeIncident(
+        current,
+        deleteIncidentTargetId
+      );
+
+    const deletingActive =
+      deleteIncidentTargetId ===
+      activeIncidentId;
+
+    if (
+      remaining.length === 0
+    ) {
+      const replacement =
+        createIncidentRecord(
+          createClientIncidentId(),
+          EMPTY_REPORT
+        );
+
+      remaining = [
+        replacement,
+      ];
+    }
+
+    setIncidentRecords(
+      remaining
+    );
+
+    if (deletingActive) {
+      const nextActive =
+        remaining[0];
+
+      setActiveIncidentId(
+        nextActive.id
+      );
+
+      setReport(
+        nextActive.report
+      );
+
+      setComposerTimestampNow();
+      setEntryText('');
+      setRawImport('');
+      setImportFeedback(null);
+      cancelEditProgress();
+    }
+
+    setDeleteIncidentTargetId(
+      null
+    );
   }
 
   function toggleIncidentArchive(
@@ -3063,6 +3160,22 @@ export function ReportWorkspace() {
                             </div>
 
                             <div className="vault-card-actions">
+                              <button
+                                className="vault-delete-action"
+                                type="button"
+                                title="Delete TT"
+                                onClick={() =>
+                                  requestDeleteIncident(
+                                    incident.id
+                                  )
+                                }
+                              >
+                                <Trash2
+                                  size={14}
+                                />
+                                Delete TT
+                              </button>
+
                               <button
                                 className="vault-secondary-action"
                                 type="button"
@@ -5496,6 +5609,154 @@ export function ReportWorkspace() {
             </>
           )}
         </section>
+
+        <AnimatePresence>
+          {deleteIncidentTarget ? (
+            <motion.div
+              className="delete-tt-overlay"
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              role="presentation"
+              onMouseDown={(
+                event
+              ) => {
+                if (
+                  event.target ===
+                  event.currentTarget
+                ) {
+                  cancelDeleteIncident();
+                }
+              }}
+            >
+              <motion.section
+                className="delete-tt-dialog glass-panel"
+                initial={{
+                  opacity: 0,
+                  y: 10,
+                  scale: 0.98,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }}
+                exit={{
+                  opacity: 0,
+                  y: 6,
+                  scale: 0.985,
+                }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-tt-title"
+              >
+                <div className="delete-tt-icon">
+                  <Trash2
+                    size={19}
+                  />
+                </div>
+
+                <div className="delete-tt-copy">
+                  <span>
+                    DELETE TROUBLE TICKET
+                  </span>
+
+                  <h3 id="delete-tt-title">
+                    Remove this TT from
+                    the workspace?
+                  </h3>
+
+                  <p>
+                    The TT disappears
+                    from Operations and
+                    Incident Vault.
+                    Firestore sync keeps
+                    a recovery snapshot
+                    before removing its
+                    cloud incident copy.
+                  </p>
+                </div>
+
+                <div className="delete-tt-target">
+                  <span>
+                    TROUBLE TICKET
+                  </span>
+
+                  <strong>
+                    {
+                      deleteIncidentTarget
+                        .report.ticket ||
+                      'Untitled incident'
+                    }
+                  </strong>
+
+                  <small>
+                    {
+                      deleteIncidentTarget
+                        .report.region ||
+                      'UNASSIGNED'
+                    }
+                    {' · '}
+                    {
+                      deleteIncidentTarget
+                        .report.progress
+                        .length
+                    } updates
+                  </small>
+                </div>
+
+                {deleteIncidentTarget.id ===
+                activeIncidentId ? (
+                  <div className="delete-tt-current-warning">
+                    <AlertTriangle
+                      size={14}
+                    />
+
+                    <span>
+                      This TT is currently
+                      open. ReportOS will
+                      switch to another
+                      saved draft, or create
+                      a blank draft when
+                      this is the last TT.
+                    </span>
+                  </div>
+                ) : null}
+
+                <div className="delete-tt-actions">
+                  <button
+                    className="delete-tt-cancel"
+                    type="button"
+                    onClick={
+                      cancelDeleteIncident
+                    }
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="delete-tt-confirm"
+                    type="button"
+                    onClick={
+                      confirmDeleteIncident
+                    }
+                  >
+                    <Trash2
+                      size={14}
+                    />
+                    Delete TT
+                  </button>
+                </div>
+              </motion.section>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <nav
           className="bottom-nav glass-panel"
