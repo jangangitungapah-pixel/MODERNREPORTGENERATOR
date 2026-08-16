@@ -11,6 +11,10 @@ import {
 } from '@/lib/server/auth/firebase-rest-auth';
 
 import {
+  requireWorkspaceRole,
+} from '@/lib/server/auth/permissions';
+
+import {
   reportOsDb,
 } from '@/lib/server/db/d1';
 
@@ -137,6 +141,11 @@ export async function POST(
       await ensureWorkspaceContext(
         principal
       );
+
+    requireWorkspaceRole(
+      context.role,
+      'supervisor'
+    );
 
     const snapshot =
       await reportOsDb()
