@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit -p tsconfig.build.json",
     "test": "vitest run",
     "firebase:emulators": "firebase emulators:start",
     "firebase:deploy": "firebase deploy --only auth,firestore --project reportgeneratornoc",
