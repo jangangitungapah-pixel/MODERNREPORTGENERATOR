@@ -12565,3 +12565,88 @@ span + span::before {
     width: 100%;
   }
 }
+
+
+/* DRAFT SAFETY SAVED STATE */
+
+.save-chip {
+  min-width: 166px;
+}
+
+.save-chip-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.save-chip-copy strong {
+  color: #586176;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .07em;
+}
+
+.save-chip-copy small {
+  overflow: hidden;
+  color: #959cad;
+  font-size: 5.9px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-chip[data-state="saving"] .save-dot {
+  background: #d7a14c;
+  box-shadow:
+    0 0 0 4px
+    rgba(215, 161, 76, .11);
+  animation:
+    draft-save-pulse
+    1.05s
+    ease-in-out
+    infinite;
+}
+
+.save-chip[data-state="opening"] .save-dot {
+  background: #8d82d8;
+  box-shadow:
+    0 0 0 4px
+    rgba(141, 130, 216, .10);
+}
+
+.save-chip[data-state="saved"] {
+  border-color:
+    rgba(48, 189, 133, .10);
+  background:
+    rgba(248, 255, 252, .72);
+}
+
+.save-chip[data-state="saved"]
+.save-chip-copy strong {
+  color: #28795d;
+}
+
+@keyframes draft-save-pulse {
+  0%,
+  100% {
+    opacity: .55;
+    transform: scale(.88);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 700px) {
+  .save-chip {
+    min-width: 0;
+    flex: 1 1 130px;
+  }
+
+  .save-chip-copy small {
+    max-width: 150px;
+  }
+}

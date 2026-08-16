@@ -25,7 +25,6 @@ import {
   Network,
   Pencil,
   Plus,
-  RotateCcw,
   Search,
   ShieldCheck,
   Sparkles,
@@ -48,7 +47,6 @@ import {
 
 import {
   EMPTY_REPORT,
-  SAMPLE_REPORT,
   completionScore,
   currentProgressStamp,
   detectProgressKind,
@@ -415,7 +413,7 @@ function AppMark() {
 
 export function ReportWorkspace() {
   const [report, setReport] =
-    useState<IncidentReport>(SAMPLE_REPORT);
+    useState<IncidentReport>(EMPTY_REPORT);
 
   const [hydrated, setHydrated] =
     useState(false);
@@ -537,6 +535,40 @@ export function ReportWorkspace() {
     setEditingProgressText,
   ] = useState('');
 
+  const [
+    lastSavedFingerprint,
+    setLastSavedFingerprint,
+  ] = useState('');
+
+  const [
+    lastSavedAt,
+    setLastSavedAt,
+  ] = useState('');
+
+  const currentSaveFingerprint =
+    useMemo(
+      () =>
+        JSON.stringify({
+          activeIncidentId,
+          report,
+          incidents:
+            incidentRecords,
+        }),
+      [
+        activeIncidentId,
+        incidentRecords,
+        report,
+      ]
+    );
+
+  const localSaveState =
+    !hydrated
+      ? 'opening'
+      : lastSavedFingerprint ===
+          currentSaveFingerprint
+        ? 'saved'
+        : 'saving';
+
   useEffect(() => {
     let cancelled = false;
 
@@ -582,7 +614,7 @@ export function ReportWorkspace() {
             );
 
           let initialReport =
-            SAMPLE_REPORT;
+            EMPTY_REPORT;
 
           if (savedDraft) {
             try {
@@ -592,7 +624,7 @@ export function ReportWorkspace() {
                 ) as IncidentReport;
             } catch {
               initialReport =
-                SAMPLE_REPORT;
+                EMPTY_REPORT;
             }
           }
 
@@ -618,7 +650,7 @@ export function ReportWorkspace() {
         const incident =
           createIncidentRecord(
             createClientIncidentId(),
-            SAMPLE_REPORT
+            EMPTY_REPORT
           );
 
         setIncidentRecords([
@@ -683,8 +715,30 @@ export function ReportWorkspace() {
       STORAGE_KEY,
       JSON.stringify(report)
     );
+
+    let cancelled =
+      false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setLastSavedFingerprint(
+        currentSaveFingerprint
+      );
+
+      setLastSavedAt(
+        now
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     activeIncidentId,
+    currentSaveFingerprint,
     hydrated,
     incidentRecords,
     report,
@@ -1750,18 +1804,6 @@ export function ReportWorkspace() {
     );
   }
 
-  function resetToSample() {
-    setReport(SAMPLE_REPORT);
-    cancelEditProgress();
-  }
-
-  function clearReport() {
-    setReport(EMPTY_REPORT);
-    setComposerTimestampNow();
-    setEntryText('');
-    cancelEditProgress();
-  }
-
   async function pasteFromClipboard() {
     try {
       const text =
@@ -2039,11 +2081,11 @@ export function ReportWorkspace() {
 
             <div className="sidebar-foot-copy">
               <strong>
-                Local draft active
+                Draft vault active
               </strong>
 
               <span>
-                Autosaved on this device
+                New drafts never overwrite current work
               </span>
             </div>
           </div>
@@ -2103,25 +2145,55 @@ export function ReportWorkspace() {
                 <FilePlus2
                   size={16}
                 />
-                New incident
+                New draft
               </button>
 
-              <div className="save-chip">
+              <div
+                className="save-chip"
+                data-state={
+                  localSaveState
+                }
+                role="status"
+                aria-live="polite"
+                title={
+                  localSaveState ===
+                  'saved'
+                    ? 'Current draft is saved in this browser.'
+                    : localSaveState ===
+                        'saving'
+                      ? 'Writing the latest draft changes.'
+                      : 'Opening saved workspace.'
+                }
+              >
                 <span className="save-dot" />
 
-                {hydrated
-                  ? 'Draft synced locally'
-                  : 'Opening workspace'}
-              </div>
+                <span className="save-chip-copy">
+                  <strong>
+                    {localSaveState ===
+                    'saved'
+                      ? 'SAVED'
+                      : localSaveState ===
+                          'saving'
+                        ? 'SAVING…'
+                        : 'OPENING'}
+                  </strong>
 
-              <button
-                className="icon-button"
-                type="button"
-                title="Load sample"
-                onClick={resetToSample}
-              >
-                <RotateCcw size={17} />
-              </button>
+                  <small>
+                    {localSaveState ===
+                    'saved'
+                      ? lastSavedAt
+                        ? 'Local · ' +
+                          formatIncidentTimestamp(
+                            lastSavedAt
+                          )
+                        : 'Saved locally'
+                      : localSaveState ===
+                          'saving'
+                        ? 'Writing latest changes'
+                        : 'Loading draft vault'}
+                  </small>
+                </span>
+              </div>
             </div>
           </header>
 
@@ -2853,7 +2925,7 @@ export function ReportWorkspace() {
                   <FilePlus2
                     size={15}
                   />
-                  Create incident
+                  New blank draft
                 </button>
               </div>
 
@@ -5075,7 +5147,13 @@ export function ReportWorkspace() {
                     </span>
 
                     <strong>
-                      Local
+                      {localSaveState ===
+                      'saved'
+                        ? 'Saved'
+                        : localSaveState ===
+                            'saving'
+                          ? 'Saving'
+                          : 'Opening'}
                     </strong>
                   </div>
                 </div>
@@ -5100,29 +5178,6 @@ export function ReportWorkspace() {
                   <kbd>CTRL C</kbd>
                 </button>
 
-                <div className="preview-secondary-actions">
-                  <button
-                    type="button"
-                    onClick={
-                      resetToSample
-                    }
-                  >
-                    <RotateCcw
-                      size={15}
-                    />
-                    Restore sample
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={
-                      clearReport
-                    }
-                  >
-                    <Trash2 size={15} />
-                    Clear draft
-                  </button>
-                </div>
               </div>
 
               <section className="delivery-console-card glass-panel">
