@@ -224,10 +224,7 @@ export function FirebaseCloudRecovery() {
 
   useEffect(() => {
     let cancelled = false;
-    let timer:
-      ReturnType<
-        typeof window.setInterval
-      > | null = null;
+    let timer: number | null = null;
 
     async function refreshSnapshots(
       userId: string
@@ -438,7 +435,7 @@ export function FirebaseCloudRecovery() {
     return () => {
       cancelled = true;
 
-      if (timer) {
+      if (timer !== null) {
         window.clearInterval(timer);
       }
     };
