@@ -22,6 +22,7 @@ import './ui-composer-v3.css';
 import './ui-navbar-premium.css';
 import './ui-archive-v2.css';
 import './ui-archive-v3.css';
+import './ui-operations-v3.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Operations Platform',
