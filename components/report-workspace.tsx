@@ -54,7 +54,6 @@ import {
   detectProgressKind,
   duplicateProgressTimes,
   formatReport,
-  inferProgressDates,
   parseIncidentReport,
   progressDateFromInput,
   progressDateToInput,
@@ -1513,17 +1512,9 @@ export function ReportWorkspace() {
     const nextEntry:
       ProgressEntry = {
       id:
-        typeof crypto !==
-          'undefined' &&
-        'randomUUID' in
-          crypto
-          ? crypto.randomUUID()
-          : (
-              String(
-                Date.now()
-              ) +
-              '-ops'
-            ),
+        createDispatchEntityId(
+          'progress'
+        ),
       date:
         stamp.date,
       time:
