@@ -1,0 +1,346 @@
+/* ReportOS major UI pass — dense operational detail normalization. */
+
+/* -------------------------------------------------------------------------- */
+/* ARCHIVE / INCIDENT VAULT                                                   */
+/* -------------------------------------------------------------------------- */
+
+.vault-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 14px;
+}
+
+.vault-incident-card {
+  min-height: 210px;
+  padding: 20px;
+  border-radius: 19px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.vault-card-status {
+  min-height: 24px;
+  gap: 7px;
+  color: #737e92;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.vault-current-chip {
+  padding: 5px 8px;
+  font-size: 9.5px;
+}
+
+.vault-region {
+  margin-bottom: 6px;
+  font-size: 10px;
+}
+
+.vault-card-identity h3 {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.vault-card-identity p {
+  max-width: 760px;
+  margin-top: 8px;
+  color: #717b8f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vault-card-metrics {
+  grid-template-columns: repeat(2, 72px);
+  gap: 7px;
+}
+
+.vault-card-metrics > div {
+  min-height: 62px;
+  border-radius: 12px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.vault-card-metrics span {
+  color: #7d879a;
+  font-size: 9px;
+}
+
+.vault-card-metrics strong {
+  margin-top: 4px;
+  color: #4f596e;
+  font-size: 13px;
+}
+
+.vault-card-meta {
+  gap: 4px;
+  color: #858fa1;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.vault-card-actions {
+  gap: 8px;
+}
+
+.vault-secondary-action,
+.vault-open-action {
+  min-height: 40px;
+  gap: 7px;
+  border-radius: 11px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+.vault-create-button {
+  min-height: 46px;
+  padding: 0 16px;
+  font-size: 12px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* OPERATIONS                                                                 */
+/* -------------------------------------------------------------------------- */
+
+.operations-kpi-grid {
+  gap: 12px;
+}
+
+.operations-kpi {
+  grid-template-columns: 44px minmax(0, 1fr);
+  min-height: 108px;
+  gap: 13px;
+  padding: 16px 17px;
+  border-radius: 18px;
+}
+
+.operations-kpi-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.operations-kpi span:not(.operations-kpi-icon) {
+  color: #778296;
+  font-size: 9.5px;
+  line-height: 1.25;
+}
+
+.operations-kpi strong {
+  margin-top: 4px;
+  color: #32394d;
+  font-size: 23px;
+}
+
+.operations-kpi small {
+  margin-top: 4px;
+  color: #7f899c;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.operations-board {
+  padding: 23px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.77);
+}
+
+.operations-board-head {
+  gap: 20px;
+  padding: 0 2px 20px;
+}
+
+.operations-board-kicker {
+  margin-bottom: 5px;
+  font-size: 10px;
+}
+
+.operations-board-head h3 {
+  font-size: 20px;
+}
+
+.operations-board-head p {
+  margin-top: 6px;
+  color: #7d879a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.operations-critical-chip,
+.operations-healthy-chip {
+  min-height: 34px;
+  gap: 7px;
+  padding: 0 11px;
+  font-size: 10.5px;
+}
+
+.operations-queue {
+  gap: 9px;
+}
+
+.operations-incident-row {
+  grid-template-columns:
+    20px
+    minmax(250px, 1.5fr)
+    minmax(230px, 0.9fr)
+    minmax(220px, 1fr)
+    auto;
+  gap: 14px;
+  min-height: 112px;
+  padding: 13px 14px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.operations-incident-tags {
+  min-height: 23px;
+  gap: 6px;
+}
+
+.operations-status-chip,
+.operations-attention-chip {
+  min-height: 23px;
+  padding: 0 8px;
+  font-size: 9.5px;
+}
+
+.operations-incident-identity h4 {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.operations-incident-identity > p {
+  margin-top: 5px;
+  color: #697488;
+  font-size: 11.5px;
+  line-height: 1.48;
+}
+
+.operations-incident-submeta {
+  gap: 7px;
+  margin-top: 7px;
+  color: #808a9d;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.operations-incident-metrics {
+  gap: 7px;
+}
+
+.operations-incident-metrics > div {
+  min-height: 60px;
+  border-radius: 11px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.operations-incident-metrics span,
+.operations-last-signal > span {
+  color: #7e899d;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.operations-incident-metrics strong {
+  margin-top: 4px;
+  color: #4a546a;
+  font-size: 12px;
+}
+
+.operations-last-signal strong {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.operations-last-signal p {
+  margin-top: 4px;
+  color: #707b90;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.operations-open-button {
+  min-height: 40px;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+@media (max-width: 1160px) {
+  .operations-incident-row {
+    grid-template-columns: 18px minmax(220px, 1.4fr) minmax(210px, 1fr) auto;
+  }
+
+  .operations-last-signal {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .vault-list {
+    grid-template-columns: 1fr;
+  }
+
+  .vault-incident-card {
+    min-height: 0;
+  }
+
+  .operations-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .operations-incident-row {
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    min-height: 0;
+    align-items: start;
+  }
+
+  .operations-incident-metrics {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .vault-card-main {
+    grid-template-columns: 1fr;
+  }
+
+  .vault-card-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vault-card-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .vault-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .operations-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-kpi {
+    min-height: 88px;
+  }
+
+  .operations-board {
+    padding: 17px;
+  }
+
+  .operations-board-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .operations-incident-row {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .operations-incident-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
