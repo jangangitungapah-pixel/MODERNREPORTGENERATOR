@@ -18,11 +18,20 @@ const ComposerOperatorDeck = dynamic(
   { ssr: false }
 );
 
+const SavedTTLibraryControl = dynamic(
+  () =>
+    import('./saved-tt-library-control').then(
+      (module) => module.SavedTTLibraryControl
+    ),
+  { ssr: false }
+);
+
 export function ReportOsClientRuntime() {
   return (
     <>
       <ReportOsUtilityDock />
       <ComposerOperatorDeck />
+      <SavedTTLibraryControl />
     </>
   );
 }
