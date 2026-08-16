@@ -38,6 +38,14 @@ import {
   traceToSvgPoints,
 } from '@/lib/sor-report';
 
+import {
+  SorAnalysisPanel,
+} from '@/components/sor-analysis-panel';
+
+import {
+  appendSorEngineeringAppendix,
+} from '@/lib/sor-pdf-appendix';
+
 type ConverterStatus =
   | 'idle'
   | 'parsing'
@@ -1435,6 +1443,11 @@ export function SorPdfConverter() {
         cursorY
       );
 
+      appendSorEngineeringAppendix(
+        doc,
+        parsed
+      );
+
       doc.save(
         safePdfFilename(
           selectedFile.name
@@ -2144,6 +2157,10 @@ export function SorPdfConverter() {
                 </span>
               </aside>
             </section>
+
+            <SorAnalysisPanel
+              parsed={parsed}
+            />
 
             <section className="sor-detail-grid">
               <article className="sor-metadata-card glass-panel">
