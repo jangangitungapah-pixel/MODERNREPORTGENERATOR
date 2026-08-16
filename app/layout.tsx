@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
+
+import {
+  FirebaseCloudRecovery,
+} from '@/components/firebase-cloud-recovery';
+
 import './globals.css';
+import './cloud-recovery.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Report Workspace',
@@ -13,7 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <FirebaseCloudRecovery />
+      </body>
     </html>
   );
 }
