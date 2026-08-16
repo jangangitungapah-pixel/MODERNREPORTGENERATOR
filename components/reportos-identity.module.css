@@ -1,0 +1,141 @@
+.trigger {
+  position: fixed;
+  z-index: 91;
+  right: 16px;
+  bottom: 118px;
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(98, 108, 151, 0.12);
+  border-radius: 10px;
+  padding: 0 10px;
+  color: #6e778d;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 30px rgba(48, 54, 78, 0.09);
+  backdrop-filter: blur(15px);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #c39c64;
+  box-shadow: 0 0 0 4px rgba(195, 156, 100, 0.08);
+}
+
+.overlay {
+  position: fixed;
+  z-index: 140;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(40, 44, 59, 0.17);
+  backdrop-filter: blur(9px);
+}
+
+.dialog {
+  width: min(420px, 100%);
+  border: 1px solid rgba(91, 99, 128, 0.1);
+  border-radius: 18px;
+  padding: 19px;
+  color: #6c7487;
+  background: rgba(252, 253, 255, 0.97);
+  box-shadow: 0 24px 70px rgba(45, 51, 72, 0.16);
+}
+
+.eyebrow {
+  color: #8c95aa;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+}
+
+.dialog h2 {
+  margin: 5px 0 0;
+  color: #596279;
+  font-size: 17px;
+}
+
+.dialog p {
+  margin: 8px 0 0;
+  color: #939baa;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.identity {
+  display: grid;
+  gap: 3px;
+  margin-top: 13px;
+  border: 1px solid rgba(91, 99, 128, 0.07);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(247, 248, 251, 0.8);
+}
+
+.identity span {
+  color: #9da4b2;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.identity strong {
+  overflow: hidden;
+  color: #687087;
+  font-size: 9px;
+  text-overflow: ellipsis;
+}
+
+.error {
+  margin-top: 10px;
+  border: 1px solid rgba(190, 86, 86, 0.1);
+  border-radius: 9px;
+  padding: 9px;
+  color: #a46d6d;
+  background: rgba(190, 86, 86, 0.04);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.actions button {
+  min-height: 38px;
+  border: 1px solid rgba(91, 99, 128, 0.09);
+  border-radius: 10px;
+  color: #747c90;
+  background: #fff;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.actions button:last-child {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #7b87ba, #6470a6);
+}
+
+.actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 700px) {
+  .trigger {
+    right: 10px;
+    bottom: 170px;
+  }
+}
