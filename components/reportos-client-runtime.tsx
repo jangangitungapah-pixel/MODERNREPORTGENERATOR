@@ -10,6 +10,19 @@ const ReportOsUtilityDock = dynamic(
   { ssr: false }
 );
 
+const ComposerOperatorDeck = dynamic(
+  () =>
+    import('./composer-operator-deck').then(
+      (module) => module.ComposerOperatorDeck
+    ),
+  { ssr: false }
+);
+
 export function ReportOsClientRuntime() {
-  return <ReportOsUtilityDock />;
+  return (
+    <>
+      <ReportOsUtilityDock />
+      <ComposerOperatorDeck />
+    </>
+  );
 }
