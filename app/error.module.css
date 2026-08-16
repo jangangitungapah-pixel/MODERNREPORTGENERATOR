@@ -1,0 +1,83 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(126, 139, 190, 0.13), transparent 34%),
+    linear-gradient(180deg, #f7f8fb, #eef1f6);
+}
+
+.card {
+  width: min(520px, 100%);
+  border: 1px solid rgba(83, 94, 132, 0.09);
+  border-radius: 20px;
+  padding: 22px;
+  color: #6a7388;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 70px rgba(48, 54, 78, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.eyebrow {
+  color: #979ead;
+  font-size: 8px;
+  font-weight: 880;
+  letter-spacing: 0.12em;
+}
+
+.card h1 {
+  margin: 6px 0 0;
+  color: #566078;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.card p {
+  margin: 8px 0 0;
+  color: #929aa9;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.reference {
+  margin-top: 12px;
+  border: 1px solid rgba(83, 94, 132, 0.06);
+  border-radius: 9px;
+  padding: 9px;
+  color: #9299a7;
+  background: rgba(247, 248, 251, 0.8);
+  font-family: monospace;
+  font-size: 8px;
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.actions button,
+.actions a {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(83, 94, 132, 0.09);
+  border-radius: 9px;
+  padding: 0 12px;
+  color: #70798d;
+  background: #fff;
+  text-decoration: none;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.actions button {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #7c88ba, #646fa5);
+}
