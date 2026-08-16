@@ -22,6 +22,7 @@ import {
   Link2,
   Mail,
   MapPin,
+  Network,
   Pencil,
   Plus,
   RotateCcw,
@@ -1861,6 +1862,30 @@ export function ReportWorkspace() {
                 }
               </span>
             </button>
+
+            <Link
+              className="nav-item nav-item-tool"
+              href="/backbone-impact"
+            >
+              <Network
+                size={18}
+              />
+
+              <span className="nav-copy">
+                <strong>
+                  Impact Board
+                </strong>
+
+                <small>
+                  Backbone B2B impact
+                </small>
+              </span>
+
+              <ChevronRight
+                className="nav-chevron"
+                size={15}
+              />
+            </Link>
 
             <Link
               className="nav-item nav-item-tool"
@@ -5137,6 +5162,18 @@ export function ReportWorkspace() {
             <Archive size={18} />
             <span>Archive</span>
           </button>
+
+          <Link
+            className="bottom-nav-tool"
+            href="/backbone-impact"
+          >
+            <Network
+              size={18}
+            />
+            <span>
+              Impact
+            </span>
+          </Link>
 
           <Link
             className="bottom-nav-tool"
