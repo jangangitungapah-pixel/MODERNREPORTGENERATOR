@@ -1,0 +1,50 @@
+- generic [active] [ref=f35e1]:
+  - main [ref=f35e2]:
+    - generic [ref=f35e3]:
+      - generic [ref=f35e4]:
+        - generic [ref=f35e5]:
+          - link "Back to ReportOS" [ref=f35e6] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f35e9]: REPORTOS CONTROL PLANE
+          - heading "System Console" [level=1] [ref=f35e10]
+          - paragraph [ref=f35e11]: Inspect authenticated identity, canonical database state, recovery history, and immutable operational audit activity.
+        - generic [ref=f35e12]:
+          - button "Refreshing" [disabled] [ref=f35e13]
+          - status [ref=f35e19]: Authenticating control plane
+      - region "System summary" [ref=f35e21]:
+        - article [ref=f35e22]:
+          - generic [ref=f35e27]: IDENTITY
+          - strong [ref=f35e28]
+        - article [ref=f35e32]:
+          - generic [ref=f35e37]: WORKSPACE ROLE
+          - strong [ref=f35e38]
+        - article [ref=f35e42]:
+          - generic [ref=f35e48]: CANONICAL REVISION
+          - strong [ref=f35e49]
+        - article [ref=f35e53]:
+          - generic [ref=f35e59]: RECOVERY POINTS
+          - strong [ref=f35e60]
+      - generic [ref=f35e64]:
+        - generic [ref=f35e66]:
+          - generic [ref=f35e73]:
+            - heading "Recovery history" [level=2] [ref=f35e74]
+            - paragraph [ref=f35e75]: Snapshots created before destructive or revision-changing operations.
+          - generic [ref=f35e76]: "0"
+        - generic [ref=f35e82]:
+          - generic [ref=f35e87]:
+            - heading "Audit trail" [level=2] [ref=f35e88]
+            - paragraph [ref=f35e89]: Latest server-side workspace mutations with actor and request correlation.
+          - generic [ref=f35e90]: "0"
+      - generic [ref=f35e95]:
+        - generic [ref=f35e102]:
+          - heading "Governance status" [level=2] [ref=f35e103]
+          - paragraph [ref=f35e104]: Firebase-authenticated server identity; D1 access remains server-only.
+        - generic [ref=f35e105]:
+          - generic [ref=f35e106]:
+            - generic [ref=f35e107]: CANONICAL CHECKSUM
+            - code [ref=f35e108]: Resolving canonical checksum…
+          - generic [ref=f35e109]:
+            - generic [ref=f35e110]: LAST WRITER
+            - code [ref=f35e111]: Resolving canonical writer…
+  - button "Open Next.js Dev Tools" [ref=f35e117] [cursor=pointer]
+  - alert [ref=f35e121]

@@ -1,0 +1,275 @@
+- generic [active] [ref=f6e1]:
+  - main [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - link "ReportOS" [ref=f6e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f6e14]:
+        - strong [ref=f6e15]: Impact Board
+        - generic [ref=f6e16]: Backbone customer impact
+    - generic [ref=f6e17]:
+      - generic [ref=f6e19]:
+        - text: BACKBONE / B2B IMPACT LIST
+        - heading "Track customer impact without losing the WAG format." [level=1] [ref=f6e20]
+        - paragraph [ref=f6e21]: List every B2B, tenant, or customer service affected by a backbone outage. Simple customers stay one line. Multi-service customers expand into sub-impact rows.
+        - generic [ref=f6e22]:
+          - generic [ref=f6e23]: B2B / Tenant
+          - generic [ref=f6e24]: Nested service
+          - generic [ref=f6e25]: WAG template
+          - generic [ref=f6e26]: Autosaved locally
+      - generic [ref=f6e27]:
+        - article [ref=f6e28]:
+          - generic [ref=f6e29]: IMPACT LEAF
+          - strong [ref=f6e30]: "7"
+          - generic [ref=f6e31]: customer / service
+        - article [ref=f6e32]:
+          - generic [ref=f6e33]: DOWN
+          - strong [ref=f6e34]: "1"
+          - generic [ref=f6e35]: ❌ affected
+        - article [ref=f6e36]:
+          - generic [ref=f6e37]: WARNING
+          - strong [ref=f6e38]: "1"
+          - generic [ref=f6e39]: ⚠️ degraded
+        - article [ref=f6e40]:
+          - generic [ref=f6e41]: PENDING
+          - strong [ref=f6e42]: "1"
+          - generic [ref=f6e43]: ⏳ checking
+        - article [ref=f6e44]:
+          - generic [ref=f6e45]: UP / CLEAR
+          - strong [ref=f6e46]: "4"
+          - generic [ref=f6e47]: ✅ healthy
+      - generic [ref=f6e48]:
+        - generic [ref=f6e49]:
+          - article [ref=f6e50]:
+            - generic [ref=f6e52]:
+              - text: BACKBONE IDENTITY
+              - heading "Backbone / route" [level=2] [ref=f6e53]
+              - paragraph [ref=f6e54]: This becomes the bold title at the top of the WAG template.
+            - generic [ref=f6e55]:
+              - generic [ref=f6e56]: BACKBONE NAME
+              - textbox "BACKBONE NAME" [ref=f6e57]:
+                - /placeholder: UJB tegal - pekalongan
+                - text: UJB tegal - pekalongan
+          - article [ref=f6e58]:
+            - generic [ref=f6e59]:
+              - generic [ref=f6e60]:
+                - text: CUSTOMER / TENANT
+                - heading "Impact listing" [level=2] [ref=f6e61]
+                - paragraph [ref=f6e62]: Add a customer directly, or add child services when one customer carries multiple circuits.
+              - button "Customer" [ref=f6e63] [cursor=pointer]
+            - generic [ref=f6e65]:
+              - article [ref=f6e66]:
+                - generic [ref=f6e67]:
+                  - generic [ref=f6e68]: "1"
+                  - generic [ref=f6e69]:
+                    - generic [ref=f6e70]: CUSTOMER / TENANT
+                    - textbox "CUSTOMER / TENANT" [ref=f6e71]:
+                      - /placeholder: H3I / IFORTE / FIBERSTAR
+                      - text: H3I
+                  - button "Remove customer" [ref=f6e72] [cursor=pointer]
+                - generic [ref=f6e76]:
+                  - generic [ref=f6e77]:
+                    - text: STATUS
+                    - group "Impact status" [ref=f6e78]:
+                      - button "✅ UP" [pressed] [ref=f6e79] [cursor=pointer]:
+                        - generic [ref=f6e80]: ✅
+                        - generic [ref=f6e81]: UP
+                      - button "⏳ Pending" [ref=f6e82] [cursor=pointer]:
+                        - generic [ref=f6e83]: ⏳
+                        - generic [ref=f6e84]: Pending
+                      - button "❌ Down" [ref=f6e85] [cursor=pointer]:
+                        - generic [ref=f6e86]: ❌
+                        - generic [ref=f6e87]: Down
+                      - button "⚠️ Warning" [ref=f6e88] [cursor=pointer]:
+                        - generic [ref=f6e89]: ⚠️
+                        - generic [ref=f6e90]: Warning
+                      - button "• Unknown" [ref=f6e91] [cursor=pointer]:
+                        - generic [ref=f6e92]: •
+                        - generic [ref=f6e93]: Unknown
+                  - generic [ref=f6e94]:
+                    - generic [ref=f6e95]: NOTE · OPTIONAL
+                    - textbox "NOTE · OPTIONAL" [ref=f6e96]:
+                      - /placeholder: RX / escalation / checking note
+                - button "Add sub-service / circuit" [ref=f6e97] [cursor=pointer]
+              - article [ref=f6e99]:
+                - generic [ref=f6e100]:
+                  - generic [ref=f6e101]: "2"
+                  - generic [ref=f6e102]:
+                    - generic [ref=f6e103]: CUSTOMER / TENANT
+                    - textbox "CUSTOMER / TENANT" [ref=f6e104]:
+                      - /placeholder: H3I / IFORTE / FIBERSTAR
+                      - text: ASIANET
+                  - button "Remove customer" [ref=f6e105] [cursor=pointer]
+                - generic [ref=f6e109]:
+                  - generic [ref=f6e110]:
+                    - text: STATUS
+                    - group "Impact status" [ref=f6e111]:
+                      - button "✅ UP" [ref=f6e112] [cursor=pointer]:
+                        - generic [ref=f6e113]: ✅
+                        - generic [ref=f6e114]: UP
+                      - button "⏳ Pending" [pressed] [ref=f6e115] [cursor=pointer]:
+                        - generic [ref=f6e116]: ⏳
+                        - generic [ref=f6e117]: Pending
+                      - button "❌ Down" [ref=f6e118] [cursor=pointer]:
+                        - generic [ref=f6e119]: ❌
+                        - generic [ref=f6e120]: Down
+                      - button "⚠️ Warning" [ref=f6e121] [cursor=pointer]:
+                        - generic [ref=f6e122]: ⚠️
+                        - generic [ref=f6e123]: Warning
+                      - button "• Unknown" [ref=f6e124] [cursor=pointer]:
+                        - generic [ref=f6e125]: •
+                        - generic [ref=f6e126]: Unknown
+                  - generic [ref=f6e127]:
+                    - generic [ref=f6e128]: NOTE · OPTIONAL
+                    - textbox "NOTE · OPTIONAL" [ref=f6e129]:
+                      - /placeholder: RX / escalation / checking note
+                - button "Add sub-service / circuit" [ref=f6e130] [cursor=pointer]
+              - article [ref=f6e132]:
+                - generic [ref=f6e133]:
+                  - generic [ref=f6e134]: "3"
+                  - generic [ref=f6e135]:
+                    - generic [ref=f6e136]: CUSTOMER / TENANT
+                    - textbox "CUSTOMER / TENANT" [ref=f6e137]:
+                      - /placeholder: H3I / IFORTE / FIBERSTAR
+                      - text: IFORTE
+                  - button "Remove customer" [ref=f6e138] [cursor=pointer]
+                - generic [ref=f6e142]: Parent status is derived from the service rows below and is not counted separately.
+                - generic [ref=f6e148]:
+                  - generic [ref=f6e149]:
+                    - generic [ref=f6e150]: "1"
+                    - generic [ref=f6e151]:
+                      - generic [ref=f6e152]: SERVICE / CIRCUIT
+                      - textbox "SERVICE / CIRCUIT" [ref=f6e153]:
+                        - /placeholder: JVBB / UJB / UAJB
+                        - text: JVBB
+                    - group "Impact status" [ref=f6e154]:
+                      - button "✅" [ref=f6e155] [cursor=pointer]
+                      - button "⏳" [ref=f6e157] [cursor=pointer]
+                      - button "❌" [pressed] [ref=f6e159] [cursor=pointer]
+                      - button "⚠️" [ref=f6e161] [cursor=pointer]
+                      - button "•" [ref=f6e163] [cursor=pointer]
+                    - generic [ref=f6e165]:
+                      - generic [ref=f6e166]: NOTE
+                      - textbox "NOTE" [ref=f6e167]:
+                        - /placeholder: RX pekalongan 0.7 db
+                        - text: RX pekalongan
+                    - button "Remove service" [ref=f6e168] [cursor=pointer]
+                  - generic [ref=f6e172]:
+                    - generic [ref=f6e173]: "2"
+                    - generic [ref=f6e174]:
+                      - generic [ref=f6e175]: SERVICE / CIRCUIT
+                      - textbox "SERVICE / CIRCUIT" [ref=f6e176]:
+                        - /placeholder: JVBB / UJB / UAJB
+                        - text: new JVBB
+                    - group "Impact status" [ref=f6e177]:
+                      - button "✅" [pressed] [ref=f6e178] [cursor=pointer]
+                      - button "⏳" [ref=f6e180] [cursor=pointer]
+                      - button "❌" [ref=f6e182] [cursor=pointer]
+                      - button "⚠️" [ref=f6e184] [cursor=pointer]
+                      - button "•" [ref=f6e186] [cursor=pointer]
+                    - generic [ref=f6e188]:
+                      - generic [ref=f6e189]: NOTE
+                      - textbox "NOTE" [ref=f6e190]:
+                        - /placeholder: RX pekalongan 0.7 db
+                    - button "Remove service" [ref=f6e191] [cursor=pointer]
+                - button "Add another service" [ref=f6e195] [cursor=pointer]
+              - article [ref=f6e197]:
+                - generic [ref=f6e198]:
+                  - generic [ref=f6e199]: "4"
+                  - generic [ref=f6e200]:
+                    - generic [ref=f6e201]: CUSTOMER / TENANT
+                    - textbox "CUSTOMER / TENANT" [ref=f6e202]:
+                      - /placeholder: H3I / IFORTE / FIBERSTAR
+                      - text: FIBERSTAR
+                  - button "Remove customer" [ref=f6e203] [cursor=pointer]
+                - generic [ref=f6e207]: Parent status is derived from the service rows below and is not counted separately.
+                - generic [ref=f6e213]:
+                  - generic [ref=f6e214]:
+                    - generic [ref=f6e215]: "1"
+                    - generic [ref=f6e216]:
+                      - generic [ref=f6e217]: SERVICE / CIRCUIT
+                      - textbox "SERVICE / CIRCUIT" [ref=f6e218]:
+                        - /placeholder: JVBB / UJB / UAJB
+                        - text: UJB
+                    - group "Impact status" [ref=f6e219]:
+                      - button "✅" [pressed] [ref=f6e220] [cursor=pointer]
+                      - button "⏳" [ref=f6e222] [cursor=pointer]
+                      - button "❌" [ref=f6e224] [cursor=pointer]
+                      - button "⚠️" [ref=f6e226] [cursor=pointer]
+                      - button "•" [ref=f6e228] [cursor=pointer]
+                    - generic [ref=f6e230]:
+                      - generic [ref=f6e231]: NOTE
+                      - textbox "NOTE" [ref=f6e232]:
+                        - /placeholder: RX pekalongan 0.7 db
+                    - button "Remove service" [ref=f6e233] [cursor=pointer]
+                  - generic [ref=f6e237]:
+                    - generic [ref=f6e238]: "2"
+                    - generic [ref=f6e239]:
+                      - generic [ref=f6e240]: SERVICE / CIRCUIT
+                      - textbox "SERVICE / CIRCUIT" [ref=f6e241]:
+                        - /placeholder: JVBB / UJB / UAJB
+                        - text: UAJB
+                    - group "Impact status" [ref=f6e242]:
+                      - button "✅" [pressed] [ref=f6e243] [cursor=pointer]
+                      - button "⏳" [ref=f6e245] [cursor=pointer]
+                      - button "❌" [ref=f6e247] [cursor=pointer]
+                      - button "⚠️" [ref=f6e249] [cursor=pointer]
+                      - button "•" [ref=f6e251] [cursor=pointer]
+                    - generic [ref=f6e253]:
+                      - generic [ref=f6e254]: NOTE
+                      - textbox "NOTE" [ref=f6e255]:
+                        - /placeholder: RX pekalongan 0.7 db
+                    - button "Remove service" [ref=f6e256] [cursor=pointer]
+                  - generic [ref=f6e260]:
+                    - generic [ref=f6e261]: "3"
+                    - generic [ref=f6e262]:
+                      - generic [ref=f6e263]: SERVICE / CIRCUIT
+                      - textbox "SERVICE / CIRCUIT" [ref=f6e264]:
+                        - /placeholder: JVBB / UJB / UAJB
+                        - text: UAJBF
+                    - group "Impact status" [ref=f6e265]:
+                      - button "✅" [ref=f6e266] [cursor=pointer]
+                      - button "⏳" [ref=f6e268] [cursor=pointer]
+                      - button "❌" [ref=f6e270] [cursor=pointer]
+                      - button "⚠️" [pressed] [ref=f6e272] [cursor=pointer]
+                      - button "•" [ref=f6e274] [cursor=pointer]
+                    - generic [ref=f6e276]:
+                      - generic [ref=f6e277]: NOTE
+                      - textbox "NOTE" [ref=f6e278]:
+                        - /placeholder: RX pekalongan 0.7 db
+                        - text: RX pekalongan 0.7 db
+                    - button "Remove service" [ref=f6e279] [cursor=pointer]
+                - button "Add another service" [ref=f6e283] [cursor=pointer]
+        - complementary [ref=f6e285]:
+          - article [ref=f6e286]:
+            - generic [ref=f6e287]:
+              - generic [ref=f6e288]:
+                - text: LIVE WAG TEMPLATE
+                - heading "Impact preview" [level=2] [ref=f6e289]
+                - paragraph [ref=f6e290]: Numbering is automatic. Customer groups with services become nested rows.
+              - generic [ref=f6e291]: LIVE
+            - generic [ref=f6e293]:
+              - strong [ref=f6e299]: impact-list.txt
+              - generic [ref=f6e303]: "*UJB tegal - pekalongan* 1.H3I ✅ 2.ASIANET ⏳ 3.IFORTE - JVBB ❌ (RX pekalongan) - new JVBB ✅ 4.FIBERSTAR - UJB ✅ - UAJB ✅ - UAJBF ⚠️ (RX pekalongan 0.7 db)"
+            - button "Copy WAG template" [ref=f6e304] [cursor=pointer]
+            - generic [ref=f6e308]:
+              - generic [ref=f6e309]: Parent numbering is regenerated automatically.
+              - generic [ref=f6e313]: ⚠️ is best used for degraded / abnormal RX that is not fully down.
+          - article [ref=f6e317]:
+            - generic [ref=f6e318]:
+              - strong [ref=f6e319]: Draft controls
+              - generic [ref=f6e320]: Data stays in this browser via local autosave.
+            - generic [ref=f6e321]:
+              - button "Load sample" [ref=f6e322] [cursor=pointer]
+              - button "Clear" [ref=f6e326] [cursor=pointer]
+          - group [ref=f6e330]:
+            - generic "Status guide Quick operator reference" [ref=f6e331] [cursor=pointer]:
+              - generic [ref=f6e332]:
+                - strong [ref=f6e333]: Status guide
+                - generic [ref=f6e334]: Quick operator reference
+  - link "System Console" [ref=f6e337] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=f6e346] [cursor=pointer]
+  - alert [ref=f6e350]
+  - button "Intelligence 14" [ref=f6e351] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=f6e352]: "14"

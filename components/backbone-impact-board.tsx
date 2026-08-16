@@ -88,12 +88,14 @@ function cloneSample():
 function StatusSelector({
   value,
   onChange,
+  label,
   compact = false,
 }: {
   value: ImpactStatus;
   onChange: (
     value: ImpactStatus
   ) => void;
+  label: string;
   compact?: boolean;
 }) {
   return (
@@ -104,7 +106,7 @@ function StatusSelector({
           : 'impact-status-selector'
       }
       role="group"
-      aria-label="Impact status"
+      aria-label={label}
     >
       {IMPACT_STATUS_OPTIONS.map(
         (option) => (
@@ -123,6 +125,11 @@ function StatusSelector({
             type="button"
             title={
               option.label
+            }
+            aria-label={
+              compact
+                ? option.label
+                : undefined
             }
             aria-pressed={
               value === option.value
@@ -168,8 +175,34 @@ export function BackboneImpactBoard() {
   ] = useState(false);
 
   const [
-    copied,
-    setCopied,
+    copyState,
+    setCopyState,
+  ] = useState<
+    | 'idle'
+    | 'success'
+    | 'error'
+  >('idle');
+
+  const [
+    persistenceState,
+    setPersistenceState,
+  ] = useState<
+    | 'hydrating'
+    | 'saved'
+    | 'error'
+  >('hydrating');
+
+  const [
+    mobilePane,
+    setMobilePane,
+  ] = useState<
+    | 'editor'
+    | 'preview'
+  >('editor');
+
+  const [
+    confirmingClear,
+    setConfirmingClear,
   ] = useState(false);
 
   useEffect(() => {
@@ -207,10 +240,21 @@ export function BackboneImpactBoard() {
         }
       } catch {
         // Keep sample fallback.
+        setPersistenceState(
+          'error'
+        );
       } finally {
         if (!cancelled) {
           setHydrated(
             true
+          );
+
+          setPersistenceState(
+            (current) =>
+              current ===
+              'error'
+                ? current
+                : 'saved'
           );
         }
       }
@@ -226,12 +270,38 @@ export function BackboneImpactBoard() {
       return;
     }
 
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(
-        draft
-      )
-    );
+    let nextPersistenceState:
+      | 'saved'
+      | 'error' =
+      'saved';
+
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+          draft
+        )
+      );
+    } catch {
+      nextPersistenceState =
+        'error';
+    }
+
+    const feedbackTimer =
+      window.setTimeout(
+        () => {
+          setPersistenceState(
+            nextPersistenceState
+          );
+        },
+        0
+      );
+
+    return () => {
+      window.clearTimeout(
+        feedbackTimer
+      );
+    };
   }, [
     draft,
     hydrated,
@@ -438,36 +508,70 @@ export function BackboneImpactBoard() {
         output
       );
 
-      setCopied(
-        true
+      setCopyState(
+        'success'
       );
 
       window.setTimeout(
         () =>
-          setCopied(
-            false
+          setCopyState(
+            'idle'
           ),
         1600
       );
     } catch {
-      setCopied(
-        false
+      setCopyState(
+        'error'
+      );
+
+      window.setTimeout(
+        () =>
+          setCopyState(
+            'idle'
+          ),
+        2600
       );
     }
   }
 
   function resetSample() {
+    setConfirmingClear(
+      false
+    );
+
     setDraft(
       cloneSample()
     );
   }
 
   function clearDraft() {
+    setConfirmingClear(
+      false
+    );
+
     setDraft({
       ...EMPTY_BACKBONE_IMPACT,
       customers: [],
     });
   }
+
+  const persistenceLabel =
+    persistenceState ===
+    'hydrating'
+      ? 'Loading local draft'
+      : persistenceState ===
+          'error'
+        ? 'Local save unavailable'
+        : 'Saved locally';
+
+  const persistenceShortLabel =
+    persistenceState ===
+    'hydrating'
+      ? 'Loading'
+      : persistenceState ===
+          'error'
+        ? 'Save error'
+        : 'Local';
 
   return (
     <main className="impact-page-shell">
@@ -511,11 +615,30 @@ export function BackboneImpactBoard() {
           </div>
         </div>
 
-        <span className="impact-local-chip">
+        <span
+          className="impact-local-chip"
+          data-state={
+            persistenceState
+          }
+          role="status"
+          aria-live="polite"
+          aria-label={
+            persistenceLabel
+          }
+        >
           <ShieldCheck
             size={13}
           />
-          Local autosave
+          <span className="impact-local-chip-full">
+            {persistenceLabel}
+          </span>
+
+          <span
+            className="impact-local-chip-short"
+            aria-hidden="true"
+          >
+            {persistenceShortLabel}
+          </span>
         </span>
       </header>
 
@@ -674,8 +797,56 @@ export function BackboneImpactBoard() {
           </article>
         </section>
 
-        <div className="impact-workspace-grid">
-          <section className="impact-editor-column">
+        <div
+          className="impact-mobile-pane-switch"
+          role="tablist"
+          aria-label="Impact workspace view"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={
+              mobilePane ===
+              'editor'
+            }
+            aria-controls="impact-editor-pane"
+            onClick={() =>
+              setMobilePane(
+                'editor'
+              )
+            }
+          >
+            Editor
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={
+              mobilePane ===
+              'preview'
+            }
+            aria-controls="impact-preview-pane"
+            onClick={() =>
+              setMobilePane(
+                'preview'
+              )
+            }
+          >
+            Preview
+          </button>
+        </div>
+
+        <div
+          className="impact-workspace-grid"
+          data-mobile-pane={
+            mobilePane
+          }
+        >
+          <section
+            className="impact-editor-column"
+            id="impact-editor-pane"
+          >
             <article className="impact-editor-card glass-panel">
               <div className="impact-section-head">
                 <div>
@@ -813,6 +984,13 @@ export function BackboneImpactBoard() {
                             className="impact-delete-button"
                             type="button"
                             title="Remove customer"
+                            aria-label={
+                              'Remove customer ' +
+                              (
+                                customer.name ||
+                                index + 1
+                              )
+                            }
                             onClick={() =>
                               removeCustomer(
                                 customer.id
@@ -833,6 +1011,14 @@ export function BackboneImpactBoard() {
                               </span>
 
                               <StatusSelector
+                                label={
+                                  'Customer ' +
+                                  (
+                                    index +
+                                    1
+                                  ) +
+                                  ' status'
+                                }
                                 value={
                                   customer.status
                                 }
@@ -935,6 +1121,14 @@ export function BackboneImpactBoard() {
 
                                 <StatusSelector
                                   compact
+                                  label={
+                                    'Service ' +
+                                    (
+                                      serviceIndex +
+                                      1
+                                    ) +
+                                    ' status'
+                                  }
                                   value={
                                     service.status
                                   }
@@ -979,6 +1173,14 @@ export function BackboneImpactBoard() {
                                   className="impact-delete-button impact-delete-service"
                                   type="button"
                                   title="Remove service"
+                                  aria-label={
+                                    'Remove service ' +
+                                    (
+                                      service.name ||
+                                      serviceIndex +
+                                      1
+                                    )
+                                  }
                                   onClick={() =>
                                     removeService(
                                       customer.id,
@@ -1053,7 +1255,10 @@ export function BackboneImpactBoard() {
             </article>
           </section>
 
-          <aside className="impact-preview-column">
+          <aside
+            className="impact-preview-column"
+            id="impact-preview-pane"
+          >
             <article className="impact-preview-card glass-panel">
               <div className="impact-preview-head">
                 <div>
@@ -1096,7 +1301,7 @@ export function BackboneImpactBoard() {
                   />
                 </div>
 
-                <pre>
+                <pre aria-label="Generated WAG impact template">
                   {
                     output
                   }
@@ -1110,7 +1315,8 @@ export function BackboneImpactBoard() {
                   copyTemplate
                 }
               >
-                {copied ? (
+                {copyState ===
+                'success' ? (
                   <Check
                     size={16}
                   />
@@ -1120,10 +1326,28 @@ export function BackboneImpactBoard() {
                   />
                 )}
 
-                {copied
+                {copyState ===
+                'success'
                   ? 'Template copied'
-                  : 'Copy WAG template'}
+                  : copyState ===
+                      'error'
+                    ? 'Copy failed · try again'
+                    : 'Copy WAG template'}
               </button>
+
+              <span
+                className="impact-copy-feedback"
+                role="status"
+                aria-live="polite"
+              >
+                {copyState ===
+                'success'
+                  ? 'WAG template copied to the clipboard.'
+                  : copyState ===
+                      'error'
+                    ? 'Clipboard access failed. Select the preview text and copy it manually.'
+                    : ''}
+              </span>
 
               <div className="impact-preview-hints">
                 <div>
@@ -1166,32 +1390,77 @@ export function BackboneImpactBoard() {
                 </span>
               </div>
 
-              <div className="impact-action-buttons">
-                <button
-                  type="button"
-                  onClick={
-                    resetSample
-                  }
+              {confirmingClear ? (
+                <div
+                  className="impact-clear-confirmation"
+                  role="alert"
                 >
-                  <RotateCcw
-                    size={14}
-                  />
-                  Load sample
-                </button>
+                  <div>
+                    <strong>
+                      Clear this local
+                      draft?
+                    </strong>
 
-                <button
-                  className="impact-clear-button"
-                  type="button"
-                  onClick={
-                    clearDraft
-                  }
-                >
-                  <Trash2
-                    size={14}
-                  />
-                  Clear
-                </button>
-              </div>
+                    <span>
+                      Customer and service
+                      rows will be removed
+                      from this browser.
+                    </span>
+                  </div>
+
+                  <div className="impact-action-buttons">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmingClear(
+                          false
+                        )
+                      }
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      className="impact-clear-button"
+                      type="button"
+                      onClick={
+                        clearDraft
+                      }
+                    >
+                      Clear draft
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="impact-action-buttons">
+                  <button
+                    type="button"
+                    onClick={
+                      resetSample
+                    }
+                  >
+                    <RotateCcw
+                      size={14}
+                    />
+                    Load sample
+                  </button>
+
+                  <button
+                    className="impact-clear-button"
+                    type="button"
+                    onClick={() =>
+                      setConfirmingClear(
+                        true
+                      )
+                    }
+                  >
+                    <Trash2
+                      size={14}
+                    />
+                    Clear
+                  </button>
+                </div>
+              )}
             </article>
 
             <details className="impact-guide-card glass-panel">

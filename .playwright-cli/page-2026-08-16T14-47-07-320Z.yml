@@ -1,0 +1,324 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e9]:
+        - strong [ref=e10]: ReportOS
+        - generic [ref=e11]: Ops intelligence
+      - navigation "Primary navigation" [ref=e12]:
+        - text: WORKSPACE
+        - button "Composer Build incident report" [ref=e13] [cursor=pointer]:
+          - generic [ref=e17]:
+            - strong [ref=e18]: Composer
+            - generic [ref=e19]: Build incident report
+        - button "Operations Live command center" [ref=e22] [cursor=pointer]:
+          - generic [ref=e26]:
+            - strong [ref=e27]: Operations
+            - generic [ref=e28]: Live command center
+        - button "Archive Incident vault 1" [ref=e29] [cursor=pointer]:
+          - generic [ref=e33]:
+            - strong [ref=e34]: Archive
+            - generic [ref=e35]: Incident vault
+          - generic [ref=e36]: "1"
+        - link "Impact Board Backbone B2B impact" [ref=e37] [cursor=pointer]:
+          - /url: /backbone-impact
+          - generic [ref=e43]:
+            - strong [ref=e44]: Impact Board
+            - generic [ref=e45]: Backbone B2B impact
+        - link "SOR → PDF OTDR fiber lab" [ref=e48] [cursor=pointer]:
+          - /url: /sor-to-pdf
+          - generic [ref=e54]:
+            - strong [ref=e55]: SOR → PDF
+            - generic [ref=e56]: OTDR fiber lab
+      - generic [ref=e62]:
+        - strong [ref=e63]: Draft vault active
+        - generic [ref=e64]: New drafts never overwrite current work
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: Incident workspace
+          - heading "Compose with clarity." [level=1] [ref=e72]
+          - generic [ref=e73]:
+            - generic [ref=e74]: active
+            - generic [ref=e75]: New incident
+        - generic [ref=e76]:
+          - button "New draft" [ref=e77] [cursor=pointer]
+          - status "Current draft is saved in this browser." [ref=e81]:
+            - generic [ref=e83]:
+              - strong [ref=e84]: SAVED
+              - generic [ref=e85]: Local · 16 Aug, 21:47
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e95]:
+                - generic [ref=e96]: SMART INGEST
+                - heading "Paste. Parse. Done." [level=2] [ref=e97]
+                - paragraph [ref=e98]: Drop a raw incident bagan here. ReportOS will reconstruct its structured fields and timeline.
+              - generic [ref=e99]: F1 PARSER
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - generic [ref=e103]: RAW INCIDENT PAYLOAD
+                  - generic [ref=e104]: 0 chars
+                - textbox "RAW INCIDENT PAYLOAD 0 chars" [ref=e105]:
+                  - /placeholder: Paste the complete incident report here — formatting can be messy.
+              - generic [ref=e106]:
+                - button "Read clipboard" [ref=e107] [cursor=pointer]
+                - button "Smart Parse & Apply" [disabled] [ref=e111]
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119]: LIVE INCIDENT / DRAFT
+              - heading "Untitled incident" [level=2] [ref=e120]
+              - paragraph [ref=e121]: Start filling the incident detail to build your structured operational report.
+            - generic [ref=e123]:
+              - strong [ref=e124]: 0%
+              - generic [ref=e125]: ready
+          - generic [ref=e126]:
+            - generic [ref=e131]:
+              - generic [ref=e132]: "01"
+              - heading "Incident identity" [level=3] [ref=e133]
+              - paragraph [ref=e134]: Core identifiers that anchor the report.
+            - generic [ref=e135]:
+              - generic [ref=e136]:
+                - generic [ref=e137]: Region
+                - textbox "Region" [ref=e139]:
+                  - /placeholder: MANDAU
+              - generic [ref=e140]:
+                - generic [ref=e141]: Trouble ticket
+                - textbox "Trouble ticket" [ref=e143]:
+                  - /placeholder: INC-YYYYMMDD-00000000
+              - generic [ref=e144]:
+                - generic [ref=e145]: Alarm / link summary
+                - textbox "Alarm / link summary" [ref=e147]:
+                  - /placeholder: LINK DOWN AT ... <> ...
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - generic [ref=e154]:
+                - generic [ref=e155]: "02"
+                - heading "Dispatch context" [level=3] [ref=e156]
+                - paragraph [ref=e157]: Timing, ownership, link impact, and physical cut point topology.
+              - generic [ref=e158]:
+                - generic [ref=e159]: 0 impact
+                - generic [ref=e160]: 0 CP
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - generic [ref=e164]: Occur time
+                  - generic [ref=e165]: DD/MM/YYYY HH:mm
+                - textbox "Occur time DD/MM/YYYY HH:mm" [ref=e166]:
+                  - /placeholder: 15/08/2026 13:54
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]: Dispatch time
+                  - generic [ref=e170]: DD/MM/YYYY HH:mm
+                - textbox "Dispatch time DD/MM/YYYY HH:mm" [ref=e171]:
+                  - /placeholder: 15/08/2026 14:25
+              - generic [ref=e172]:
+                - generic [ref=e173]: PIC
+                - textbox "PIC" [ref=e175]:
+                  - /placeholder: Name (area)
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - generic [ref=e184]:
+                    - strong [ref=e185]: Link impact topology
+                    - generic [ref=e186]: Freeform affected links. Region, status tag, and child TT are optional.
+                  - button "Impact link" [ref=e187] [cursor=pointer]
+                - article [ref=e189]:
+                  - generic [ref=e190]:
+                    - generic [ref=e191]:
+                      - generic [ref=e192]: MAIN LINK
+                      - strong [ref=e193]: Primary incident
+                    - group "Link status" [ref=e194]:
+                      - button "•" [pressed] [ref=e195] [cursor=pointer]
+                      - button "❌" [ref=e197] [cursor=pointer]
+                      - button "⚠️" [ref=e199] [cursor=pointer]
+                      - button "✅" [ref=e201] [cursor=pointer]
+                  - generic [ref=e203]:
+                    - generic [ref=e204]:
+                      - generic [ref=e205]: STATUS TAG
+                      - textbox "STATUS TAG" [ref=e206]:
+                        - /placeholder: "[Open - Major]"
+                    - generic [ref=e207]:
+                      - generic [ref=e208]: LINK / ALARM
+                      - strong [ref=e209]: Use Incident Identity to define the main link.
+                - generic [ref=e215]:
+                  - strong [ref=e216]: No impact link
+                  - generic [ref=e217]: Add any affected link in whatever operational format you receive. Structured metadata is optional.
+              - generic [ref=e218]:
+                - generic [ref=e219]:
+                  - generic [ref=e225]:
+                    - strong [ref=e226]: Cut point topology
+                    - generic [ref=e227]: Pair each CP with its own rootcause, location, and current marker.
+                  - button "Add CP" [ref=e228] [cursor=pointer]
+                - generic [ref=e230]:
+                  - generic [ref=e235]:
+                    - strong [ref=e236]: Single CP mode
+                    - generic [ref=e237]: These legacy fields remain ideal for a normal one-cut incident. Press Add CP to promote them into structured CP1.
+                  - generic [ref=e238]:
+                    - generic [ref=e239]:
+                      - generic [ref=e240]: Cut point
+                      - textbox "Cut point" [ref=e242]:
+                        - /placeholder: KM / landmark / location
+                    - generic [ref=e243]:
+                      - generic [ref=e244]: Rootcause
+                      - textbox "Rootcause" [ref=e246]:
+                        - /placeholder: Describe root cause
+          - generic [ref=e247]:
+            - generic [ref=e248]:
+              - generic [ref=e252]:
+                - generic [ref=e253]: "03"
+                - heading "Update progress" [level=3] [ref=e254]
+                - paragraph [ref=e255]: Chronological worklog. New updates land instantly in the preview.
+              - generic [ref=e256]: 0 updates
+            - generic [ref=e257]:
+              - generic [ref=e258]:
+                - generic [ref=e264]:
+                  - strong [ref=e265]: Periodic update assistant
+                  - generic [ref=e266]: Suggested next signals follow the current operational stage. Clicking one records it with the current date and time.
+                - generic [ref=e267]: NEW
+              - generic [ref=e268]:
+                - button "Prepare tools" [ref=e269] [cursor=pointer]
+                - button "Team OTW" [ref=e271] [cursor=pointer]
+                - button "Arrived onsite" [ref=e273] [cursor=pointer]
+              - group [ref=e275]:
+                - generic "More quick updates" [ref=e276] [cursor=pointer]
+            - generic [ref=e279]:
+              - generic [ref=e280]:
+                - generic [ref=e281]: DATE
+                - textbox "DATE" [ref=e282]: 2026-08-16
+              - generic [ref=e283]:
+                - generic [ref=e284]: TIME
+                - textbox "TIME" [ref=e285]:
+                  - /placeholder: 22:15
+                  - text: 21:47
+              - generic [ref=e286]:
+                - generic [ref=e287]: PROGRESS UPDATE
+                - textbox "PROGRESS UPDATE" [ref=e288]:
+                  - /placeholder: Type the latest activity...
+              - button "Now" [ref=e289] [cursor=pointer]
+              - button "Add update" [disabled] [ref=e293]
+            - generic [ref=e295]:
+              - generic [ref=e300]:
+                - strong [ref=e301]: Timeline intelligence
+                - generic [ref=e302]: Choose how the Composer timeline is displayed. This does not change the chronological order used by Preview or generated bagan.
+              - generic [ref=e303]:
+                - generic [ref=e304]: Timeline clean
+                - group "Timeline display order" [ref=e307]:
+                  - button "Newest first" [pressed] [ref=e308] [cursor=pointer]
+                  - button "Oldest first" [ref=e309] [cursor=pointer]
+            - generic [ref=e311]:
+              - strong [ref=e314]: No progress update yet
+              - generic [ref=e315]: Add the first field activity above.
+          - generic [ref=e316]:
+            - generic [ref=e317]:
+              - generic [ref=e322]:
+                - generic [ref=e323]: "04"
+                - heading "Closure readiness" [level=3] [ref=e324]
+                - paragraph [ref=e325]: Administrative tasks that must follow operational restoration.
+              - generic [ref=e326]:
+                - strong [ref=e327]: 0%
+                - generic [ref=e328]: 0/5
+            - generic [ref=e329]:
+              - button "Statement Up WAG Confirm restoration statement has been delivered to WAG. PENDING" [ref=e330] [cursor=pointer]:
+                - generic [ref=e332]:
+                  - strong [ref=e333]: Statement Up WAG
+                  - generic [ref=e334]: Confirm restoration statement has been delivered to WAG.
+                - generic [ref=e335]: PENDING
+              - generic [ref=e336]:
+                - generic [ref=e337]:
+                  - generic [ref=e338]: 0/3
+                  - generic [ref=e340]:
+                    - strong [ref=e341]: Matoa Clearance
+                    - generic [ref=e342]: Three supporting clearance requirements.
+                  - generic [ref=e343]: IN PROGRESS
+                - generic [ref=e344]:
+                  - button "Status TT" [ref=e345] [cursor=pointer]
+                  - button "Event and Photo" [ref=e348] [cursor=pointer]
+                  - button "RFO" [ref=e351] [cursor=pointer]
+              - button "Sent Closed Email Confirm final closed notification email has been sent. PENDING" [ref=e354] [cursor=pointer]:
+                - generic [ref=e356]:
+                  - strong [ref=e357]: Sent Closed Email
+                  - generic [ref=e358]: Confirm final closed notification email has been sent.
+                - generic [ref=e359]: PENDING
+            - generic [ref=e360]:
+              - generic [ref=e361]: 5 closure tasks remaining.
+              - strong [ref=e362]: 0% READY
+        - complementary [ref=e363]:
+          - generic [ref=e364]:
+            - generic [ref=e365]:
+              - generic [ref=e366]:
+                - generic [ref=e367]: Output monitor
+                - heading "Report preview" [level=2] [ref=e371]
+              - generic [ref=e372]: LIVE
+            - generic [ref=e374]:
+              - generic [ref=e375]: formatted-output.txt
+              - generic [ref=e384]: "*[] , [TT : ]* Occur Time = Dispacth Time = PIC = Rootcause = Cut Point = Update Progress"
+            - generic [ref=e385]:
+              - generic [ref=e386]:
+                - generic [ref=e387]: Completion
+                - strong [ref=e388]: 0%
+              - generic [ref=e389]:
+                - generic [ref=e390]: Updates
+                - strong [ref=e391]: "0"
+              - generic [ref=e392]:
+                - generic [ref=e393]: Storage
+                - strong [ref=e394]: Saved
+            - button "Copy formatted report CTRL C" [ref=e395] [cursor=pointer]:
+              - generic [ref=e399]: Copy formatted report
+              - generic [ref=e400]: CTRL C
+          - generic [ref=e401]:
+            - generic [ref=e402]:
+              - generic [ref=e403]:
+                - generic [ref=e404]: SMART CLOSE / DELIVERY
+                - heading "Delivery console" [level=3] [ref=e405]
+                - paragraph [ref=e406]: Prepare operational handoff, closure email, and final archive without rebuilding the report manually.
+              - generic [ref=e407]: VALIDATION ACTIVE
+            - generic [ref=e408]:
+              - generic [ref=e409]:
+                - generic [ref=e410]: STATUS
+                - strong [ref=e411]: NEW
+              - generic [ref=e412]:
+                - generic [ref=e413]: REPORT
+                - strong [ref=e414]: 0%
+              - generic [ref=e415]:
+                - generic [ref=e416]: CLOSURE
+                - strong [ref=e417]: 0%
+            - generic [ref=e418]:
+              - generic [ref=e419]: Close validation
+              - generic [ref=e422]: Operational status must be RESTORED before final closure.
+              - generic [ref=e423]: Report completeness is 0%. Complete all required report signals first.
+              - generic [ref=e424]: 5 closure tasks remaining.
+            - generic [ref=e425]:
+              - button "Copy WAG report Exact ReportOS output, including impacts and CP." [disabled] [ref=e426]:
+                - generic [ref=e431]:
+                  - strong [ref=e432]: Copy WAG report
+                  - generic [ref=e433]: Exact ReportOS output, including impacts and CP.
+              - button "Closed email Generic closure draft; recipients stay manual." [disabled] [ref=e434]:
+                - generic [ref=e439]:
+                  - strong [ref=e440]: Closed email
+                  - generic [ref=e441]: Generic closure draft; recipients stay manual.
+              - button "Final package Full report plus closure administration audit." [disabled] [ref=e442]:
+                - generic [ref=e447]:
+                  - strong [ref=e448]: Final package
+                  - generic [ref=e449]: Full report plus closure administration audit.
+            - button "Finalize & archive incident" [disabled] [ref=e450]
+            - paragraph [ref=e454]: Copy actions never mark WAG or email tasks as sent automatically. Checklist confirmation remains an explicit operator action.
+          - generic [ref=e460]:
+            - strong [ref=e461]: Fast operator flow
+            - paragraph [ref=e462]: Use Ctrl + Enter while writing a progress line to append it instantly.
+  - link "System Console" [ref=e463] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=e472] [cursor=pointer]
+  - alert [ref=e476]
+  - button "Intelligence 14" [ref=e477] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=e478]: "14"
+  - complementary "ReportOS canonical sync status" [ref=e479]:
+    - generic [ref=e481]:
+      - strong [ref=e482]: SERVER CONNECTING
+      - generic [ref=e483]: Resolving authenticated canonical state
+  - button "Cloud syncing Connecting Firebase" [ref=e484] [cursor=pointer]:
+    - generic [ref=e491]:
+      - strong [ref=e492]: Cloud syncing
+      - generic [ref=e493]: Connecting Firebase

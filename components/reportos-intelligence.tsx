@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -25,6 +26,9 @@ import {
 } from '@/lib/workspace';
 
 import styles from './reportos-intelligence.module.css';
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const WORKSPACE_STORAGE_KEY =
   'reportos:workspace:v1';
@@ -56,6 +60,15 @@ export function ReportOsIntelligence() {
   const [open, setOpen] =
     useState(false);
 
+  const triggerRef =
+    useRef<HTMLButtonElement>(null);
+
+  const panelRef =
+    useRef<HTMLElement>(null);
+
+  const closeRef =
+    useRef<HTMLButtonElement>(null);
+
   const [copied, setCopied] =
     useState<
       | 'rfo'
@@ -82,6 +95,95 @@ export function ReportOsIntelligence() {
       window.clearInterval(timer);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    const returnFocusTarget =
+      triggerRef.current;
+
+    document.body.style.overflow =
+      'hidden';
+
+    const focusFrame =
+      window.requestAnimationFrame(
+        () => {
+          closeRef.current?.focus();
+        }
+      );
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+
+      if (
+        event.key !== 'Tab' ||
+        !panelRef.current
+      ) {
+        return;
+      }
+
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          FOCUSABLE_SELECTOR
+        )
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panelRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last =
+        focusable[focusable.length - 1];
+
+      if (
+        event.shiftKey &&
+        document.activeElement === first
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        document.activeElement === last
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown
+    );
+
+    return () => {
+      window.cancelAnimationFrame(
+        focusFrame
+      );
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown
+      );
+      document.body.style.overflow =
+        previousOverflow;
+      if (returnFocusTarget?.isConnected) {
+        returnFocusTarget.focus();
+      }
+    };
+  }, [open]);
 
   const activeIncident =
     useMemo(
@@ -171,8 +273,12 @@ export function ReportOsIntelligence() {
   return (
     <>
       <button
+        ref={triggerRef}
         className={styles.trigger}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls="reportos-intelligence-dialog"
         onClick={() =>
           setOpen(true)
         }
@@ -200,10 +306,13 @@ export function ReportOsIntelligence() {
           }}
         >
           <section
+            ref={panelRef}
+            id="reportos-intelligence-dialog"
             className={styles.panel}
             role="dialog"
             aria-modal="true"
             aria-labelledby="reportos-intelligence-title"
+            tabIndex={-1}
           >
             <header
               className={styles.header}
@@ -225,6 +334,7 @@ export function ReportOsIntelligence() {
               </div>
 
               <button
+                ref={closeRef}
                 className={styles.close}
                 type="button"
                 aria-label="Close intelligence"

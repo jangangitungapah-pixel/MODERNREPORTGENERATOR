@@ -1,0 +1,82 @@
+html {
+  min-width: 320px;
+  background: var(--ui-surface-app);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100svh;
+  color: var(--ui-ink-950);
+  background:
+    radial-gradient(circle at 14% -8%, rgba(103, 84, 234, 0.1), transparent 32rem),
+    radial-gradient(circle at 96% 18%, rgba(67, 135, 229, 0.075), transparent 36rem),
+    linear-gradient(180deg, #fafbff 0%, var(--ui-surface-app) 50%, #f7f8fc 100%);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button,
+input,
+textarea,
+select {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+a,
+input,
+textarea,
+select,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ui-ink-400);
+  opacity: 1;
+}
+
+::selection {
+  color: #fff;
+  background: var(--ui-brand);
+}
+
+.glass-panel {
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface-primary);
+  box-shadow: var(--ui-shadow-1);
+  backdrop-filter: blur(22px) saturate(1.12);
+  -webkit-backdrop-filter: blur(22px) saturate(1.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

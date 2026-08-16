@@ -144,6 +144,11 @@ export function SorPdfConverter() {
     setExporting,
   ] = useState(false);
 
+  const [
+    exportError,
+    setExportError,
+  ] = useState('');
+
   const events =
     useMemo(
       () =>
@@ -261,6 +266,8 @@ export function SorPdfConverter() {
     setParsed(null);
     setErrorMessage('');
     setDragActive(false);
+    setExportError('');
+    setExporting(false);
 
     if (inputRef.current) {
       inputRef.current.value =
@@ -271,6 +278,10 @@ export function SorPdfConverter() {
   async function parseFile(
     file: File
   ) {
+    if (status === 'parsing') {
+      return;
+    }
+
     const fileName =
       file.name.toLowerCase();
 
@@ -281,7 +292,7 @@ export function SorPdfConverter() {
     ) {
       setStatus('error');
       setErrorMessage(
-        'File harus berformat .SOR.'
+        'Choose an OTDR Standard Record file with the .SOR extension.'
       );
       setParsed(null);
       setSelectedFile(
@@ -299,7 +310,7 @@ export function SorPdfConverter() {
     ) {
       setStatus('error');
       setErrorMessage(
-        'File lebih besar dari 64 MB. Gunakan file SOR hasil OTDR asli atau export yang lebih kecil.'
+        'This file is larger than 64 MB. Choose the original OTDR SOR file or a smaller export.'
       );
       setParsed(null);
       setSelectedFile(
@@ -311,6 +322,7 @@ export function SorPdfConverter() {
 
     setStatus('parsing');
     setErrorMessage('');
+    setExportError('');
     setSelectedFile(
       file
     );
@@ -342,8 +354,9 @@ export function SorPdfConverter() {
 
       setErrorMessage(
         error instanceof Error
-          ? error.message
-          : 'SOR parser gagal membaca file.'
+          ? 'The local parser could not read this SOR file. ' +
+              error.message
+          : 'The local parser could not read this SOR file.'
       );
     }
   }
@@ -357,6 +370,7 @@ export function SorPdfConverter() {
     }
 
     setExporting(true);
+    setExportError('');
 
     try {
       const {
@@ -1454,12 +1468,11 @@ export function SorPdfConverter() {
         )
       );
     } catch (error) {
-      setStatus('error');
-
-      setErrorMessage(
+      setExportError(
         error instanceof Error
-          ? error.message
-          : 'PDF generation failed.'
+          ? 'PDF generation failed. ' +
+              error.message
+          : 'PDF generation failed. Try again without reloading the SOR file.'
       );
     } finally {
       setExporting(false);
@@ -1467,7 +1480,10 @@ export function SorPdfConverter() {
   }
 
   return (
-    <main className="sor-page-shell">
+    <main
+      className="sor-page-shell"
+      data-state={status}
+    >
       <div
         className="ambient ambient-one"
         aria-hidden="true"
@@ -1507,11 +1523,24 @@ export function SorPdfConverter() {
           </div>
         </div>
 
-        <span className="sor-local-chip">
+        <span
+          className="sor-local-chip"
+          role="status"
+          aria-label="Files stay on this device"
+        >
           <ShieldCheck
             size={13}
           />
-          Local processing
+          <span className="sor-local-chip-full">
+            Local processing
+          </span>
+
+          <span
+            className="sor-local-chip-short"
+            aria-hidden="true"
+          >
+            Local
+          </span>
         </span>
       </header>
 
@@ -1575,10 +1604,22 @@ export function SorPdfConverter() {
               ? 'sor-dropzone glass-panel sor-dropzone-active'
               : 'sor-dropzone glass-panel'
           }
+          aria-busy={
+            status ===
+            'parsing'
+          }
           onDragEnter={(
             event
           ) => {
             event.preventDefault();
+
+            if (
+              status ===
+              'parsing'
+            ) {
+              return;
+            }
+
             setDragActive(
               true
             );
@@ -1587,6 +1628,14 @@ export function SorPdfConverter() {
             event
           ) => {
             event.preventDefault();
+
+            if (
+              status ===
+              'parsing'
+            ) {
+              return;
+            }
+
             setDragActive(
               true
             );
@@ -1598,6 +1647,13 @@ export function SorPdfConverter() {
             setDragActive(
               false
             );
+
+            if (
+              status ===
+              'parsing'
+            ) {
+              return;
+            }
           }}
           onDrop={(
             event
@@ -1623,6 +1679,10 @@ export function SorPdfConverter() {
             className="sor-file-input"
             type="file"
             accept=".sor,.SOR,application/octet-stream"
+            disabled={
+              status ===
+              'parsing'
+            }
             onChange={(
               event
             ) => {
@@ -1641,6 +1701,10 @@ export function SorPdfConverter() {
           <button
             className="sor-dropzone-button"
             type="button"
+            disabled={
+              status ===
+              'parsing'
+            }
             onClick={() =>
               inputRef.current?.click()
             }
@@ -1653,12 +1717,17 @@ export function SorPdfConverter() {
 
             <span className="sor-dropzone-copy">
               <strong>
-                Drop .SOR file here
+                {status ===
+                'parsing'
+                  ? 'Parsing locally'
+                  : 'Drop .SOR file here'}
               </strong>
 
               <small>
-                or click to browse
-                from your computer
+                {status ===
+                'parsing'
+                  ? 'Your file stays on this device while ReportOS reads it.'
+                  : 'or click to browse from your computer'}
               </small>
             </span>
 
@@ -1691,13 +1760,21 @@ export function SorPdfConverter() {
 
               {status ===
               'parsing' ? (
-                <span className="sor-processing-chip">
-                  Parsing…
+                <span
+                  className="sor-processing-chip"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Activity
+                    size={12}
+                  />
+                  Parsing locally
                 </span>
               ) : (
                 <button
                   type="button"
                   title="Clear file"
+                  aria-label="Clear selected file"
                   onClick={
                     reset
                   }
@@ -1713,7 +1790,10 @@ export function SorPdfConverter() {
 
         {status ===
         'error' ? (
-          <section className="sor-error-card glass-panel">
+          <section
+            className="sor-error-card glass-panel"
+            role="alert"
+          >
             <AlertTriangle
               size={18}
             />
@@ -1729,24 +1809,141 @@ export function SorPdfConverter() {
                   errorMessage
                 }
               </span>
+
+              <small>
+                Nothing was uploaded.
+                The selected file remains
+                on this device.
+              </small>
             </div>
 
-            <button
-              type="button"
-              onClick={
-                reset
-              }
-            >
-              <RotateCcw
-                size={14}
-              />
-              Reset
-            </button>
+            <div className="sor-error-actions">
+              {selectedFile &&
+              selectedFile.name
+                .toLowerCase()
+                .endsWith(
+                  '.sor'
+                ) &&
+              selectedFile.size <=
+                64 *
+                  1024 *
+                  1024 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void parseFile(
+                      selectedFile
+                    )
+                  }
+                >
+                  <RotateCcw
+                    size={14}
+                  />
+                  Retry
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    inputRef.current
+                  ) {
+                    inputRef.current.value =
+                      '';
+                    inputRef.current.click();
+                  }
+                }}
+              >
+                <Upload
+                  size={14}
+                />
+                Choose another file
+              </button>
+            </div>
           </section>
         ) : null}
 
         {parsed ? (
           <>
+            <section className="sor-ready-toolbar glass-panel">
+              <div className="sor-ready-file">
+                <span className="sor-ready-file-icon">
+                  <FileText
+                    size={18}
+                  />
+                </span>
+
+                <div>
+                  <span>
+                    READY TO EXPORT
+                  </span>
+
+                  <strong>
+                    {selectedFile?.name ??
+                      parsed.filename}
+                  </strong>
+
+                  <small>
+                    Parsed locally · {
+                      events.length
+                    } events · SOR v{
+                      parsed.version
+                    }
+                  </small>
+                </div>
+              </div>
+
+              <button
+                className="sor-ready-download"
+                type="button"
+                disabled={
+                  exporting
+                }
+                aria-busy={
+                  exporting
+                }
+                onClick={() =>
+                  void exportPdf()
+                }
+              >
+                <Download
+                  size={17}
+                />
+
+                {exporting
+                  ? 'Generating PDF…'
+                  : 'Download engineering PDF'}
+              </button>
+
+              {exportError ? (
+                <div
+                  className="sor-export-error"
+                  role="alert"
+                >
+                  <AlertTriangle
+                    size={16}
+                  />
+
+                  <span>
+                    {exportError}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={
+                      exporting
+                    }
+                    onClick={() =>
+                      void exportPdf()
+                    }
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : null}
+            </section>
+
             <section className="sor-kpi-grid">
               <article className="sor-kpi glass-panel">
                 <span className="sor-kpi-icon">
@@ -1882,16 +2079,22 @@ export function SorPdfConverter() {
                 </div>
 
                 <div className="sor-trace-canvas">
-                  <svg
-                    viewBox={
-                      '0 0 ' +
-                      SVG_WIDTH +
-                      ' ' +
-                      SVG_HEIGHT
-                    }
-                    role="img"
-                    aria-label="OTDR trace graph"
-                  >
+                  <div className="sor-trace-scroll">
+                    <svg
+                      viewBox={
+                        '0 0 ' +
+                        SVG_WIDTH +
+                        ' ' +
+                        SVG_HEIGHT
+                      }
+                      role="img"
+                      aria-label="OTDR trace graph"
+                    >
+                      <title>
+                        OTDR trace with {
+                          events.length
+                        } detected events
+                      </title>
                     {[
                       1,
                       2,
@@ -1953,38 +2156,51 @@ export function SorPdfConverter() {
                       )
                     )}
 
-                    {eventMarkers.map(
-                      (event) => (
-                        <line
-                          className="sor-event-line"
-                          key={
-                            event.number
-                          }
-                          x1={
-                            event.x
-                          }
-                          x2={
-                            event.x
-                          }
-                          y1={
-                            SVG_PADDING
-                          }
-                          y2={
-                            SVG_HEIGHT -
-                            SVG_PADDING
-                          }
-                        />
-                      )
-                    )}
+                      {eventMarkers.map(
+                        (event) => (
+                          <line
+                            className="sor-event-line"
+                            key={
+                              event.number
+                            }
+                            x1={
+                              event.x
+                            }
+                            x2={
+                              event.x
+                            }
+                            y1={
+                              SVG_PADDING
+                            }
+                            y2={
+                              SVG_HEIGHT -
+                              SVG_PADDING
+                            }
+                          >
+                            <title>
+                              Event {
+                                event.number
+                              }: {
+                                shortEventType(
+                                  event.type
+                                )
+                              } at {
+                                event.distance
+                              } km
+                            </title>
+                          </line>
+                        )
+                      )}
 
-                    <polyline
-                      className="sor-trace-line"
-                      fill="none"
-                      points={
-                        svgPoints
-                      }
-                    />
-                  </svg>
+                      <polyline
+                        className="sor-trace-line"
+                        fill="none"
+                        points={
+                          svgPoints
+                        }
+                      />
+                    </svg>
+                  </div>
 
                   <div className="sor-trace-axis">
                     <span>
@@ -2130,31 +2346,18 @@ export function SorPdfConverter() {
                   </div>
                 </div>
 
-                <button
-                  className="sor-export-button"
-                  type="button"
-                  disabled={
-                    exporting
-                  }
-                  onClick={() =>
-                    void exportPdf()
-                  }
-                >
-                  <Download
-                    size={17}
+                <div className="sor-export-assurance">
+                  <ShieldCheck
+                    size={16}
                   />
 
-                  {exporting
-                    ? 'Generating PDF…'
-                    : 'Export PDF'}
-                </button>
-
-                <span className="sor-export-note">
+                  <span className="sor-export-note">
                   The SOR file stays
                   on this device.
                   Conversion happens
                   in your browser.
-                </span>
+                  </span>
+                </div>
               </aside>
             </section>
 
@@ -2464,6 +2667,12 @@ export function SorPdfConverter() {
               0 ? (
                 <div className="sor-events-table-wrap">
                   <table className="sor-events-table">
+                    <caption className="sor-visually-hidden">
+                      Detected OTDR events
+                      with distance, loss,
+                      reflectance, and
+                      comments
+                    </caption>
                     <thead>
                       <tr>
                         <th>#</th>

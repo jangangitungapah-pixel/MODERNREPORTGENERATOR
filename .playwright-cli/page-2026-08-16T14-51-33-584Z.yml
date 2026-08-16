@@ -1,0 +1,9 @@
+- generic [active] [ref=f10e1]:
+  - generic [ref=f10e2]: Opening ReportOS System Console…
+  - link "System Console" [ref=f10e4] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=f10e13] [cursor=pointer]
+  - alert [ref=f10e17]
+  - button "Intelligence 14" [ref=f10e18] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=f10e19]: "14"

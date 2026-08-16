@@ -1,0 +1,86 @@
+- generic [ref=f32e1]:
+  - main [ref=f32e2]:
+    - text: WORKSPACE
+    - generic [ref=f32e3]:
+      - generic [ref=f32e4]:
+        - generic [ref=f32e5]:
+          - generic [ref=f32e6]: Incident workspace
+          - heading "Command center." [level=1] [ref=f32e340]
+        - generic [ref=f32e14]:
+          - button "New draft" [ref=f32e15] [cursor=pointer]
+          - status "Current draft is saved in this browser." [ref=f32e19]:
+            - generic [ref=f32e21]:
+              - strong [ref=f32e22]: SAVED
+              - generic [ref=f32e23]: Local · 16 Aug, 22:32
+      - generic [ref=f32e341]:
+        - generic [ref=f32e343]:
+          - generic [ref=f32e344]: OPERATIONAL PULSE
+          - heading "Live incident command center." [level=2] [ref=f32e345]
+          - paragraph [ref=f32e346]: Operational status is inferred from each TT progress history. Attention is raised after 60 minutes without a new update on a running incident.
+          - generic [ref=f32e347]:
+            - generic [ref=f32e348]: LIVE WORKSPACE
+            - generic [ref=f32e350]: 1 active records
+        - generic [ref=f32e351]:
+          - article [ref=f32e352]:
+            - generic [ref=f32e356]:
+              - generic [ref=f32e357]: RUNNING TT
+              - strong [ref=f32e358]: "1"
+              - generic [ref=f32e359]: Currently unresolved
+          - article [ref=f32e360]:
+            - generic [ref=f32e364]:
+              - generic [ref=f32e365]: RESTORED
+              - strong [ref=f32e366]: "0"
+              - generic [ref=f32e367]: 0 pending closure
+          - article [ref=f32e368]:
+            - generic [ref=f32e372]:
+              - generic [ref=f32e373]: NEED ATTENTION
+              - strong [ref=f32e374]: "0"
+              - generic [ref=f32e375]: 60m+ without update
+          - article [ref=f32e376]:
+            - generic [ref=f32e381]:
+              - generic [ref=f32e382]: AVG RUNNING AGE
+              - strong [ref=f32e383]: —
+              - generic [ref=f32e384]: Across running TT
+        - generic [ref=f32e385]:
+          - generic [ref=f32e386]:
+            - generic [ref=f32e387]:
+              - generic [ref=f32e388]: ACTIVE INCIDENTS
+              - heading "Operational queue" [level=3] [ref=f32e389]
+              - paragraph [ref=f32e390]: Highest-attention incidents surface first automatically.
+            - generic [ref=f32e391]:
+              - group "Operations view mode" [ref=f32e392]:
+                - button "Columns" [pressed] [ref=f32e393] [cursor=pointer]
+                - button "List" [ref=f32e398] [cursor=pointer]
+              - generic [ref=f32e402]: No critical freshness
+          - article [ref=f32e407]:
+            - generic [ref=f32e411]:
+              - generic [ref=f32e412]: NEW
+              - heading "Untitled incident" [level=4] [ref=f32e414]
+              - paragraph [ref=f32e415]: No incident summary yet.
+              - generic [ref=f32e416]:
+                - generic [ref=f32e417]: UNASSIGNED
+                - generic [ref=f32e418]: •No PIC
+            - generic [ref=f32e419]:
+              - generic [ref=f32e420]:
+                - generic [ref=f32e421]: AGE
+                - strong [ref=f32e422]: —
+              - generic [ref=f32e423]:
+                - generic [ref=f32e424]: FRESHNESS
+                - strong [ref=f32e425]: —
+              - generic [ref=f32e426]:
+                - generic [ref=f32e427]: UPDATES
+                - strong [ref=f32e428]: "0"
+            - generic [ref=f32e429]:
+              - text: LAST SIGNAL
+              - strong [ref=f32e430]: —
+              - paragraph [ref=f32e431]: No progress update yet.
+            - generic [ref=f32e432]:
+              - button "Quick update" [ref=f32e433] [cursor=pointer]
+              - button "Open" [ref=f32e437] [cursor=pointer]
+    - navigation "Mobile navigation" [ref=f32e310]:
+      - button "Composer" [ref=f32e311] [cursor=pointer]
+      - button "Operations" [active] [ref=f32e316] [cursor=pointer]
+      - button "Archive" [ref=f32e321] [cursor=pointer]
+      - button "More" [ref=f32e326] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=f32e335] [cursor=pointer]
+  - alert [ref=f32e339]

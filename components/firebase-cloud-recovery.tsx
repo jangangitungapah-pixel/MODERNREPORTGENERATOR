@@ -41,6 +41,9 @@ const IMPACT_STORAGE_KEY =
 const SYNC_INTERVAL_MS =
   2_500;
 
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 type CloudStatus =
   | 'starting'
   | 'syncing'
@@ -221,6 +224,15 @@ export function FirebaseCloudRecovery() {
 
   const syncBusyRef =
     useRef(false);
+
+  const triggerRef =
+    useRef<HTMLButtonElement>(null);
+
+  const drawerRef =
+    useRef<HTMLElement>(null);
+
+  const closeRef =
+    useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -441,6 +453,95 @@ export function FirebaseCloudRecovery() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!drawerOpen) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    const returnFocusTarget =
+      triggerRef.current;
+
+    document.body.style.overflow =
+      'hidden';
+
+    const focusFrame =
+      window.requestAnimationFrame(
+        () => {
+          closeRef.current?.focus();
+        }
+      );
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setDrawerOpen(false);
+        return;
+      }
+
+      if (
+        event.key !== 'Tab' ||
+        !drawerRef.current
+      ) {
+        return;
+      }
+
+      const focusable = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(
+          FOCUSABLE_SELECTOR
+        )
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        drawerRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last =
+        focusable[focusable.length - 1];
+
+      if (
+        event.shiftKey &&
+        document.activeElement === first
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        document.activeElement === last
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown
+    );
+
+    return () => {
+      window.cancelAnimationFrame(
+        focusFrame
+      );
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown
+      );
+      document.body.style.overflow =
+        previousOverflow;
+      if (returnFocusTarget?.isConnected) {
+        returnFocusTarget.focus();
+      }
+    };
+  }, [drawerOpen]);
+
   async function manualSync() {
     if (!uid) {
       return;
@@ -597,10 +698,14 @@ export function FirebaseCloudRecovery() {
   return (
     <>
       <button
+        ref={triggerRef}
         className="cloud-recovery-trigger"
         data-status={status}
         type="button"
         title="Cloud backup & recovery"
+        aria-haspopup="dialog"
+        aria-expanded={drawerOpen}
+        aria-controls="cloud-recovery-dialog"
         onClick={() =>
           setDrawerOpen(true)
         }
@@ -621,11 +726,7 @@ export function FirebaseCloudRecovery() {
 
         <span>
           <strong>
-            {status === 'ready'
-              ? 'Cloud protected'
-              : status === 'error'
-                ? 'Local safe mode'
-                : 'Cloud syncing'}
+            Recovery
           </strong>
 
           <small>
@@ -655,10 +756,13 @@ export function FirebaseCloudRecovery() {
           }}
         >
           <aside
+            ref={drawerRef}
+            id="cloud-recovery-dialog"
             className="cloud-recovery-drawer"
             role="dialog"
             aria-modal="true"
             aria-label="Cloud backup and recovery"
+            tabIndex={-1}
           >
             <header className="cloud-recovery-head">
               <div>
@@ -680,6 +784,7 @@ export function FirebaseCloudRecovery() {
               </div>
 
               <button
+                ref={closeRef}
                 type="button"
                 title="Close"
                 onClick={() =>

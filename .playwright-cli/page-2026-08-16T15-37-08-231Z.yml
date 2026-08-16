@@ -1,0 +1,26 @@
+- generic [active] [ref=f34e1]:
+  - main [ref=f34e2]:
+    - generic [ref=f34e3]:
+      - link "ReportOS" [ref=f34e4] [cursor=pointer]:
+        - /url: /
+      - strong [ref=f34e15]: Fiber Lab
+      - status "Files stay on this device" [ref=f34e16]:
+        - generic [ref=f34e20]: Local
+    - generic [ref=f34e21]:
+      - generic [ref=f34e23]:
+        - generic [ref=f34e24]: OTDR / SOR CONVERTER
+        - heading "SOR to PDF, with the trace still meaningful." [level=1] [ref=f34e25]
+        - paragraph [ref=f34e26]: Parse OTDR Standard Record files locally, inspect measurement metadata and events, then generate a clean PDF report with the actual trace graph.
+        - generic [ref=f34e27]:
+          - generic [ref=f34e28]: SOR v1 + v2
+          - generic [ref=f34e29]: Trace graph
+          - generic [ref=f34e30]: Event table
+          - generic [ref=f34e31]: No server upload
+      - generic [ref=f34e32]:
+        - button "Choose File"
+        - button "Drop .SOR file here or click to browse from your computer" [ref=f34e33] [cursor=pointer]:
+          - generic [ref=f34e38]:
+            - strong [ref=f34e39]: Drop .SOR file here
+            - generic [ref=f34e40]: or click to browse from your computer
+  - button "Open Next.js Dev Tools" [ref=f34e46] [cursor=pointer]
+  - alert [ref=f34e50]

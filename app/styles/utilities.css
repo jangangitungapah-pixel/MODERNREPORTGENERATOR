@@ -1,0 +1,207 @@
+.reportos-utility-dock {
+  position: fixed;
+  z-index: 96;
+  right: 20px;
+  bottom: 20px;
+  width: min(720px, calc(100vw - 40px));
+  color: var(--ui-ink-700, #50596f);
+}
+
+.reportos-utility-surface {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) max-content;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  border: 1px solid var(--ui-line-strong, rgba(47, 55, 80, 0.16));
+  border-radius: 18px;
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--ui-shadow-3, 0 28px 80px rgba(35, 42, 69, 0.14));
+  backdrop-filter: blur(24px) saturate(1.14);
+  -webkit-backdrop-filter: blur(24px) saturate(1.14);
+}
+
+.reportos-utility-sheet-head {
+  display: none;
+}
+
+.reportos-utility-sheet-status {
+  min-width: 0;
+}
+
+.reportos-utility-trigger-group {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 6px;
+  min-width: 0;
+  border-left: 1px solid var(--ui-line, rgba(47, 55, 80, 0.1));
+  padding-left: 7px;
+}
+
+.reportos-utility-trigger-group > a,
+.reportos-utility-trigger-group > button {
+  width: 100%;
+  min-width: 0;
+}
+
+.reportos-utility-mobile-trigger,
+.reportos-utility-sheet-overlay {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .reportos-utility-dock {
+    z-index: auto;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  .reportos-utility-mobile-trigger {
+    position: relative;
+    z-index: 24;
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--ui-brand-border, rgba(103, 84, 234, 0.16));
+    border-radius: var(--ui-radius-button, 12px);
+    padding: 0 15px;
+    color: var(--ui-brand-strong, #5740d9);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--ui-shadow-2, 0 18px 48px rgba(45, 52, 82, 0.075));
+    font-size: 14px;
+    font-weight: 780;
+    cursor: pointer;
+  }
+
+  .reportos-utility-dock--workspace .reportos-utility-mobile-trigger {
+    display: none;
+  }
+
+  .reportos-utility-sheet-overlay {
+    position: fixed;
+    z-index: 229;
+    inset: 0;
+    display: block;
+    background: rgba(32, 37, 54, 0.44);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .reportos-utility-surface {
+    display: block;
+    position: fixed;
+    z-index: 230;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: min(100%, 560px);
+    max-height: min(88dvh, 760px);
+    margin-inline: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid rgba(255, 255, 255, 0.7);
+    border-bottom: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 24px 24px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(24px);
+    visibility: hidden;
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease,
+      visibility 0s linear 200ms;
+  }
+
+  .reportos-utility-surface--open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    visibility: visible;
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease;
+  }
+
+  .reportos-utility-sheet-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .reportos-utility-sheet-head > div {
+    min-width: 0;
+  }
+
+  .reportos-utility-sheet-head span {
+    color: var(--ui-brand, #6754ea);
+    font-size: 11px;
+    font-weight: 820;
+    letter-spacing: 0.11em;
+  }
+
+  .reportos-utility-sheet-head h2 {
+    margin: 5px 0 0;
+    color: var(--ui-ink-950, #202536);
+    font-size: 24px;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+
+  .reportos-utility-sheet-head p {
+    max-width: 42ch;
+    margin: 6px 0 0;
+    color: var(--ui-ink-600, #687287);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .reportos-utility-sheet-head > button {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    place-items: center;
+    border: 1px solid var(--ui-line, rgba(47, 55, 80, 0.1));
+    border-radius: 13px;
+    color: var(--ui-ink-700, #50596f);
+    background: var(--ui-surface-nested, #f8f9fc);
+    cursor: pointer;
+  }
+
+  .reportos-utility-trigger-group {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    gap: 8px;
+    margin-top: 12px;
+    border-top: 1px solid var(--ui-line, rgba(47, 55, 80, 0.1));
+    border-left: 0;
+    padding-left: 0;
+    padding-top: 12px;
+  }
+
+  .reportos-utility-trigger-group > a,
+  .reportos-utility-trigger-group > button {
+    min-height: 52px;
+    font-size: 14px;
+  }
+
+  .reportos-utility-trigger-group .cloud-recovery-trigger strong {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reportos-utility-surface {
+    transition: none;
+  }
+}

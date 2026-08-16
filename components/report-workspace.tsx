@@ -42,6 +42,7 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -112,6 +113,62 @@ import {
 const STORAGE_KEY = 'reportos:draft:v1';
 const WORKSPACE_STORAGE_KEY =
   'reportos:workspace:v1';
+
+const DIALOG_FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'textarea:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+function trapDialogFocus(
+  event: KeyboardEvent,
+  container: HTMLElement | null
+) {
+  if (
+    event.key !== 'Tab' ||
+    !container
+  ) {
+    return;
+  }
+
+  const focusable = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      DIALOG_FOCUSABLE_SELECTOR
+    )
+  ).filter(
+    (element) =>
+      element.getAttribute('aria-hidden') !==
+        'true' &&
+      !element.hasAttribute('disabled')
+  );
+
+  if (focusable.length === 0) {
+    event.preventDefault();
+    container.focus();
+    return;
+  }
+
+  const first = focusable[0];
+  const last =
+    focusable[focusable.length - 1];
+
+  if (
+    event.shiftKey &&
+    document.activeElement === first
+  ) {
+    event.preventDefault();
+    last.focus();
+  } else if (
+    !event.shiftKey &&
+    document.activeElement === last
+  ) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
 type MobilePane = 'compose' | 'preview';
 type TimelineSortOrder =
@@ -423,6 +480,11 @@ export function ReportWorkspace() {
     useState<MobilePane>('compose');
 
   const [
+    mobileMoreOpen,
+    setMobileMoreOpen,
+  ] = useState(false);
+
+  const [
     timelineSortOrder,
     setTimelineSortOrder,
   ] = useState<TimelineSortOrder>(
@@ -552,6 +614,27 @@ export function ReportWorkspace() {
     lastSavedAt,
     setLastSavedAt,
   ] = useState('');
+
+  const mobileMoreTriggerRef =
+    useRef<HTMLButtonElement>(null);
+
+  const mobileMoreSheetRef =
+    useRef<HTMLElement>(null);
+
+  const mobileMoreCloseRef =
+    useRef<HTMLButtonElement>(null);
+
+  const deleteDialogRef =
+    useRef<HTMLElement>(null);
+
+  const deleteCancelRef =
+    useRef<HTMLButtonElement>(null);
+
+  const deleteReturnFocusRef =
+    useRef<HTMLElement | null>(null);
+
+  const archiveSearchRef =
+    useRef<HTMLInputElement>(null);
 
   const currentSaveFingerprint =
     useMemo(
@@ -815,6 +898,130 @@ export function ReportWorkspace() {
       );
     };
   }, []);
+
+  useEffect(() => {
+    if (!mobileMoreOpen) {
+      return;
+    }
+
+    const previousBodyOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      'hidden';
+
+    const focusFrame =
+      window.requestAnimationFrame(
+        () => {
+          mobileMoreCloseRef.current?.focus();
+        }
+      );
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMobileMoreOpen(false);
+        return;
+      }
+
+      trapDialogFocus(
+        event,
+        mobileMoreSheetRef.current
+      );
+    };
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown
+    );
+
+    return () => {
+      window.cancelAnimationFrame(
+        focusFrame
+      );
+
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousBodyOverflow;
+
+      mobileMoreTriggerRef.current?.focus();
+    };
+  }, [mobileMoreOpen]);
+
+  useEffect(() => {
+    if (!deleteIncidentTargetId) {
+      return;
+    }
+
+    const previousBodyOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      'hidden';
+
+    const focusFrame =
+      window.requestAnimationFrame(
+        () => {
+          deleteCancelRef.current?.focus();
+        }
+      );
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+
+        setDeleteIncidentTargetId(
+          null
+        );
+
+        return;
+      }
+
+      trapDialogFocus(
+        event,
+        deleteDialogRef.current
+      );
+    };
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown
+    );
+
+    return () => {
+      window.cancelAnimationFrame(
+        focusFrame
+      );
+
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousBodyOverflow;
+
+      const returnTarget =
+        deleteReturnFocusRef.current;
+
+      if (returnTarget?.isConnected) {
+        returnTarget.focus();
+      } else {
+        archiveSearchRef.current?.focus();
+      }
+
+      deleteReturnFocusRef.current =
+        null;
+    };
+  }, [deleteIncidentTargetId]);
 
   const generated = useMemo(
     () => formatReport(report),
@@ -2001,7 +2208,10 @@ export function ReportWorkspace() {
         ease: [0.2, 0.8, 0.2, 1],
       }}
     >
-      <main className="app-shell">
+      <main
+        className="app-shell"
+        data-workspace-mode={workspaceMode}
+      >
         <div
           className="ambient ambient-one"
           aria-hidden="true"
@@ -2034,6 +2244,11 @@ export function ReportWorkspace() {
                   : 'nav-item'
               }
               type="button"
+              title="Composer — Build incident report"
+              aria-pressed={
+                workspaceMode ===
+                'compose'
+              }
               onClick={() =>
                 setWorkspaceMode(
                   'compose'
@@ -2063,6 +2278,11 @@ export function ReportWorkspace() {
                   : 'nav-item'
               }
               type="button"
+              title="Operations — Live command center"
+              aria-pressed={
+                workspaceMode ===
+                'operations'
+              }
               onClick={() =>
                 setWorkspaceMode(
                   'operations'
@@ -2096,6 +2316,11 @@ export function ReportWorkspace() {
                   : 'nav-item'
               }
               type="button"
+              title="Archive — Incident vault"
+              aria-pressed={
+                workspaceMode ===
+                'archive'
+              }
               onClick={() =>
                 setWorkspaceMode(
                   'archive'
@@ -2121,6 +2346,7 @@ export function ReportWorkspace() {
             <Link
               className="nav-item nav-item-tool"
               href="/backbone-impact"
+              title="Impact Board — Backbone B2B impact"
             >
               <Network
                 size={18}
@@ -2145,6 +2371,7 @@ export function ReportWorkspace() {
             <Link
               className="nav-item nav-item-tool"
               href="/sor-to-pdf"
+              title="Fiber Lab — OTDR SOR to PDF"
             >
               <FileOutput
                 size={18}
@@ -2979,6 +3206,7 @@ export function ReportWorkspace() {
                   <Search size={15} />
 
                   <input
+                    ref={archiveSearchRef}
                     value={
                       archiveQuery
                     }
@@ -3160,11 +3388,14 @@ export function ReportWorkspace() {
                                 className="vault-delete-action"
                                 type="button"
                                 title="Delete TT"
-                                onClick={() =>
+                                onClick={(event) => {
+                                  deleteReturnFocusRef.current =
+                                    event.currentTarget;
+
                                   requestDeleteIncident(
                                     incident.id
-                                  )
-                                }
+                                  );
+                                }}
                               >
                                 <Trash2
                                   size={14}
@@ -5632,6 +5863,7 @@ export function ReportWorkspace() {
               }}
             >
               <motion.section
+                ref={deleteDialogRef}
                 className="delete-tt-dialog glass-panel"
                 initial={{
                   opacity: 0,
@@ -5651,6 +5883,8 @@ export function ReportWorkspace() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="delete-tt-title"
+                aria-describedby="delete-tt-description"
+                tabIndex={-1}
               >
                 <div className="delete-tt-icon">
                   <Trash2
@@ -5668,7 +5902,7 @@ export function ReportWorkspace() {
                     the workspace?
                   </h3>
 
-                  <p>
+                  <p id="delete-tt-description">
                     The TT disappears
                     from Operations and
                     Incident Vault.
@@ -5727,6 +5961,7 @@ export function ReportWorkspace() {
 
                 <div className="delete-tt-actions">
                   <button
+                    ref={deleteCancelRef}
                     className="delete-tt-cancel"
                     type="button"
                     onClick={
@@ -5747,6 +5982,193 @@ export function ReportWorkspace() {
                       size={14}
                     />
                     Delete TT
+                  </button>
+                </div>
+              </motion.section>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {mobileMoreOpen ? (
+            <motion.div
+              className="mobile-more-overlay"
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              role="presentation"
+              onMouseDown={(event) => {
+                if (
+                  event.target ===
+                  event.currentTarget
+                ) {
+                  setMobileMoreOpen(
+                    false
+                  );
+                }
+              }}
+            >
+              <motion.section
+                ref={mobileMoreSheetRef}
+                className="mobile-more-sheet"
+                id="mobile-more-sheet"
+                initial={{
+                  opacity: 0,
+                  y: 24,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  y: 16,
+                }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="mobile-more-title"
+                aria-describedby="mobile-more-description"
+                tabIndex={-1}
+              >
+                <header className="mobile-more-head">
+                  <div>
+                    <span>
+                      REPORTOS TOOLS
+                    </span>
+
+                    <h2 id="mobile-more-title">
+                      More
+                    </h2>
+
+                    <p id="mobile-more-description">
+                      Open a specialist workspace or
+                      review system status.
+                    </p>
+                  </div>
+
+                  <button
+                    ref={mobileMoreCloseRef}
+                    className="mobile-more-close"
+                    type="button"
+                    title="Close More tools"
+                    aria-label="Close More tools"
+                    onClick={() =>
+                      setMobileMoreOpen(
+                        false
+                      )
+                    }
+                  >
+                    <X size={18} />
+                  </button>
+                </header>
+
+                <div className="mobile-more-list">
+                  <Link
+                    className="mobile-more-action"
+                    href="/backbone-impact"
+                    onClick={() =>
+                      setMobileMoreOpen(
+                        false
+                      )
+                    }
+                  >
+                    <Network size={20} />
+
+                    <span>
+                      <strong>
+                        Impact Board
+                      </strong>
+
+                      <small>
+                        Build backbone and B2B impact lists
+                      </small>
+                    </span>
+
+                    <ChevronRight size={17} />
+                  </Link>
+
+                  <Link
+                    className="mobile-more-action"
+                    href="/sor-to-pdf"
+                    onClick={() =>
+                      setMobileMoreOpen(
+                        false
+                      )
+                    }
+                  >
+                    <FileOutput size={20} />
+
+                    <span>
+                      <strong>
+                        Fiber Lab
+                      </strong>
+
+                      <small>
+                        Inspect SOR traces and export PDF
+                      </small>
+                    </span>
+
+                    <ChevronRight size={17} />
+                  </Link>
+
+                  <Link
+                    className="mobile-more-action"
+                    href="/system"
+                    onClick={() =>
+                      setMobileMoreOpen(
+                        false
+                      )
+                    }
+                  >
+                    <Gauge size={20} />
+
+                    <span>
+                      <strong>
+                        System Console
+                      </strong>
+
+                      <small>
+                        Audit identity, recovery, and governance
+                      </small>
+                    </span>
+
+                    <ChevronRight size={17} />
+                  </Link>
+
+                  <button
+                    className="mobile-more-action"
+                    type="button"
+                    onClick={() => {
+                      setMobileMoreOpen(
+                        false
+                      );
+
+                      window.dispatchEvent(
+                        new CustomEvent(
+                          'reportos:open-utility-dock'
+                        )
+                      );
+                    }}
+                  >
+                    <ShieldCheck size={20} />
+
+                    <span>
+                      <strong>
+                        System status
+                      </strong>
+
+                      <small>
+                        Sync, identity, intelligence, and recovery
+                      </small>
+                    </span>
+
+                    <ChevronRight size={17} />
                   </button>
                 </div>
               </motion.section>
@@ -5812,29 +6234,30 @@ export function ReportWorkspace() {
             <span>Archive</span>
           </button>
 
-          <Link
-            className="bottom-nav-tool"
-            href="/backbone-impact"
+          <button
+            ref={mobileMoreTriggerRef}
+            className={
+              mobileMoreOpen
+                ? 'bottom-nav-more bottom-nav-active'
+                : 'bottom-nav-more'
+            }
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={
+              mobileMoreOpen
+            }
+            aria-controls="mobile-more-sheet"
+            onClick={() =>
+              setMobileMoreOpen(
+                true
+              )
+            }
           >
-            <Network
-              size={18}
-            />
+            <Command size={18} />
             <span>
-              Impact
+              More
             </span>
-          </Link>
-
-          <Link
-            className="bottom-nav-tool"
-            href="/sor-to-pdf"
-          >
-            <FileOutput
-              size={18}
-            />
-            <span>
-              SOR PDF
-            </span>
-          </Link>
+          </button>
         </nav>
       </main>
     </MotionConfig>

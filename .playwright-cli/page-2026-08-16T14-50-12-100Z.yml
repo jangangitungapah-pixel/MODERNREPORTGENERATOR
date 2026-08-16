@@ -1,0 +1,220 @@
+- generic [active] [ref=f5e1]:
+  - main [ref=f5e2]:
+    - generic [ref=f5e3]:
+      - generic [ref=f5e4]:
+        - generic [ref=f5e5]:
+          - generic [ref=f5e6]: Incident workspace
+          - heading "Compose with clarity." [level=1] [ref=f5e10]
+          - generic [ref=f5e11]:
+            - generic [ref=f5e12]: active
+            - generic [ref=f5e13]: New incident
+        - button "New draft" [ref=f5e15] [cursor=pointer]
+      - tablist "Workspace view" [ref=f5e19]:
+        - tab "Composer" [selected] [ref=f5e20]
+        - tab "Preview" [ref=f5e25]
+      - generic [ref=f5e30]:
+        - generic [ref=f5e31]:
+          - generic [ref=f5e38]:
+            - generic [ref=f5e39]: SMART INGEST
+            - heading "Paste. Parse. Done." [level=2] [ref=f5e40]
+            - paragraph [ref=f5e41]: Drop a raw incident bagan here. ReportOS will reconstruct its structured fields and timeline.
+          - generic [ref=f5e42]:
+            - generic [ref=f5e43]:
+              - generic [ref=f5e44]:
+                - generic [ref=f5e45]: RAW INCIDENT PAYLOAD
+                - generic [ref=f5e46]: 0 chars
+              - textbox "RAW INCIDENT PAYLOAD 0 chars" [ref=f5e47]:
+                - /placeholder: Paste the complete incident report here — formatting can be messy.
+            - generic [ref=f5e48]:
+              - button "Read clipboard" [ref=f5e49] [cursor=pointer]
+              - button "Smart Parse & Apply" [disabled] [ref=f5e53]
+        - generic [ref=f5e59]:
+          - generic [ref=f5e60]:
+            - generic [ref=f5e61]: LIVE INCIDENT / DRAFT
+            - heading "Untitled incident" [level=2] [ref=f5e62]
+            - paragraph [ref=f5e63]: Start filling the incident detail to build your structured operational report.
+          - generic [ref=f5e65]:
+            - strong [ref=f5e66]: 0%
+            - generic [ref=f5e67]: ready
+        - generic [ref=f5e68]:
+          - generic [ref=f5e73]:
+            - generic [ref=f5e74]: "01"
+            - heading "Incident identity" [level=3] [ref=f5e75]
+            - paragraph [ref=f5e76]: Core identifiers that anchor the report.
+          - generic [ref=f5e77]:
+            - generic [ref=f5e78]:
+              - generic [ref=f5e79]: Region
+              - textbox "Region" [ref=f5e81]:
+                - /placeholder: MANDAU
+            - generic [ref=f5e82]:
+              - generic [ref=f5e83]: Trouble ticket
+              - textbox "Trouble ticket" [ref=f5e85]:
+                - /placeholder: INC-YYYYMMDD-00000000
+            - generic [ref=f5e86]:
+              - generic [ref=f5e87]: Alarm / link summary
+              - textbox "Alarm / link summary" [ref=f5e89]:
+                - /placeholder: LINK DOWN AT ... <> ...
+        - generic [ref=f5e90]:
+          - generic [ref=f5e96]:
+            - generic [ref=f5e97]: "02"
+            - heading "Dispatch context" [level=3] [ref=f5e98]
+            - paragraph [ref=f5e99]: Timing, ownership, link impact, and physical cut point topology.
+          - generic [ref=f5e100]:
+            - generic [ref=f5e101]:
+              - generic [ref=f5e102]:
+                - generic [ref=f5e103]: Occur time
+                - generic [ref=f5e104]: DD/MM/YYYY HH:mm
+              - textbox "Occur time DD/MM/YYYY HH:mm" [ref=f5e105]:
+                - /placeholder: 15/08/2026 13:54
+            - generic [ref=f5e106]:
+              - generic [ref=f5e107]:
+                - generic [ref=f5e108]: Dispatch time
+                - generic [ref=f5e109]: DD/MM/YYYY HH:mm
+              - textbox "Dispatch time DD/MM/YYYY HH:mm" [ref=f5e110]:
+                - /placeholder: 15/08/2026 14:25
+            - generic [ref=f5e111]:
+              - generic [ref=f5e112]: PIC
+              - textbox "PIC" [ref=f5e114]:
+                - /placeholder: Name (area)
+          - generic [ref=f5e115]:
+            - generic [ref=f5e116]:
+              - generic [ref=f5e117]:
+                - generic [ref=f5e123]:
+                  - strong [ref=f5e124]: Link impact topology
+                  - generic [ref=f5e125]: Freeform affected links. Region, status tag, and child TT are optional.
+                - button "Impact link" [ref=f5e126] [cursor=pointer]
+              - article [ref=f5e128]:
+                - generic [ref=f5e129]:
+                  - generic [ref=f5e130]:
+                    - generic [ref=f5e131]: MAIN LINK
+                    - strong [ref=f5e132]: Primary incident
+                  - group "Link status" [ref=f5e133]:
+                    - button "•" [pressed] [ref=f5e134] [cursor=pointer]
+                    - button "❌" [ref=f5e136] [cursor=pointer]
+                    - button "⚠️" [ref=f5e138] [cursor=pointer]
+                    - button "✅" [ref=f5e140] [cursor=pointer]
+                - generic [ref=f5e142]:
+                  - generic [ref=f5e143]:
+                    - generic [ref=f5e144]: STATUS TAG
+                    - textbox "STATUS TAG" [ref=f5e145]:
+                      - /placeholder: "[Open - Major]"
+                  - generic [ref=f5e146]:
+                    - generic [ref=f5e147]: LINK / ALARM
+                    - strong [ref=f5e148]: Use Incident Identity to define the main link.
+              - generic [ref=f5e154]:
+                - strong [ref=f5e155]: No impact link
+                - generic [ref=f5e156]: Add any affected link in whatever operational format you receive. Structured metadata is optional.
+            - generic [ref=f5e157]:
+              - generic [ref=f5e158]:
+                - generic [ref=f5e164]:
+                  - strong [ref=f5e165]: Cut point topology
+                  - generic [ref=f5e166]: Pair each CP with its own rootcause, location, and current marker.
+                - button "Add CP" [ref=f5e167] [cursor=pointer]
+              - generic [ref=f5e169]:
+                - generic [ref=f5e174]:
+                  - strong [ref=f5e175]: Single CP mode
+                  - generic [ref=f5e176]: These legacy fields remain ideal for a normal one-cut incident. Press Add CP to promote them into structured CP1.
+                - generic [ref=f5e177]:
+                  - generic [ref=f5e178]:
+                    - generic [ref=f5e179]: Cut point
+                    - textbox "Cut point" [ref=f5e181]:
+                      - /placeholder: KM / landmark / location
+                  - generic [ref=f5e182]:
+                    - generic [ref=f5e183]: Rootcause
+                    - textbox "Rootcause" [ref=f5e185]:
+                      - /placeholder: Describe root cause
+        - generic [ref=f5e186]:
+          - generic [ref=f5e187]:
+            - generic [ref=f5e191]:
+              - generic [ref=f5e192]: "03"
+              - heading "Update progress" [level=3] [ref=f5e193]
+              - paragraph [ref=f5e194]: Chronological worklog. New updates land instantly in the preview.
+            - generic [ref=f5e195]: 0 updates
+          - generic [ref=f5e196]:
+            - generic [ref=f5e197]:
+              - generic [ref=f5e203]:
+                - strong [ref=f5e204]: Periodic update assistant
+                - generic [ref=f5e205]: Suggested next signals follow the current operational stage. Clicking one records it with the current date and time.
+              - generic [ref=f5e206]: NEW
+            - generic [ref=f5e207]:
+              - button "Prepare tools" [ref=f5e208] [cursor=pointer]
+              - button "Team OTW" [ref=f5e210] [cursor=pointer]
+              - button "Arrived onsite" [ref=f5e212] [cursor=pointer]
+            - group [ref=f5e214]:
+              - generic "More quick updates" [ref=f5e215] [cursor=pointer]
+          - generic [ref=f5e218]:
+            - generic [ref=f5e219]:
+              - generic [ref=f5e220]: DATE
+              - textbox "DATE" [ref=f5e221]: 2026-08-16
+            - generic [ref=f5e222]:
+              - generic [ref=f5e223]: TIME
+              - textbox "TIME" [ref=f5e224]:
+                - /placeholder: 22:15
+                - text: 21:50
+            - generic [ref=f5e225]:
+              - generic [ref=f5e226]: PROGRESS UPDATE
+              - textbox "PROGRESS UPDATE" [ref=f5e227]:
+                - /placeholder: Type the latest activity...
+            - button "Now" [ref=f5e228] [cursor=pointer]
+            - button "Add update" [disabled] [ref=f5e232]
+          - generic [ref=f5e234]:
+            - generic [ref=f5e239]:
+              - strong [ref=f5e240]: Timeline intelligence
+              - generic [ref=f5e241]: Choose how the Composer timeline is displayed. This does not change the chronological order used by Preview or generated bagan.
+            - generic [ref=f5e242]:
+              - generic [ref=f5e243]: Timeline clean
+              - group "Timeline display order" [ref=f5e246]:
+                - button "Newest first" [pressed] [ref=f5e247] [cursor=pointer]
+                - button "Oldest first" [ref=f5e248] [cursor=pointer]
+          - generic [ref=f5e250]:
+            - strong [ref=f5e253]: No progress update yet
+            - generic [ref=f5e254]: Add the first field activity above.
+        - generic [ref=f5e255]:
+          - generic [ref=f5e256]:
+            - generic [ref=f5e261]:
+              - generic [ref=f5e262]: "04"
+              - heading "Closure readiness" [level=3] [ref=f5e263]
+              - paragraph [ref=f5e264]: Administrative tasks that must follow operational restoration.
+            - generic [ref=f5e265]:
+              - strong [ref=f5e266]: 0%
+              - generic [ref=f5e267]: 0/5
+          - generic [ref=f5e268]:
+            - button "Statement Up WAG Confirm restoration statement has been delivered to WAG. PENDING" [ref=f5e269] [cursor=pointer]:
+              - generic [ref=f5e271]:
+                - strong [ref=f5e272]: Statement Up WAG
+                - generic [ref=f5e273]: Confirm restoration statement has been delivered to WAG.
+              - generic [ref=f5e274]: PENDING
+            - generic [ref=f5e275]:
+              - generic [ref=f5e276]:
+                - generic [ref=f5e277]: 0/3
+                - generic [ref=f5e279]:
+                  - strong [ref=f5e280]: Matoa Clearance
+                  - generic [ref=f5e281]: Three supporting clearance requirements.
+                - generic [ref=f5e282]: IN PROGRESS
+              - generic [ref=f5e283]:
+                - button "Status TT" [ref=f5e284] [cursor=pointer]
+                - button "Event and Photo" [ref=f5e287] [cursor=pointer]
+                - button "RFO" [ref=f5e290] [cursor=pointer]
+            - button "Sent Closed Email Confirm final closed notification email has been sent. PENDING" [ref=f5e293] [cursor=pointer]:
+              - generic [ref=f5e295]:
+                - strong [ref=f5e296]: Sent Closed Email
+                - generic [ref=f5e297]: Confirm final closed notification email has been sent.
+              - generic [ref=f5e298]: PENDING
+          - generic [ref=f5e299]:
+            - generic [ref=f5e300]: 5 closure tasks remaining.
+            - strong [ref=f5e301]: 0% READY
+    - navigation "Mobile navigation" [ref=f5e302]:
+      - button "Composer" [ref=f5e303]
+      - button "Operations" [ref=f5e308]
+      - button "Archive" [ref=f5e313]
+      - link "Impact" [ref=f5e318] [cursor=pointer]:
+        - /url: /backbone-impact
+      - link "SOR PDF" [ref=f5e325] [cursor=pointer]:
+        - /url: /sor-to-pdf
+  - link "System Console" [ref=f5e332] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=f5e341] [cursor=pointer]
+  - alert [ref=f5e345]
+  - button "Intelligence 14" [ref=f5e346] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=f5e347]: "14"

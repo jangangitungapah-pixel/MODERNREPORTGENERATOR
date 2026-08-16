@@ -1,0 +1,71 @@
+- generic [ref=f32e1]:
+  - main [ref=f32e2]:
+    - text: WORKSPACE
+    - generic [ref=f32e3]:
+      - generic [ref=f32e4]:
+        - generic [ref=f32e5]:
+          - generic [ref=f32e6]: Incident workspace
+          - heading "Incident vault." [level=1] [ref=f32e448]
+        - generic [ref=f32e14]:
+          - button "New draft" [ref=f32e15] [cursor=pointer]
+          - status "Current draft is saved in this browser." [ref=f32e19]:
+            - generic [ref=f32e21]:
+              - strong [ref=f32e22]: SAVED
+              - generic [ref=f32e23]: Local · 16 Aug, 22:32
+      - generic [ref=f32e341]:
+        - generic [ref=f32e342]:
+          - generic [ref=f32e343]:
+            - generic [ref=f32e344]: INCIDENT MEMORY
+            - heading "Every TT, one operational memory." [level=2] [ref=f32e449]
+            - paragraph [ref=f32e346]: Search, reopen, archive, and continue any incident without sacrificing the draft currently in your composer.
+          - generic [ref=f32e450]:
+            - generic [ref=f32e451]:
+              - generic [ref=f32e452]: TOTAL
+              - strong [ref=f32e453]: "1"
+            - generic [ref=f32e454]:
+              - generic [ref=f32e455]: ACTIVE
+              - strong [ref=f32e456]: "1"
+            - generic [ref=f32e457]:
+              - generic [ref=f32e458]: ARCHIVED
+              - strong [ref=f32e459]: "0"
+        - generic [ref=f32e351]:
+          - textbox [ref=f32e464]:
+            - /placeholder: Search TT, region, PIC, rootcause, progress...
+          - button "New blank draft" [ref=f32e465] [cursor=pointer]
+        - article [ref=f32e470]:
+          - generic [ref=f32e471]:
+            - generic [ref=f32e473]: active
+            - generic [ref=f32e474]: OPEN NOW
+          - generic [ref=f32e475]:
+            - generic [ref=f32e476]:
+              - generic [ref=f32e477]: UNASSIGNED
+              - heading "Untitled incident" [level=3] [ref=f32e478]
+              - paragraph [ref=f32e479]: No incident summary yet.
+            - generic [ref=f32e480]:
+              - generic [ref=f32e481]:
+                - generic [ref=f32e482]: READY
+                - strong [ref=f32e483]: 0%
+              - generic [ref=f32e484]:
+                - generic [ref=f32e485]: UPDATES
+                - strong [ref=f32e486]: "0"
+          - generic [ref=f32e487]:
+            - generic [ref=f32e488]:
+              - generic [ref=f32e489]: No PIC
+              - generic [ref=f32e490]: Updated now
+            - generic [ref=f32e491]:
+              - button "Delete TT" [ref=f32e492] [cursor=pointer]
+              - button "Archive" [ref=f32e496] [cursor=pointer]
+              - button "Return to composer" [ref=f32e500] [cursor=pointer]
+    - navigation "Mobile navigation" [ref=f32e310]:
+      - button "Composer" [ref=f32e311] [cursor=pointer]
+      - button "Operations" [ref=f32e316] [cursor=pointer]
+      - button "Archive" [active] [ref=f32e321] [cursor=pointer]
+      - button "More" [ref=f32e326] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=f32e440] [cursor=pointer]:
+    - generic [ref=f32e504]:
+      - text: Rendering
+      - generic [ref=f32e505]:
+        - generic [ref=f32e506]: .
+        - generic [ref=f32e507]: .
+        - generic [ref=f32e508]: .
+  - alert [ref=f32e339]

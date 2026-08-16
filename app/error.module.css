@@ -1,83 +1,146 @@
 .page {
-  min-height: 100vh;
   display: grid;
+  min-height: 100svh;
   place-items: center;
-  padding: 18px;
+  padding: 24px;
   background:
-    radial-gradient(circle at 20% 0%, rgba(126, 139, 190, 0.13), transparent 34%),
-    linear-gradient(180deg, #f7f8fb, #eef1f6);
+    radial-gradient(circle at 18% 0%, rgba(103, 84, 234, 0.12), transparent 28rem),
+    radial-gradient(circle at 90% 90%, rgba(67, 135, 229, 0.08), transparent 32rem),
+    linear-gradient(180deg, #fafbff, #f3f5fa);
 }
 
 .card {
-  width: min(520px, 100%);
-  border: 1px solid rgba(83, 94, 132, 0.09);
-  border-radius: 20px;
-  padding: 22px;
-  color: #6a7388;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 70px rgba(48, 54, 78, 0.12);
-  backdrop-filter: blur(18px);
+  position: relative;
+  width: min(620px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(47, 55, 80, 0.11);
+  border-radius: 24px;
+  padding: 28px;
+  color: #50596f;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 28px 80px rgba(35, 42, 69, 0.14);
+  backdrop-filter: blur(20px);
+}
+
+.card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6754ea, #4387e5);
+  content: '';
 }
 
 .eyebrow {
-  color: #979ead;
-  font-size: 8px;
-  font-weight: 880;
+  color: #6754ea;
+  font-size: 11px;
+  font-weight: 820;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .card h1 {
-  margin: 6px 0 0;
-  color: #566078;
-  font-size: 22px;
-  letter-spacing: -0.03em;
+  max-width: 16ch;
+  margin: 8px 0 0;
+  color: #202536;
+  font-size: clamp(28px, 5vw, 36px);
+  font-weight: 780;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
 }
 
 .card p {
-  margin: 8px 0 0;
-  color: #929aa9;
-  font-size: 10px;
-  line-height: 1.55;
+  margin: 12px 0 0;
+  color: #687287;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .reference {
-  margin-top: 12px;
-  border: 1px solid rgba(83, 94, 132, 0.06);
-  border-radius: 9px;
-  padding: 9px;
-  color: #9299a7;
-  background: rgba(247, 248, 251, 0.8);
-  font-family: monospace;
-  font-size: 8px;
-  word-break: break-all;
+  margin-top: 18px;
+  border: 1px solid rgba(47, 55, 80, 0.09);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #687287;
+  background: #f8f9fc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .actions {
   display: flex;
-  gap: 7px;
-  margin-top: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .actions button,
 .actions a {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 46px;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(83, 94, 132, 0.09);
-  border-radius: 9px;
-  padding: 0 12px;
-  color: #70798d;
+  border: 1px solid rgba(47, 55, 80, 0.11);
+  border-radius: 12px;
+  padding: 0 17px;
+  color: #50596f;
   background: #fff;
-  text-decoration: none;
   font: inherit;
-  font-size: 9px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 760;
+  text-decoration: none;
   cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
 }
 
 .actions button {
-  color: #fff;
   border-color: transparent;
-  background: linear-gradient(135deg, #7c88ba, #646fa5);
+  color: #fff;
+  background: linear-gradient(135deg, #6754ea, #5740d9);
+}
+
+.actions button:hover {
+  background: linear-gradient(135deg, #5e49e0, #4d36c8);
+}
+
+.actions a:hover {
+  border-color: rgba(103, 84, 234, 0.22);
+  color: #5740d9;
+  background: rgba(103, 84, 234, 0.05);
+}
+
+.actions button:focus-visible,
+.actions a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(103, 84, 234, 0.19);
+}
+
+@media (max-width: 560px) {
+  .page {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .card {
+    border-radius: 24px;
+    padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .card h1 {
+    font-size: 30px;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .actions button,
+  .actions a {
+    min-height: 48px;
+    font-size: 14px;
+  }
 }

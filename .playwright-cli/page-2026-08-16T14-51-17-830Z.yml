@@ -1,0 +1,37 @@
+- generic [active] [ref=f9e1]:
+  - main [ref=f9e2]:
+    - generic [ref=f9e3]:
+      - link "ReportOS" [ref=f9e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f9e13]:
+        - strong [ref=f9e14]: Fiber Lab
+        - generic [ref=f9e15]: SOR intelligence
+      - generic [ref=f9e16]: Local processing
+    - generic [ref=f9e19]:
+      - generic [ref=f9e21]:
+        - generic [ref=f9e22]: OTDR / SOR CONVERTER
+        - heading "SOR to PDF, with the trace still meaningful." [level=1] [ref=f9e23]
+        - paragraph [ref=f9e24]: Parse OTDR Standard Record files locally, inspect measurement metadata and events, then generate a clean PDF report with the actual trace graph.
+        - generic [ref=f9e25]:
+          - generic [ref=f9e26]: SOR v1 + v2
+          - generic [ref=f9e27]: Trace graph
+          - generic [ref=f9e28]: Event table
+          - generic [ref=f9e29]: No server upload
+      - generic [ref=f9e30]:
+        - button "Choose File"
+        - button "Drop .SOR file here or click to browse from your computer" [ref=f9e31] [cursor=pointer]:
+          - generic [ref=f9e36]:
+            - strong [ref=f9e37]: Drop .SOR file here
+            - generic [ref=f9e38]: or click to browse from your computer
+  - link "System Console" [ref=f9e39] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=f9e48] [cursor=pointer]
+  - alert [ref=f9e52]
+  - button "Intelligence 14" [ref=f9e53] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=f9e54]: "14"
+  - button "Secure workspace" [ref=f9e55] [cursor=pointer]
+  - complementary "ReportOS canonical sync status" [ref=f9e57]:
+    - generic [ref=f9e59]:
+      - strong [ref=f9e60]: SERVER CONNECTING
+      - generic [ref=f9e61]: Resolving authenticated canonical state

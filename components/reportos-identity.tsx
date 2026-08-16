@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -13,6 +14,9 @@ import {
 } from '@/lib/firebase-identity';
 
 import styles from './reportos-identity.module.css';
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function ReportOsIdentity() {
   const [
@@ -27,6 +31,15 @@ export function ReportOsIdentity() {
 
   const [busy, setBusy] =
     useState(false);
+
+  const triggerRef =
+    useRef<HTMLButtonElement>(null);
+
+  const dialogRef =
+    useRef<HTMLElement>(null);
+
+  const dismissRef =
+    useRef<HTMLButtonElement>(null);
 
   const [
     error,
@@ -52,6 +65,95 @@ export function ReportOsIdentity() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    const returnFocusTarget =
+      triggerRef.current;
+
+    document.body.style.overflow =
+      'hidden';
+
+    const focusFrame =
+      window.requestAnimationFrame(
+        () => {
+          dismissRef.current?.focus();
+        }
+      );
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+
+      if (
+        event.key !== 'Tab' ||
+        !dialogRef.current
+      ) {
+        return;
+      }
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          FOCUSABLE_SELECTOR
+        )
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last =
+        focusable[focusable.length - 1];
+
+      if (
+        event.shiftKey &&
+        document.activeElement === first
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        document.activeElement === last
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown
+    );
+
+    return () => {
+      window.cancelAnimationFrame(
+        focusFrame
+      );
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown
+      );
+      document.body.style.overflow =
+        previousOverflow;
+      if (returnFocusTarget?.isConnected) {
+        returnFocusTarget.focus();
+      }
+    };
+  }, [open]);
 
   if (
     !identity ||
@@ -109,8 +211,13 @@ export function ReportOsIdentity() {
   return (
     <>
       <button
+        ref={triggerRef}
         className={styles.trigger}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls="reportos-identity-dialog"
+        aria-label="Secure workspace identity"
         onClick={() =>
           setOpen(true)
         }
@@ -119,7 +226,7 @@ export function ReportOsIdentity() {
           className={styles.dot}
           aria-hidden="true"
         />
-        Secure workspace
+        Identity
       </button>
 
       {open ? (
@@ -136,10 +243,13 @@ export function ReportOsIdentity() {
           }}
         >
           <section
+            ref={dialogRef}
+            id="reportos-identity-dialog"
             className={styles.dialog}
             role="dialog"
             aria-modal="true"
             aria-labelledby="identity-title"
+            tabIndex={-1}
           >
             <span
               className={styles.eyebrow}
@@ -176,6 +286,7 @@ export function ReportOsIdentity() {
               className={styles.actions}
             >
               <button
+                ref={dismissRef}
                 type="button"
                 disabled={busy}
                 onClick={() =>

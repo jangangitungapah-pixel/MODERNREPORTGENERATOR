@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ReportOS">
+  <defs>
+    <linearGradient id="brand" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#806EFF"/>
+      <stop offset="1" stop-color="#5740D9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#brand)"/>
+  <ellipse cx="32" cy="32" rx="21" ry="10" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="2" transform="rotate(28 32 32)"/>
+  <ellipse cx="32" cy="32" rx="21" ry="10" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="2" transform="rotate(-28 32 32)"/>
+  <circle cx="32" cy="32" r="5" fill="#fff"/>
+</svg>

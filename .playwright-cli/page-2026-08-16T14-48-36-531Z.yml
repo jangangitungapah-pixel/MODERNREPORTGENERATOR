@@ -1,0 +1,33 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "ReportOS" [ref=f2e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f2e14]:
+        - strong [ref=f2e15]: Fiber Lab
+        - generic [ref=f2e16]: SOR intelligence
+      - generic [ref=f2e17]: Local processing
+    - generic [ref=f2e21]:
+      - generic [ref=f2e23]:
+        - generic [ref=f2e24]: OTDR / SOR CONVERTER
+        - heading "SOR to PDF, with the trace still meaningful." [level=1] [ref=f2e25]
+        - paragraph [ref=f2e26]: Parse OTDR Standard Record files locally, inspect measurement metadata and events, then generate a clean PDF report with the actual trace graph.
+        - generic [ref=f2e27]:
+          - generic [ref=f2e28]: SOR v1 + v2
+          - generic [ref=f2e29]: Trace graph
+          - generic [ref=f2e30]: Event table
+          - generic [ref=f2e31]: No server upload
+      - generic [ref=f2e38]:
+        - button "Choose File"
+        - button "Drop .SOR file here or click to browse from your computer MAX 64 MB" [ref=f2e39] [cursor=pointer]:
+          - generic [ref=f2e44]:
+            - strong [ref=f2e45]: Drop .SOR file here
+            - generic [ref=f2e46]: or click to browse from your computer
+          - generic [ref=f2e47]: MAX 64 MB
+  - link "System Console" [ref=f2e48] [cursor=pointer]:
+    - /url: /system
+  - button "Open Next.js Dev Tools" [ref=f2e57] [cursor=pointer]
+  - alert [ref=f2e61]
+  - button "Intelligence 14" [ref=f2e62] [cursor=pointer]:
+    - text: Intelligence
+    - generic [ref=f2e63]: "14"

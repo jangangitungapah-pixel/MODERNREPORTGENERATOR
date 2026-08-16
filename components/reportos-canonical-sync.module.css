@@ -1,20 +1,15 @@
 .root {
-  position: fixed;
-  z-index: 95;
-  right: 18px;
-  bottom: 18px;
   display: flex;
-  min-width: 240px;
-  max-width: min(390px, calc(100vw - 24px));
+  width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 11px;
-  border: 1px solid rgba(78, 88, 126, 0.13);
-  border-radius: 15px;
-  padding: 11px 13px;
-  color: #606a80;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 48px rgba(45, 51, 74, 0.14);
-  backdrop-filter: blur(18px);
+  border: 1px solid var(--ui-line, rgba(47, 55, 80, 0.1));
+  border-radius: 12px;
+  min-height: 46px;
+  padding: 6px 10px;
+  color: var(--ui-ink-700, #50596f);
+  background: var(--ui-surface-nested, #f8f9fc);
 }
 
 .dot {
@@ -47,7 +42,8 @@
 }
 
 .unavailable .dot {
-  background: #9185c7;
+  background: var(--ui-red, #c95151);
+  box-shadow: 0 0 0 4px var(--ui-red-soft, rgba(201, 81, 81, 0.09));
 }
 
 .copy {
@@ -58,7 +54,7 @@
 }
 
 .copy strong {
-  color: #515b72;
+  color: var(--ui-ink-800, #394156);
   font-size: 12px;
   line-height: 1.25;
   font-weight: 820;
@@ -66,12 +62,9 @@
 }
 
 .copy span {
-  overflow: hidden;
-  color: #7f899b;
-  font-size: 10.5px;
+  color: var(--ui-ink-600, #687287);
+  font-size: 12px;
   line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .actions {
@@ -81,14 +74,14 @@
 }
 
 .actions button {
-  min-height: 32px;
-  border: 1px solid rgba(96, 104, 132, 0.12);
+  min-height: 40px;
+  border: 1px solid var(--ui-line-strong, rgba(47, 55, 80, 0.16));
   border-radius: 9px;
   padding: 0 10px;
-  color: #626d82;
-  background: rgba(247, 248, 251, 0.96);
+  color: var(--ui-ink-700, #50596f);
+  background: #fff;
   font: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 780;
   cursor: pointer;
 }
@@ -96,7 +89,7 @@
 .actions button:last-child {
   color: #fff;
   border-color: rgba(93, 104, 153, 0.18);
-  background: linear-gradient(135deg, #7582b7, #626fa4);
+  background: var(--ui-brand, #6754ea);
 }
 
 @keyframes pulse {
@@ -111,20 +104,34 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1023px) {
   .root {
-    right: 10px;
-    bottom: 78px;
-    left: 10px;
-    min-width: 0;
-    max-width: none;
+    align-items: flex-start;
+    padding: 13px;
   }
 
   .copy strong {
-    font-size: 11.5px;
+    font-size: 13px;
   }
 
   .copy span {
-    font-size: 10px;
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+  .conflict {
+    flex-wrap: wrap;
+    border-color: rgba(201, 81, 81, 0.24);
+    background: var(--ui-red-soft, rgba(201, 81, 81, 0.09));
+  }
+
+  .conflict .actions {
+    width: 100%;
+    padding-left: 20px;
+  }
+
+  .actions button {
+    min-height: 44px;
+    flex: 1;
   }
 }

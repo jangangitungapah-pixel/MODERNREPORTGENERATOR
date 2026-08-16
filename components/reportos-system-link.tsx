@@ -11,9 +11,10 @@ export function ReportOsSystemLink() {
     <Link
       className={styles.link}
       href="/system"
+      aria-label="Open System Console"
     >
       <Settings2 size={12} />
-      System Console
+      System
     </Link>
   );
 }

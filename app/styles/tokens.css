@@ -1,0 +1,73 @@
+:root {
+  color-scheme: light;
+
+  /* ReportOS neutral foundation */
+  --ui-ink-950: #202536;
+  --ui-ink-900: #282e41;
+  --ui-ink-800: #394156;
+  --ui-ink-700: #50596f;
+  --ui-ink-600: #687287;
+  --ui-ink-500: #7e889c;
+  --ui-ink-400: #98a1b1;
+  --ui-ink-300: #b4bbc7;
+
+  /* Surface hierarchy */
+  --ui-surface-app: #f5f7fc;
+  --ui-surface-primary: rgba(255, 255, 255, 0.97);
+  --ui-surface-secondary: rgba(255, 255, 255, 0.86);
+  --ui-surface-nested: #f8f9fc;
+  --ui-surface-disabled: #f2f3f7;
+  --ui-line: rgba(47, 55, 80, 0.1);
+  --ui-line-strong: rgba(47, 55, 80, 0.16);
+
+  /* Brand and operational state */
+  --ui-brand: #6754ea;
+  --ui-brand-strong: #5740d9;
+  --ui-brand-hover: #5e49e0;
+  --ui-brand-soft: rgba(103, 84, 234, 0.08);
+  --ui-brand-border: rgba(103, 84, 234, 0.16);
+
+  --ui-green: #239e72;
+  --ui-green-strong: #147956;
+  --ui-green-soft: rgba(35, 158, 114, 0.09);
+  --ui-amber: #c7862e;
+  --ui-amber-strong: #996316;
+  --ui-amber-soft: rgba(199, 134, 46, 0.1);
+  --ui-red: #c95151;
+  --ui-red-strong: #9e3636;
+  --ui-red-soft: rgba(201, 81, 81, 0.09);
+  --ui-blue: #4387e5;
+  --ui-blue-soft: rgba(67, 135, 229, 0.09);
+
+  /* Geometry */
+  --ui-radius-shell: 26px;
+  --ui-radius-hero: 24px;
+  --ui-radius-section: 22px;
+  --ui-radius-editor: 15px;
+  --ui-radius-control: 11px;
+  --ui-radius-button: 12px;
+
+  /* Elevation */
+  --ui-shadow-1: 0 8px 24px rgba(45, 52, 82, 0.045);
+  --ui-shadow-2: 0 18px 48px rgba(45, 52, 82, 0.075);
+  --ui-shadow-3: 0 28px 80px rgba(35, 42, 69, 0.14);
+  --ui-focus-ring: 0 0 0 3px rgba(103, 84, 234, 0.19);
+
+  /* Compatibility aliases for the original stylesheet. */
+  --ink: var(--ui-ink-950);
+  --ink-soft: var(--ui-ink-600);
+  --ink-faint: var(--ui-ink-400);
+  --line: var(--ui-line);
+  --line-strong: var(--ui-line-strong);
+  --surface: var(--ui-surface-secondary);
+  --surface-strong: var(--ui-surface-primary);
+  --violet: var(--ui-brand);
+  --violet-strong: var(--ui-brand-strong);
+  --blue: var(--ui-blue);
+  --emerald: var(--ui-green);
+  --shadow: var(--ui-shadow-2);
+  --shadow-soft: var(--ui-shadow-1);
+  --radius-xl: var(--ui-radius-shell);
+  --radius-lg: var(--ui-radius-section);
+  --radius-md: var(--ui-radius-editor);
+}
