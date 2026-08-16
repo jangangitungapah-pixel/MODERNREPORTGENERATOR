@@ -9,6 +9,10 @@ import {
 } from '@/components/reportos-canonical-sync';
 
 import {
+  ReportOsIdentity,
+} from '@/components/reportos-identity';
+
+import {
   ReportOsIntelligence,
 } from '@/components/reportos-intelligence';
 
@@ -29,6 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <ReportOsIdentity />
         <ReportOsIntelligence />
         <ReportOsCanonicalSync />
         <FirebaseCloudRecovery />
