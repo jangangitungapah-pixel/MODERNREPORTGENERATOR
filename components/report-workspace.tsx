@@ -66,6 +66,13 @@ import {
   type IncidentRecord,
 } from '@/lib/workspace';
 
+import {
+  buildWorkspaceOperationalViews,
+  formatOperationalDuration,
+  operationalStatusLabel,
+  workspaceOperationalSummary,
+} from '@/lib/operations';
+
 const STORAGE_KEY = 'reportos:draft:v1';
 const WORKSPACE_STORAGE_KEY =
   'reportos:workspace:v1';
@@ -73,6 +80,7 @@ const WORKSPACE_STORAGE_KEY =
 type MobilePane = 'compose' | 'preview';
 type WorkspaceMode =
   | 'compose'
+  | 'operations'
   | 'archive';
 
 const PROGRESS_KIND_LABELS = {
@@ -231,6 +239,11 @@ export function ReportWorkspace() {
     archiveQuery,
     setArchiveQuery,
   ] = useState('');
+
+  const [
+    nowEpoch,
+    setNowEpoch,
+  ] = useState(0);
 
   const [entryTime, setEntryTime] =
     useState('');
@@ -426,6 +439,36 @@ export function ReportWorkspace() {
     report,
   ]);
 
+  useEffect(() => {
+    const updateClock = () => {
+      setNowEpoch(
+        Date.now()
+      );
+    };
+
+    const initialTick =
+      window.setTimeout(
+        updateClock,
+        0
+      );
+
+    const timer =
+      window.setInterval(
+        updateClock,
+        60_000
+      );
+
+    return () => {
+      window.clearTimeout(
+        initialTick
+      );
+
+      window.clearInterval(
+        timer
+      );
+    };
+  }, []);
+
   const generated = useMemo(
     () => formatReport(report),
     [report]
@@ -483,6 +526,35 @@ export function ReportWorkspace() {
         archiveQuery,
         incidentRecordsForView,
       ]
+    );
+
+  const operationalViews =
+    useMemo(
+      () =>
+        buildWorkspaceOperationalViews(
+          incidentRecordsForView,
+          nowEpoch
+        ),
+      [
+        incidentRecordsForView,
+        nowEpoch,
+      ]
+    );
+
+  const operationalSummary =
+    useMemo(
+      () =>
+        workspaceOperationalSummary(
+          operationalViews
+        ),
+      [operationalViews]
+    );
+
+  const runningOperationalViews =
+    operationalViews.filter(
+      (view) =>
+        view.lifecycle ===
+        'active'
     );
 
   const activeIncident =
@@ -992,17 +1064,36 @@ export function ReportWorkspace() {
             </button>
 
             <button
-              className="nav-item"
+              className={
+                workspaceMode ===
+                  'operations'
+                  ? 'nav-item nav-item-active'
+                  : 'nav-item'
+              }
               type="button"
+              onClick={() =>
+                setWorkspaceMode(
+                  'operations'
+                )
+              }
             >
-              <Activity size={18} />
+              <Gauge size={18} />
 
               <span className="nav-copy">
-                <strong>Timeline</strong>
+                <strong>Operations</strong>
                 <small>
-                  Progress stream
+                  Live command center
                 </small>
               </span>
+
+              {operationalSummary.attention >
+              0 ? (
+                <span className="nav-alert-count">
+                  {
+                    operationalSummary.attention
+                  }
+                </span>
+              ) : null}
             </button>
 
             <button
@@ -1063,9 +1154,12 @@ export function ReportWorkspace() {
 
               <h1>
                 {workspaceMode ===
-                'archive'
-                  ? 'Incident vault.'
-                  : 'Compose with clarity.'}
+                'operations'
+                  ? 'Command center.'
+                  : workspaceMode ===
+                      'archive'
+                    ? 'Incident vault.'
+                    : 'Compose with clarity.'}
               </h1>
 
               {workspaceMode ===
@@ -1127,6 +1221,405 @@ export function ReportWorkspace() {
           </header>
 
           {workspaceMode ===
+          'operations' ? (
+            <section className="operations-center">
+              <div className="operations-hero glass-panel">
+                <div className="operations-hero-copy">
+                  <span className="operations-kicker">
+                    OPERATIONAL PULSE
+                  </span>
+
+                  <h2>
+                    Live incident
+                    command center.
+                  </h2>
+
+                  <p>
+                    Operational status is inferred
+                    from each TT progress history.
+                    Attention is raised after 60
+                    minutes without a new update on
+                    a running incident.
+                  </p>
+
+                  <div className="operations-hero-meta">
+                    <span>
+                      <span className="operations-live-dot" />
+                      LIVE WORKSPACE
+                    </span>
+
+                    <span>
+                      {
+                        operationalSummary.totalActive
+                      } active records
+                    </span>
+                  </div>
+                </div>
+
+                <div className="operations-orbit" aria-hidden="true">
+                  <span className="operations-orbit-ring operations-orbit-ring-one" />
+                  <span className="operations-orbit-ring operations-orbit-ring-two" />
+                  <span className="operations-orbit-core">
+                    <Activity
+                      size={23}
+                    />
+                  </span>
+                </div>
+              </div>
+
+              <div className="operations-kpi-grid">
+                <article
+                  className="operations-kpi glass-panel"
+                  data-tone="running"
+                >
+                  <span className="operations-kpi-icon">
+                    <Activity
+                      size={16}
+                    />
+                  </span>
+
+                  <div>
+                    <span>
+                      RUNNING TT
+                    </span>
+
+                    <strong>
+                      {
+                        operationalSummary.running
+                      }
+                    </strong>
+
+                    <small>
+                      Currently unresolved
+                    </small>
+                  </div>
+                </article>
+
+                <article
+                  className="operations-kpi glass-panel"
+                  data-tone="restored"
+                >
+                  <span className="operations-kpi-icon">
+                    <Check
+                      size={16}
+                    />
+                  </span>
+
+                  <div>
+                    <span>
+                      RESTORED
+                    </span>
+
+                    <strong>
+                      {
+                        operationalSummary.restored
+                      }
+                    </strong>
+
+                    <small>
+                      Active records restored
+                    </small>
+                  </div>
+                </article>
+
+                <article
+                  className="operations-kpi glass-panel"
+                  data-tone={
+                    operationalSummary.attention >
+                    0
+                      ? 'attention'
+                      : 'clean'
+                  }
+                >
+                  <span className="operations-kpi-icon">
+                    <AlertTriangle
+                      size={16}
+                    />
+                  </span>
+
+                  <div>
+                    <span>
+                      NEED ATTENTION
+                    </span>
+
+                    <strong>
+                      {
+                        operationalSummary.attention
+                      }
+                    </strong>
+
+                    <small>
+                      60m+ without update
+                    </small>
+                  </div>
+                </article>
+
+                <article
+                  className="operations-kpi glass-panel"
+                  data-tone="aging"
+                >
+                  <span className="operations-kpi-icon">
+                    <Clock3
+                      size={16}
+                    />
+                  </span>
+
+                  <div>
+                    <span>
+                      AVG RUNNING AGE
+                    </span>
+
+                    <strong>
+                      {
+                        formatOperationalDuration(
+                          operationalSummary.averageRunningAgeMinutes
+                        )
+                      }
+                    </strong>
+
+                    <small>
+                      Across running TT
+                    </small>
+                  </div>
+                </article>
+              </div>
+
+              <section className="operations-board glass-panel">
+                <div className="operations-board-head">
+                  <div>
+                    <span className="operations-board-kicker">
+                      ACTIVE INCIDENTS
+                    </span>
+
+                    <h3>
+                      Operational queue
+                    </h3>
+
+                    <p>
+                      Highest-attention incidents
+                      surface first automatically.
+                    </p>
+                  </div>
+
+                  {operationalSummary.critical >
+                  0 ? (
+                    <span className="operations-critical-chip">
+                      <AlertTriangle
+                        size={13}
+                      />
+                      {
+                        operationalSummary.critical
+                      } critical freshness
+                    </span>
+                  ) : (
+                    <span className="operations-healthy-chip">
+                      <ShieldCheck
+                        size={13}
+                      />
+                      No critical freshness
+                    </span>
+                  )}
+                </div>
+
+                <div className="operations-queue">
+                  <AnimatePresence
+                    initial={false}
+                  >
+                    {runningOperationalViews.map(
+                      (item) => (
+                        <motion.article
+                          className="operations-incident-row"
+                          data-status={
+                            item.status
+                          }
+                          data-attention={
+                            item.criticalAttention
+                              ? 'critical'
+                              : item.needsAttention
+                                ? 'attention'
+                                : 'normal'
+                          }
+                          key={
+                            item.incidentId
+                          }
+                          layout
+                          initial={{
+                            opacity: 0,
+                            y: 6,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          exit={{
+                            opacity: 0,
+                            scale: 0.99,
+                          }}
+                        >
+                          <div className="operations-status-rail">
+                            <span className="operations-status-dot" />
+                            <span className="operations-status-line" />
+                          </div>
+
+                          <div className="operations-incident-identity">
+                            <div className="operations-incident-tags">
+                              <span className="operations-status-chip">
+                                {
+                                  operationalStatusLabel(
+                                    item.status
+                                  )
+                                }
+                              </span>
+
+                              {item.criticalAttention ? (
+                                <span className="operations-attention-chip">
+                                  CRITICAL FRESHNESS
+                                </span>
+                              ) : item.needsAttention ? (
+                                <span className="operations-attention-chip">
+                                  UPDATE DUE
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <h4>
+                              {
+                                item.ticket ||
+                                'Untitled incident'
+                              }
+                            </h4>
+
+                            <p>
+                              {
+                                item.summary ||
+                                'No incident summary yet.'
+                              }
+                            </p>
+
+                            <div className="operations-incident-submeta">
+                              <span>
+                                {
+                                  item.region ||
+                                  'UNASSIGNED'
+                                }
+                              </span>
+
+                              <span>
+                                {
+                                  item.pic ||
+                                  'No PIC'
+                                }
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="operations-incident-metrics">
+                            <div>
+                              <span>
+                                AGE
+                              </span>
+
+                              <strong>
+                                {
+                                  formatOperationalDuration(
+                                    item.ageMinutes
+                                  )
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>
+                                FRESHNESS
+                              </span>
+
+                              <strong>
+                                {
+                                  item.staleMinutes ===
+                                  null
+                                    ? '—'
+                                    : formatOperationalDuration(
+                                        item.staleMinutes
+                                      ) + ' ago'
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>
+                                UPDATES
+                              </span>
+
+                              <strong>
+                                {
+                                  item.progressCount
+                                }
+                              </strong>
+                            </div>
+                          </div>
+
+                          <div className="operations-last-signal">
+                            <span>
+                              LAST SIGNAL
+                            </span>
+
+                            <strong>
+                              {
+                                item.lastActivityTime ||
+                                '—'
+                              }
+                            </strong>
+
+                            <p>
+                              {
+                                item.lastActivityText ||
+                                'No progress update yet.'
+                              }
+                            </p>
+                          </div>
+
+                          <button
+                            className="operations-open-button"
+                            type="button"
+                            onClick={() =>
+                              openIncident(
+                                item.incidentId
+                              )
+                            }
+                          >
+                            Open
+                            <ChevronRight
+                              size={14}
+                            />
+                          </button>
+                        </motion.article>
+                      )
+                    )}
+                  </AnimatePresence>
+
+                  {runningOperationalViews.length ===
+                  0 ? (
+                    <div className="operations-empty">
+                      <Check
+                        size={25}
+                      />
+
+                      <strong>
+                        No active incident
+                        records
+                      </strong>
+
+                      <span>
+                        Create a new incident
+                        or restore one from
+                        the vault.
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            </section>
+          ) : workspaceMode ===
           'archive' ? (
             <section className="incident-vault">
               <div className="vault-hero glass-panel">
@@ -2473,9 +2966,22 @@ export function ReportWorkspace() {
             <span>Composer</span>
           </button>
 
-          <button type="button">
-            <Activity size={18} />
-            <span>Timeline</span>
+          <button
+            className={
+              workspaceMode ===
+                'operations'
+                ? 'bottom-nav-active'
+                : ''
+            }
+            type="button"
+            onClick={() =>
+              setWorkspaceMode(
+                'operations'
+              )
+            }
+          >
+            <Gauge size={18} />
+            <span>Operations</span>
           </button>
 
           <button
