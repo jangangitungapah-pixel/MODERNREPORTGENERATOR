@@ -1,33 +1,36 @@
 # ReportOS Production Runbook
 
-This runbook activates the full-stack ReportOS control plane without enabling any paid service.
+This runbook operates the live full-stack ReportOS control plane without enabling any paid service.
 
-## Preconditions
+Production URL:
 
-- Cloudflare Workers Free account
-- D1 available on the account
-- Firebase project `reportgeneratornoc`
-- Firebase Anonymous Authentication enabled
-- Google provider enabled only if cross-device account linking is desired
+```text
+https://reportos.reportosnoc.workers.dev
+```
+
+## Production invariants
+
+- Cloudflare Workers Free is the application runtime and hosting layer
+- Cloudflare D1 `reportos-db` is canonical server storage
+- Worker D1 binding name is `DB`
+- Firebase Authentication Spark is the identity provider
+- Firebase Firestore is a recovery safety layer, not canonical storage
+- localStorage remains an offline/browser safety cache
+- Firebase Hosting is retired
 - no Firebase Blaze upgrade
 - no Firebase Storage
 - no Cloudflare R2
+- no paid external runtime service is required
 
-## 1. Create D1
+## 1. D1 configuration
 
-Create one production database named:
+The production database is:
 
 ```text
 reportos-db
 ```
 
-Record the real Cloudflare D1 database UUID.
-
-Never commit a placeholder UUID.
-
-## 2. Bind D1
-
-Add the real binding to `wrangler.jsonc`:
+The committed Worker configuration contains the real D1 UUID and:
 
 ```json
 {
@@ -35,16 +38,18 @@ Add the real binding to `wrangler.jsonc`:
     {
       "binding": "DB",
       "database_name": "reportos-db",
-      "database_id": "<REAL-D1-UUID>",
+      "database_id": "2914d882-d24f-41f8-a1a1-3ebebb558d30",
       "migrations_dir": "drizzle"
     }
   ]
 }
 ```
 
-`DB` is the binding name consumed by server routes.
+`DB` is the binding consumed by server routes.
 
-## 3. Apply migrations
+Never replace the UUID with a placeholder in production configuration.
+
+## 2. Migrations
 
 Inspect first:
 
@@ -52,13 +57,13 @@ Inspect first:
 npm run db:migrations:remote
 ```
 
-Then apply:
+Apply pending migrations only after inspection:
 
 ```text
 npm run db:migrate:remote
 ```
 
-Current migration chain:
+Current production migration chain:
 
 ```text
 0000_reportos_core.sql
@@ -66,29 +71,55 @@ Current migration chain:
 0002_incident_soft_delete.sql
 ```
 
-Do not manually create tables outside the migration chain.
+All three migrations are applied in production.
 
-## 4. Validate locally against Workers runtime
+Do not manually create or mutate schema objects outside the migration chain.
 
-Use OpenNext preview rather than treating `next dev` as production-runtime validation:
+## 3. Quality gate
+
+Before deployment, `main` must pass ReportOS Quality:
 
 ```text
-npm run preview:worker
+npm ci
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run build:worker
+npm audit --omit=dev --audit-level=high
 ```
 
-Validate:
+Do not suppress the security audit and do not use `npm audit fix --force` as a release shortcut.
+
+## 4. Deploy Worker
+
+Deploy only a green revision:
+
+```text
+npm run deploy:worker
+```
+
+The expected public route is:
+
+```text
+https://reportos.reportosnoc.workers.dev
+```
+
+After deployment, verify readiness:
 
 ```text
 GET /api/health
 ```
 
-Expected after a valid D1 binding:
+Expected shape:
 
 ```json
 {
   "ok": true,
   "ready": true,
   "service": "reportos",
+  "runtime": "cloudflare-workers",
+  "architecture": "full-stack",
   "database": {
     "binding": "ready",
     "canonicalModel": "ready"
@@ -96,17 +127,43 @@ Expected after a valid D1 binding:
 }
 ```
 
-If `ok` is true but `ready` is false, the Worker is live while D1 is missing/unreachable. Do not delete browser or Firestore fallback data.
+If `ok` is true but `ready` is false, the Worker is live while D1 is missing or unreachable. Do not clear browser or Firestore safety data.
 
-## 5. Deploy Worker
+## 5. Production acceptance
 
-Run the repository deployment script only after CI is green and D1 health is ready:
+Run intentional release acceptance with:
 
 ```text
-npm run deploy:worker
+npm run acceptance:production
 ```
 
-## 6. First-user migration verification
+The harness validates the live production stack rather than a local mock. It covers:
+
+1. Worker health and D1 readiness
+2. production homepage HTTP 200
+3. Firebase anonymous identity creation
+4. authenticated session/workspace bootstrap
+5. canonical D1 revision 1
+6. normalized incident projection
+7. timeline, impact, cut-point, and closure child projection
+8. revision increment
+9. stale-write `409 REVISION_CONFLICT`
+10. recovery snapshot creation
+11. recovery restore into a new revision
+12. production audit trail
+13. application-level soft delete
+14. deleted incident exclusion from normal read APIs
+15. recoverability of the pre-delete canonical state
+16. Firestore owner read/write
+17. Firestore cross-UID denial
+18. immutable Firestore recovery snapshots
+19. Firestore acceptance-document cleanup
+
+The D1 acceptance workspace ends with no active synthetic incident. Firestore acceptance documents are deleted by the harness.
+
+This command intentionally creates an isolated anonymous D1 acceptance identity/workspace. Run it for release acceptance, not as a frequent polling job.
+
+## 6. First-user migration behavior
 
 On first authenticated load with an empty D1 canonical workspace:
 
@@ -118,87 +175,115 @@ On first authenticated load with an empty D1 canonical workspace:
 6. subsequent local save increments revision
 7. previous revision becomes a recovery snapshot
 
-Verify incident counts in System Console before trusting D1 as the primary recovery plane.
+The production acceptance harness independently validates the same canonical write/revision/projection path with an isolated synthetic identity.
 
-## 7. Cross-device verification
+## 7. Identity and cross-device continuity
 
-For true cross-device identity continuity, link the anonymous Firebase account to Google from `Secure workspace`.
+Anonymous Firebase Authentication is the default identity path.
 
-Successful linking must preserve the same Firebase UID.
+`Secure workspace` supports:
 
-Verify:
+- linking the current anonymous identity to Google while preserving the UID
+- signing into an already-linked Google identity from another browser/device
 
-1. device A shows linked non-anonymous identity
-2. device B signs into the linked account
-3. `/api/v1/session` resolves the same UID
-4. same D1 workspace is returned
-5. canonical revision matches
+Google linking is optional and interactive. If it is enabled for the deployment, verify with a real Google account when that capability is intentionally used:
+
+1. device A links the anonymous identity
+2. Firebase UID remains unchanged
+3. device B signs into that linked account
+4. `/api/v1/session` resolves the same UID
+5. the same D1 workspace/revision is returned
 6. no anonymous workspace is deleted during linking
+
+Failure or cancellation of the Google popup must not delete local, D1, or Firestore data.
 
 ## 8. Recovery drill
 
-Create a harmless draft revision, then another edit.
+Production acceptance already validates server recovery automatically. For an operator-facing manual drill:
 
-In `/system`:
+1. create a harmless draft revision
+2. create another edit
+3. open `/system`
+4. confirm a recovery point exists
+5. select Restore
+6. return to Operations
+7. confirm restored incident data matches the selected snapshot
+8. confirm the audit trail contains the resulting workspace mutation
 
-1. confirm a recovery point exists
-2. select Restore
-3. confirm the current state is snapshotted before restore
-4. return to Operations
-5. confirm restored incident data matches the selected snapshot
-6. confirm audit trail contains the restore-triggered workspace mutation
+## 9. Conflict behavior
 
-## 9. Conflict drill
+Canonical saves use optimistic revisions.
 
-Use two clients with the same linked identity.
+A stale client must receive:
 
-1. allow both to start from the same revision
-2. edit client A and let it save
-3. edit stale client B
-4. stale save must receive `REVISION_CONFLICT`
-5. UI must show explicit conflict state
-6. choose either `Use server` or `Keep local`
-7. verify no silent overwrite occurs
+```text
+409 REVISION_CONFLICT
+```
 
-## 10. Delete TT drill
+The UI then exposes explicit conflict resolution rather than silently overwriting a newer revision.
 
-Delete an incident through the normal ReportOS UI.
+The production acceptance harness validates the server-side stale-write rejection on every intentional acceptance run.
 
-Verify:
+## 10. Delete behavior
 
-- incident disappears from active workspace
-- canonical prior revision exists in recovery history
-- normalized incident is soft deleted
-- `/api/v1/incidents` no longer returns it
-- child normalized data remains available for future retention/audit policy
+Deleting a TT through the normal ReportOS workspace removes it from canonical active state.
 
-## Rollback
+The server projection service then performs an explicit D1 update:
 
-If Worker/D1 behavior is unhealthy:
+- `lifecycle` becomes `archived`
+- `deleted_at` is populated
+- normalized revision increases
+- normal incident APIs exclude the tombstoned row
+- prior canonical state remains available in recovery history
+
+ReportOS does **not** rely on a multi-statement SQLite soft-delete trigger. That trigger design was removed because D1/Wrangler migration parsing made it unnecessarily fragile.
+
+Do not physically purge tombstoned incidents until an explicit retention policy is approved.
+
+## 11. Firestore recovery safety plane
+
+Firestore is UID-scoped recovery storage.
+
+Security expectations:
+
+- authenticated users can only access documents below their own UID
+- unmatched paths are denied
+- recovery snapshots are immutable after creation
+- owners may explicitly delete their own snapshots
+
+These rules are validated against the live Firebase project by `npm run acceptance:production`.
+
+Firestore is not the canonical persistence layer and must not be promoted to canonical ownership without an architecture change.
+
+## 12. Rollback
+
+If a Worker revision behaves incorrectly:
 
 1. do not clear localStorage
 2. do not delete Firestore recovery documents
-3. stop relying on canonical D1 sync
-4. use existing local/Firestore recovery plane
-5. roll Worker code back to the last known-green Git commit
-6. inspect `/api/health`
-7. repair D1 migration/binding before re-enabling canonical use
+3. identify the last known-green Git revision
+4. roll the Worker back or redeploy that known-green revision
+5. inspect `/api/health`
+6. inspect D1 migration state before making schema changes
+7. re-run production acceptance after remediation
 
-The application intentionally treats D1 unavailability as `SERVER STANDBY`; browser and Firestore safety data are not destroyed by that condition.
+D1 unavailability is surfaced as server standby/readiness failure; safety-plane data must not be destroyed as remediation.
 
-## Database Recovery
+## 13. Database recovery
 
 The canonical workspace payload is the source for rebuilding normalized read-model tables.
 
-If normalized projection is suspected stale but canonical checksum/revision is valid, re-saving the same canonical workspace causes projection to be rebuilt without creating a new revision.
+If normalized projection is suspected stale while canonical checksum/revision is valid, saving the same canonical workspace causes projection to be rebuilt without creating a new canonical revision.
 
-## Retention
+## 14. Retention
 
-Do not physically purge soft-deleted incident rows until a retention policy is explicitly approved.
+Soft deletion is implemented by the application projection service, not a database trigger.
 
-The soft-delete trigger intercepts the first delete. A future retention job may physically remove rows that already have `deleted_at` set after an approved retention period.
+Do not physically purge tombstoned incident rows, recovery snapshots, or audit history until a retention policy is explicitly approved.
 
-## Free-Tier Safety
+A future retention job may physically remove eligible records after that policy exists and is tested against recovery requirements.
+
+## 15. Free-tier safety
 
 If a free-tier quota is exhausted:
 
@@ -206,4 +291,17 @@ If a free-tier quota is exhausted:
 - preserve existing data
 - surface readiness/availability status
 - never automatically enable or upgrade to a paid plan
-- never add a billing method as an automated remediation
+- never add a billing method as automated remediation
+
+## Production completion definition
+
+The foundation is considered production-complete when all of the following are true:
+
+- latest `main` quality workflow is green
+- D1 reports no pending migration
+- `/api/health` reports `ready: true`
+- production homepage returns HTTP 200
+- `npm run acceptance:production` passes against the live deployment
+- repository documentation matches the deployed architecture
+
+Once those conditions hold, remaining work is normal product evolution: new features, UI/UX changes, optional integrations, and performance improvements rather than unfinished production infrastructure.
