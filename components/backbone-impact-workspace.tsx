@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Check,
   Cloud,
+  FolderOpen,
   RefreshCcw,
   Save,
 } from 'lucide-react';
@@ -29,19 +30,20 @@ import type {
 
 import {
   ImpactTemplateClientError,
-  loadImpactTemplate,
+  loadImpactTemplateById,
+  loadImpactTemplateLibrary,
   saveImpactTemplate,
+  type ImpactTemplateSummary,
 } from '@/lib/impact-template-client';
 
 const STORAGE_KEY =
   'reportos:backbone-impact:v1';
 
-const CLOUD_POLL_MS = 1400;
-
 type CloudState =
   | 'connecting'
   | 'synced'
   | 'saving'
+  | 'loading'
   | 'error'
   | 'conflict';
 
@@ -77,10 +79,19 @@ function readLocalDraft():
   }
 }
 
-function draftFingerprint(
-  draft: BackboneImpactDraft
+function cleanTemplateName(
+  value: string
 ): string {
-  return JSON.stringify(draft);
+  return value
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizedTemplateName(
+  value: string
+): string {
+  return cleanTemplateName(value)
+    .toLocaleLowerCase('en-US');
 }
 
 function cloudLabel(
@@ -88,16 +99,34 @@ function cloudLabel(
 ): string {
   switch (state) {
     case 'connecting':
-      return 'Connecting cloud';
+      return 'Connecting library';
     case 'saving':
-      return 'Saving to D1';
+      return 'Saving template';
+    case 'loading':
+      return 'Loading template';
     case 'error':
-      return 'Cloud retry needed';
+      return 'Cloud action needed';
     case 'conflict':
-      return 'Cloud changed';
+      return 'Library changed';
     default:
-      return 'Cloud synced';
+      return 'Library synced';
   }
+}
+
+function formatUpdatedAt(
+  value: number
+): string {
+  return new Intl.DateTimeFormat(
+    'en-GB',
+    {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  ).format(
+    new Date(value)
+  );
 }
 
 export function BackboneImpactWorkspace() {
@@ -110,11 +139,23 @@ export function BackboneImpactWorkspace() {
   const [cloudUpdatedAt, setCloudUpdatedAt] =
     useState<number | null>(null);
 
-  const revisionRef =
-    useRef(0);
+  const [cloudMessage, setCloudMessage] =
+    useState<string | null>(null);
 
-  const lastCloudFingerprintRef =
-    useRef<string | null>(null);
+  const [templates, setTemplates] =
+    useState<ImpactTemplateSummary[]>([]);
+
+  const [libraryOpen, setLibraryOpen] =
+    useState(false);
+
+  const [activeTemplateId, setActiveTemplateId] =
+    useState<string | null>(null);
+
+  const [boardKey, setBoardKey] =
+    useState(0);
+
+  const libraryRevisionRef =
+    useRef(0);
 
   const saveInFlightRef =
     useRef(false);
@@ -122,43 +163,82 @@ export function BackboneImpactWorkspace() {
   const blockedByConflictRef =
     useRef(false);
 
+  const applyLibrary =
+    useCallback(
+      ({
+        templates: nextTemplates,
+        libraryRevision,
+        updatedAt,
+      }: {
+        templates: ImpactTemplateSummary[];
+        libraryRevision: number;
+        updatedAt: number | null;
+      }) => {
+        libraryRevisionRef.current =
+          libraryRevision;
+        setTemplates(
+          nextTemplates
+        );
+        setCloudUpdatedAt(
+          updatedAt
+        );
+      },
+      []
+    );
+
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
       try {
         const remote =
-          await loadImpactTemplate();
+          await loadImpactTemplateLibrary();
 
         if (cancelled) {
           return;
         }
 
-        revisionRef.current =
-          remote.revision;
+        applyLibrary(remote);
 
-        setCloudUpdatedAt(
-          remote.updatedAt
-        );
+        if (
+          !readLocalDraft() &&
+          remote.templates.length > 0
+        ) {
+          const latest =
+            await loadImpactTemplateById(
+              remote.templates[0].id
+            );
 
-        if (remote.template) {
+          if (cancelled) {
+            return;
+          }
+
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify(
-              remote.template
+              latest.template
             )
           );
 
-          lastCloudFingerprintRef.current =
-            draftFingerprint(
-              remote.template
-            );
+          applyLibrary(latest);
+          setActiveTemplateId(
+            latest.templateMeta.id
+          );
+          setBoardKey(
+            (current) =>
+              current + 1
+          );
         }
 
         setCloudState('synced');
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setCloudState('error');
+          setCloudMessage(
+            error instanceof Error
+              ? error.message
+              : 'Template library could not be loaded.'
+          );
         }
       } finally {
         if (!cancelled) {
@@ -172,13 +252,37 @@ export function BackboneImpactWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyLibrary]);
+
+  const refreshLibrary =
+    useCallback(
+      async () => {
+        setCloudState('connecting');
+        setCloudMessage(null);
+
+        try {
+          const remote =
+            await loadImpactTemplateLibrary();
+
+          applyLibrary(remote);
+          blockedByConflictRef.current =
+            false;
+          setCloudState('synced');
+        } catch (error) {
+          setCloudState('error');
+          setCloudMessage(
+            error instanceof Error
+              ? error.message
+              : 'Template library could not be refreshed.'
+          );
+        }
+      },
+      [applyLibrary]
+    );
 
   const saveCurrentTemplate =
     useCallback(
-      async (
-        force = false
-      ) => {
+      async () => {
         if (
           saveInFlightRef.current ||
           blockedByConflictRef.current
@@ -190,43 +294,87 @@ export function BackboneImpactWorkspace() {
           readLocalDraft();
 
         if (!local) {
+          setCloudState('error');
+          setCloudMessage(
+            'No local Impact Board draft is available to save.'
+          );
           return;
         }
 
-        const fingerprint =
-          draftFingerprint(local);
+        const name =
+          cleanTemplateName(
+            local.title
+          );
 
-        if (
-          !force &&
-          fingerprint ===
-            lastCloudFingerprintRef.current
-        ) {
-          setCloudState('synced');
+        if (!name) {
+          setCloudState('error');
+          setCloudMessage(
+            'Give the Impact Board a title before saving the template.'
+          );
           return;
         }
+
+        const normalizedName =
+          normalizedTemplateName(
+            name
+          );
+
+        const activeTemplate =
+          activeTemplateId
+            ? templates.find(
+                (template) =>
+                  template.id ===
+                  activeTemplateId
+              )
+            : undefined;
+
+        const sameNameTemplate =
+          templates.find(
+            (template) =>
+              normalizedTemplateName(
+                template.name
+              ) === normalizedName
+          );
+
+        const templateId =
+          activeTemplate &&
+          normalizedTemplateName(
+            activeTemplate.name
+          ) === normalizedName
+            ? activeTemplate.id
+            : sameNameTemplate?.id;
 
         saveInFlightRef.current = true;
         setCloudState('saving');
+        setCloudMessage(null);
 
         try {
           const saved =
             await saveImpactTemplate({
-              draft: local,
-              expectedRevision:
-                revisionRef.current,
+              draft: {
+                ...local,
+                title: name,
+              },
+              expectedLibraryRevision:
+                libraryRevisionRef.current,
+              ...(templateId
+                ? {
+                    templateId,
+                  }
+                : {}),
             });
 
-          revisionRef.current =
-            saved.revision;
-
-          lastCloudFingerprintRef.current =
-            fingerprint;
-
-          setCloudUpdatedAt(
-            saved.updatedAt
+          applyLibrary(saved);
+          setActiveTemplateId(
+            saved.templateMeta.id
           );
-
+          blockedByConflictRef.current =
+            false;
           setCloudState('synced');
+          setCloudMessage(
+            `Saved “${saved.templateMeta.name}” to the template library.`
+          );
+          setLibraryOpen(true);
         } catch (error) {
           if (
             error instanceof
@@ -237,84 +385,81 @@ export function BackboneImpactWorkspace() {
             blockedByConflictRef.current =
               true;
             setCloudState('conflict');
+            setCloudMessage(
+              'The cloud library changed in another session. Refresh the library before saving again.'
+            );
           } else {
             setCloudState('error');
+            setCloudMessage(
+              error instanceof Error
+                ? error.message
+                : 'Template could not be saved.'
+            );
           }
         } finally {
           saveInFlightRef.current = false;
         }
       },
-      []
+      [
+        activeTemplateId,
+        applyLibrary,
+        templates,
+      ]
     );
 
-  useEffect(() => {
-    if (!bootstrapped) {
-      return;
-    }
+  const openSavedTemplate =
+    useCallback(
+      async (
+        templateId: string
+      ) => {
+        setCloudState('loading');
+        setCloudMessage(null);
 
-    const interval =
-      window.setInterval(
-        () => {
-          void saveCurrentTemplate(
-            false
+        try {
+          const remote =
+            await loadImpactTemplateById(
+              templateId
+            );
+
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(
+              remote.template
+            )
           );
-        },
-        CLOUD_POLL_MS
-      );
 
-    return () => {
-      window.clearInterval(
-        interval
-      );
-    };
-  }, [
-    bootstrapped,
-    saveCurrentTemplate,
-  ]);
-
-  async function reloadCloudTemplate() {
-    setCloudState('connecting');
-
-    try {
-      const remote =
-        await loadImpactTemplate();
-
-      revisionRef.current =
-        remote.revision;
-
-      setCloudUpdatedAt(
-        remote.updatedAt
-      );
-
-      if (remote.template) {
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(
-            remote.template
-          )
-        );
-
-        lastCloudFingerprintRef.current =
-          draftFingerprint(
-            remote.template
+          applyLibrary(remote);
+          setActiveTemplateId(
+            remote.templateMeta.id
           );
-      }
-
-      blockedByConflictRef.current =
-        false;
-
-      setCloudState('synced');
-
-      window.location.reload();
-    } catch {
-      setCloudState('error');
-    }
-  }
+          setBoardKey(
+            (current) =>
+              current + 1
+          );
+          setLibraryOpen(false);
+          blockedByConflictRef.current =
+            false;
+          setCloudState('synced');
+          setCloudMessage(
+            `Loaded “${remote.templateMeta.name}”.`
+          );
+        } catch (error) {
+          setCloudState('error');
+          setCloudMessage(
+            error instanceof Error
+              ? error.message
+              : 'Saved template could not be loaded.'
+          );
+        }
+      },
+      [applyLibrary]
+    );
 
   const statusIcon =
     cloudState === 'synced'
       ? <Check size={14} />
-      : cloudState === 'conflict'
+      : cloudState === 'error' ||
+          cloudState === 'conflict'
         ? <AlertTriangle size={14} />
         : <Cloud size={14} />;
 
@@ -357,26 +502,45 @@ export function BackboneImpactWorkspace() {
                 )}
               </strong>
               <small>
-                D1 canonical template
-                {updatedLabel
-                  ? ` · ${updatedLabel}`
-                  : ''}
+                {cloudMessage ??
+                  `Cloudflare D1 · ${templates.length} saved${updatedLabel
+                    ? ` · ${updatedLabel}`
+                    : ''}`}
               </small>
             </span>
           </span>
+
+          <button
+            className="impact-template-library-toggle"
+            type="button"
+            aria-expanded={libraryOpen}
+            aria-controls="impact-template-library"
+            onClick={() =>
+              setLibraryOpen(
+                (current) =>
+                  !current
+              )
+            }
+          >
+            <FolderOpen size={14} />
+            Templates
+            <span className="impact-template-count">
+              {templates.length}
+            </span>
+          </button>
 
           {cloudState ===
           'conflict' ? (
             <button
               type="button"
               onClick={() =>
-                void reloadCloudTemplate()
+                void refreshLibrary()
               }
             >
               <RefreshCcw
                 size={14}
               />
-              Reload cloud
+              Refresh library
             </button>
           ) : (
             <button
@@ -385,12 +549,12 @@ export function BackboneImpactWorkspace() {
                 cloudState ===
                 'saving' ||
                 cloudState ===
+                'loading' ||
+                cloudState ===
                 'connecting'
               }
               onClick={() =>
-                void saveCurrentTemplate(
-                  true
-                )
+                void saveCurrentTemplate()
               }
             >
               <Save size={14} />
@@ -399,8 +563,115 @@ export function BackboneImpactWorkspace() {
           )}
         </div>
 
+        {libraryOpen ? (
+          <aside
+            className="impact-template-library"
+            id="impact-template-library"
+            aria-label="Saved Impact Board templates"
+          >
+            <header className="impact-template-library-head">
+              <span>
+                <strong>
+                  Saved templates
+                </strong>
+                <small>
+                  {templates.length === 0
+                    ? 'No cloud templates yet'
+                    : `${templates.length} reusable template${templates.length === 1
+                      ? ''
+                      : 's'} in Cloudflare D1`}
+                </small>
+              </span>
+
+              <button
+                type="button"
+                aria-label="Refresh saved templates"
+                title="Refresh saved templates"
+                onClick={() =>
+                  void refreshLibrary()
+                }
+              >
+                <RefreshCcw
+                  size={14}
+                />
+              </button>
+            </header>
+
+            {templates.length === 0 ? (
+              <div className="impact-template-library-empty">
+                <FolderOpen size={20} />
+                <strong>
+                  Save your first template
+                </strong>
+                <span>
+                  The Impact Board title becomes the template name automatically.
+                </span>
+              </div>
+            ) : (
+              <div className="impact-template-library-list">
+                {templates.map(
+                  (template) => (
+                    <button
+                      className="impact-template-library-item"
+                      data-active={
+                        activeTemplateId ===
+                        template.id
+                      }
+                      type="button"
+                      key={template.id}
+                      disabled={
+                        cloudState ===
+                        'loading'
+                      }
+                      onClick={() =>
+                        void openSavedTemplate(
+                          template.id
+                        )
+                      }
+                    >
+                      <span className="impact-template-library-icon">
+                        <FolderOpen
+                          size={15}
+                        />
+                      </span>
+
+                      <span className="impact-template-library-copy">
+                        <strong>
+                          {template.name}
+                        </strong>
+                        <small>
+                          {template.customerCount} customer{template.customerCount === 1
+                            ? ''
+                            : 's'}
+                          {' · '}
+                          {template.serviceCount} service{template.serviceCount === 1
+                            ? ''
+                            : 's'}
+                          {' · '}
+                          {formatUpdatedAt(
+                            template.updatedAt
+                          )}
+                        </small>
+                      </span>
+
+                      <span className="impact-template-library-action">
+                        {activeTemplateId ===
+                        template.id
+                          ? 'Active'
+                          : 'Open'}
+                      </span>
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+          </aside>
+        ) : null}
+
         {bootstrapped ? (
-          <BackboneImpactBoard />
+          <BackboneImpactBoard
+            key={boardKey}
+          />
         ) : (
           <div className="impact-cloud-boot">
             <Cloud size={20} />
@@ -408,7 +679,7 @@ export function BackboneImpactWorkspace() {
               Loading Impact Board
             </strong>
             <span>
-              Resolving your cloud template before opening the editor.
+              Resolving your cloud template library before opening the editor.
             </span>
           </div>
         )}
