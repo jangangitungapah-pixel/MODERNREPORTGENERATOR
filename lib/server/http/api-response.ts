@@ -4,7 +4,7 @@ import {
 
 import {
   AuthenticationError,
-} from '@/lib/server/auth/firebase-rest-auth';
+} from '../auth/firebase-rest-auth';
 
 export class ApiError extends Error {
   readonly status: number;
