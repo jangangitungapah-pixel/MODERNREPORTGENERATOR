@@ -8,11 +8,27 @@ import type {
   BackboneImpactDraft,
 } from '@/lib/backbone-impact';
 
-export type ImpactTemplateEnvelope = {
-  template: BackboneImpactDraft | null;
+export type ImpactTemplateSummary = {
+  id: string;
+  name: string;
   revision: number;
+  createdAt: number;
+  updatedAt: number;
+  customerCount: number;
+  serviceCount: number;
+};
+
+export type ImpactTemplateLibraryEnvelope = {
+  templates: ImpactTemplateSummary[];
+  libraryRevision: number;
   updatedAt: number | null;
 };
+
+export type ImpactTemplateRecordEnvelope =
+  ImpactTemplateLibraryEnvelope & {
+    template: BackboneImpactDraft;
+    templateMeta: ImpactTemplateSummary;
+  };
 
 export class ImpactTemplateClientError extends Error {
   readonly status: number;
@@ -36,6 +52,7 @@ export class ImpactTemplateClientError extends Error {
 }
 
 async function impactFetch(
+  suffix = '',
   init: RequestInit = {}
 ): Promise<Response> {
   const user =
@@ -60,7 +77,7 @@ async function impactFetch(
   }
 
   return fetch(
-    '/api/v1/impact-template',
+    `/api/v1/impact-template${suffix}`,
     {
       ...init,
       headers,
@@ -69,9 +86,9 @@ async function impactFetch(
   );
 }
 
-async function readEnvelope(
+async function readBody(
   response: Response
-): Promise<ImpactTemplateEnvelope> {
+): Promise<Record<string, unknown>> {
   let body: unknown;
 
   try {
@@ -111,8 +128,7 @@ async function readEnvelope(
 
   if (
     typeof body !== 'object' ||
-    body === null ||
-    !('revision' in body)
+    body === null
   ) {
     throw new ImpactTemplateClientError({
       status: 500,
@@ -121,47 +137,182 @@ async function readEnvelope(
     });
   }
 
-  const record = body as Record<string, unknown>;
+  return body as Record<string, unknown>;
+}
+
+function parseSummary(
+  value: unknown
+): ImpactTemplateSummary | null {
+  if (
+    typeof value !== 'object' ||
+    value === null
+  ) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if (
+    typeof record.id !== 'string' ||
+    typeof record.name !== 'string' ||
+    typeof record.revision !== 'number' ||
+    typeof record.createdAt !== 'number' ||
+    typeof record.updatedAt !== 'number' ||
+    typeof record.customerCount !== 'number' ||
+    typeof record.serviceCount !== 'number'
+  ) {
+    return null;
+  }
 
   return {
-    template:
-      record.template === null ||
-      typeof record.template === 'object'
-        ? record.template as BackboneImpactDraft | null
-        : null,
-    revision:
-      typeof record.revision === 'number'
-        ? record.revision
-        : 0,
+    id: record.id,
+    name: record.name,
+    revision: record.revision,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+    customerCount: record.customerCount,
+    serviceCount: record.serviceCount,
+  };
+}
+
+function parseLibrary(
+  body: Record<string, unknown>
+): ImpactTemplateLibraryEnvelope {
+  if (
+    !Array.isArray(body.templates) ||
+    typeof body.libraryRevision !== 'number'
+  ) {
+    throw new ImpactTemplateClientError({
+      status: 500,
+      code: 'INVALID_SERVER_RESPONSE',
+      message: 'Impact template library response is invalid.',
+    });
+  }
+
+  const templates =
+    body.templates.map(
+      parseSummary
+    );
+
+  if (
+    templates.some(
+      (template) =>
+        template === null
+    )
+  ) {
+    throw new ImpactTemplateClientError({
+      status: 500,
+      code: 'INVALID_SERVER_RESPONSE',
+      message: 'Impact template library contains invalid metadata.',
+    });
+  }
+
+  return {
+    templates:
+      templates as ImpactTemplateSummary[],
+    libraryRevision:
+      body.libraryRevision,
     updatedAt:
-      typeof record.updatedAt === 'number'
-        ? record.updatedAt
+      typeof body.updatedAt === 'number'
+        ? body.updatedAt
         : null,
   };
 }
 
-export async function loadImpactTemplate(): Promise<
-  ImpactTemplateEnvelope
+function parseRecord(
+  body: Record<string, unknown>
+): ImpactTemplateRecordEnvelope {
+  const library =
+    parseLibrary(body);
+
+  const templateMeta =
+    parseSummary(
+      body.templateMeta
+    );
+
+  if (
+    !templateMeta ||
+    typeof body.template !== 'object' ||
+    body.template === null
+  ) {
+    throw new ImpactTemplateClientError({
+      status: 500,
+      code: 'INVALID_SERVER_RESPONSE',
+      message: 'Impact template record response is invalid.',
+    });
+  }
+
+  const template =
+    body.template as BackboneImpactDraft;
+
+  if (
+    typeof template.title !== 'string' ||
+    !Array.isArray(
+      template.customers
+    )
+  ) {
+    throw new ImpactTemplateClientError({
+      status: 500,
+      code: 'INVALID_SERVER_RESPONSE',
+      message: 'Impact template draft response is invalid.',
+    });
+  }
+
+  return {
+    ...library,
+    template,
+    templateMeta,
+  };
+}
+
+export async function loadImpactTemplateLibrary(): Promise<
+  ImpactTemplateLibraryEnvelope
 > {
-  return readEnvelope(
-    await impactFetch()
+  return parseLibrary(
+    await readBody(
+      await impactFetch()
+    )
+  );
+}
+
+export async function loadImpactTemplateById(
+  templateId: string
+): Promise<ImpactTemplateRecordEnvelope> {
+  return parseRecord(
+    await readBody(
+      await impactFetch(
+        `?id=${encodeURIComponent(templateId)}`
+      )
+    )
   );
 }
 
 export async function saveImpactTemplate({
   draft,
-  expectedRevision,
+  expectedLibraryRevision,
+  templateId,
 }: {
   draft: BackboneImpactDraft;
-  expectedRevision: number;
-}): Promise<ImpactTemplateEnvelope> {
-  return readEnvelope(
-    await impactFetch({
-      method: 'PUT',
-      body: JSON.stringify({
-        draft,
-        expectedRevision,
-      }),
-    })
+  expectedLibraryRevision: number;
+  templateId?: string;
+}): Promise<ImpactTemplateRecordEnvelope> {
+  return parseRecord(
+    await readBody(
+      await impactFetch(
+        '',
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            draft,
+            expectedLibraryRevision,
+            ...(templateId
+              ? {
+                  templateId,
+                }
+              : {}),
+          }),
+        }
+      )
+    )
   );
 }
