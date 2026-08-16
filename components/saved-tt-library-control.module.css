@@ -1,0 +1,434 @@
+.saveButton,
+.libraryButton {
+  order: 2;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(103, 84, 234, 0.14);
+  border-radius: 11px;
+  padding: 0 12px;
+  color: #5c49d4;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(246, 244, 255, 0.88));
+  box-shadow:
+    0 8px 22px rgba(68, 58, 131, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  font: inherit;
+  font-size: 10.75px;
+  font-weight: 760;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
+}
+
+.saveButton:hover,
+.libraryButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 84, 234, 0.26);
+  box-shadow:
+    0 12px 28px rgba(68, 58, 131, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.saveButton[data-saved='true'] {
+  border-color: rgba(35, 158, 114, 0.15);
+  color: #24845f;
+  background:
+    linear-gradient(135deg, rgba(248, 255, 252, 0.96), rgba(239, 250, 246, 0.9));
+}
+
+.saveButton:disabled,
+.libraryButton:disabled {
+  cursor: default;
+  opacity: 0.58;
+  transform: none;
+}
+
+.libraryButton span {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(103, 84, 234, 0.11);
+  font-size: 8.5px;
+  font-weight: 850;
+}
+
+:global(.app-shell .topbar-actions .new-incident-button) {
+  order: 1;
+}
+
+:global(.app-shell .topbar-actions .save-chip) {
+  order: 3;
+}
+
+.backdrop {
+  position: fixed;
+  z-index: 430;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 78px 22px 94px;
+  background: rgba(33, 38, 58, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.libraryPanel {
+  display: flex;
+  width: min(520px, calc(100vw - 28px));
+  max-height: calc(100dvh - 172px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(77, 73, 108, 0.12);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(105, 83, 235, 0.11), transparent 220px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 253, 0.95));
+  box-shadow:
+    0 34px 96px rgba(32, 37, 66, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid rgba(66, 73, 101, 0.07);
+}
+
+.panelTitle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelIcon {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  place-items: center;
+  border: 1px solid rgba(103, 84, 234, 0.11);
+  border-radius: 11px;
+  color: #6652df;
+  background: rgba(103, 84, 234, 0.07);
+}
+
+.panelTitle > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.panelTitle strong {
+  color: #3c4356;
+  font-size: 13px;
+  font-weight: 810;
+}
+
+.panelTitle small {
+  max-width: 360px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #858d9e;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerActions {
+  display: flex;
+  gap: 5px;
+}
+
+.headerActions button {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 1px solid rgba(65, 72, 101, 0.09);
+  border-radius: 9px;
+  color: #747c8f;
+  background: rgba(255, 255, 255, 0.74);
+  cursor: pointer;
+}
+
+.headerActions button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.libraryMeta {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(65, 72, 101, 0.055);
+  color: #8a91a1;
+  background: rgba(248, 249, 252, 0.62);
+  font-size: 9.5px;
+  font-weight: 650;
+}
+
+.libraryMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recordList {
+  display: grid;
+  gap: 7px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
+}
+
+.record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: center;
+  border: 1px solid rgba(65, 72, 101, 0.075);
+  border-radius: 13px;
+  padding: 10px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 253, 0.76));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.recordMain {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.recordStatus {
+  width: fit-content;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  padding: 3px 6px;
+  color: #5f50c8;
+  background: rgba(103, 84, 234, 0.075);
+  font-size: 8px;
+  font-weight: 820;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recordMain > strong {
+  overflow: hidden;
+  color: #42495c;
+  font-size: 11.5px;
+  font-weight: 790;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recordMain > small {
+  margin-top: 3px;
+  color: #858d9e;
+  font-size: 9.5px;
+  font-weight: 620;
+}
+
+.recordMain > p {
+  display: -webkit-box;
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: #737c8f;
+  font-size: 9.75px;
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.recordTelemetry {
+  display: grid;
+  grid-template-columns: 58px 112px;
+  gap: 5px;
+}
+
+.recordTelemetry > span {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(65, 72, 101, 0.065);
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: rgba(247, 248, 252, 0.72);
+}
+
+.recordTelemetry small {
+  color: #969cab;
+  font-size: 7.75px;
+  font-weight: 820;
+  letter-spacing: 0.055em;
+}
+
+.recordTelemetry strong {
+  margin-top: 3px;
+  color: #4b5367;
+  font-size: 9.5px;
+  font-weight: 760;
+}
+
+.recordActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid rgba(65, 72, 101, 0.055);
+  padding-top: 8px;
+}
+
+.recordActions button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 9px;
+  padding: 0 9px;
+  font: inherit;
+  font-size: 9.75px;
+  font-weight: 730;
+  cursor: pointer;
+}
+
+.deleteButton {
+  border: 1px solid rgba(196, 75, 75, 0.1);
+  color: #b34c4c;
+  background: rgba(255, 247, 247, 0.82);
+}
+
+.deleteButton[data-confirm='true'] {
+  border-color: rgba(196, 75, 75, 0.2);
+  color: #fff;
+  background: #bd5252;
+}
+
+.openButton {
+  border: 1px solid rgba(103, 84, 234, 0.12);
+  color: #fff;
+  background: linear-gradient(135deg, #725cec, #5b45df);
+}
+
+.recordActions button:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px dashed rgba(103, 84, 234, 0.14);
+  border-radius: 14px;
+  padding: 20px;
+  color: #7868dc;
+  background: rgba(103, 84, 234, 0.028);
+  text-align: center;
+}
+
+.emptyState strong {
+  color: #4c5366;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.emptyState small {
+  max-width: 330px;
+  color: #8b92a3;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.spinner {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1023px) {
+  .saveButton,
+  .libraryButton {
+    min-height: 42px;
+    font-size: 11px;
+  }
+
+  .backdrop {
+    align-items: flex-end;
+    padding: 14px 12px calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .libraryPanel {
+    width: min(100%, 620px);
+    max-height: min(72dvh, 720px);
+    margin-inline: auto;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .saveButton,
+  .libraryButton {
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .record {
+    grid-template-columns: 1fr;
+  }
+
+  .recordTelemetry {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .recordActions {
+    grid-column: 1;
+  }
+
+  .panelTitle small {
+    max-width: 210px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saveButton,
+  .libraryButton {
+    transition: none;
+  }
+
+  .saveButton:hover,
+  .libraryButton:hover {
+    transform: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
