@@ -8,6 +8,7 @@ import {
 import {
   currentIdentity,
   linkCurrentUserWithGoogle,
+  signInWithGoogleIdentity,
   type IdentitySummary,
 } from '@/lib/firebase-identity';
 
@@ -82,6 +83,29 @@ export function ReportOsIdentity() {
     }
   };
 
+  const handleSignIn = async () => {
+    setBusy(true);
+    setError(null);
+
+    try {
+      const next =
+        await signInWithGoogleIdentity();
+
+      setIdentity(next);
+      setOpen(false);
+
+      window.location.reload();
+    } catch (signInError) {
+      setError(
+        signInError instanceof Error
+          ? signInError.message
+          : 'Google sign-in failed.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       <button
@@ -124,11 +148,11 @@ export function ReportOsIdentity() {
             </span>
 
             <h2 id="identity-title">
-              Link this ReportOS identity
+              Secure this ReportOS identity
             </h2>
 
             <p>
-              The current workspace uses an anonymous Firebase identity. Linking Google keeps the same UID, so server ownership and recovery history stay attached to the same account while becoming available across signed-in devices.
+              Link the current anonymous workspace to Google to preserve the same UID, or sign in to a Google identity that was already linked on another browser or device. When an existing identity has canonical D1 data, the server copy wins safely after reload.
             </p>
 
             <div
@@ -169,8 +193,21 @@ export function ReportOsIdentity() {
                 }}
               >
                 {busy
-                  ? 'Linking…'
-                  : 'Link Google account'}
+                  ? 'Working…'
+                  : 'Link this workspace'}
+              </button>
+
+              <button
+                className={styles.signIn}
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void handleSignIn();
+                }}
+              >
+                {busy
+                  ? 'Working…'
+                  : 'Sign in to existing Google identity'}
               </button>
             </div>
           </section>
