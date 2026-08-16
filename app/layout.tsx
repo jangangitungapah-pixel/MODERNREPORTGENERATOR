@@ -4,6 +4,10 @@ import {
   FirebaseCloudRecovery,
 } from '@/components/firebase-cloud-recovery';
 
+import {
+  FirebaseDestructiveGuard,
+} from '@/components/firebase-destructive-guard';
+
 import './globals.css';
 import './cloud-recovery.css';
 
@@ -21,6 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <FirebaseDestructiveGuard />
         <FirebaseCloudRecovery />
       </body>
     </html>
