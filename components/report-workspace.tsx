@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   Archive,
+  ArchiveRestore,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -13,12 +14,15 @@ import {
   Clock3,
   Command,
   Copy,
+  FilePlus2,
   FileText,
+  FolderArchive,
   Gauge,
   Layers3,
   Pencil,
   Plus,
   RotateCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -51,9 +55,25 @@ import {
   type ProgressEntry,
 } from '@/lib/report';
 
+import {
+  createIncidentRecord,
+  deserializeWorkspace,
+  filterIncidents,
+  serializeWorkspace,
+  setIncidentArchived,
+  sortIncidentsByUpdatedAt,
+  upsertIncidentReport,
+  type IncidentRecord,
+} from '@/lib/workspace';
+
 const STORAGE_KEY = 'reportos:draft:v1';
+const WORKSPACE_STORAGE_KEY =
+  'reportos:workspace:v1';
 
 type MobilePane = 'compose' | 'preview';
+type WorkspaceMode =
+  | 'compose'
+  | 'archive';
 
 const PROGRESS_KIND_LABELS = {
   coordination: 'Coordination',
@@ -124,6 +144,50 @@ function Field({
   );
 }
 
+function formatIncidentTimestamp(
+  value: string
+): string {
+  const parsed =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return 'Unknown time';
+  }
+
+  return new Intl.DateTimeFormat(
+    'en-GB',
+    {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  ).format(parsed);
+}
+
+function createClientIncidentId(): string {
+  if (
+    typeof crypto !==
+      'undefined' &&
+    'randomUUID' in crypto
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return (
+    'incident-' +
+    Date.now() +
+    '-' +
+    Math.random()
+      .toString(36)
+      .slice(2, 9)
+  );
+}
+
 function AppMark() {
   return (
     <div className="app-mark" aria-hidden="true">
@@ -143,6 +207,30 @@ export function ReportWorkspace() {
 
   const [mobilePane, setMobilePane] =
     useState<MobilePane>('compose');
+
+  const [
+    workspaceMode,
+    setWorkspaceMode,
+  ] = useState<WorkspaceMode>(
+    'compose'
+  );
+
+  const [
+    incidentRecords,
+    setIncidentRecords,
+  ] = useState<
+    IncidentRecord[]
+  >([]);
+
+  const [
+    activeIncidentId,
+    setActiveIncidentId,
+  ] = useState('');
+
+  const [
+    archiveQuery,
+    setArchiveQuery,
+  ] = useState('');
 
   const [entryTime, setEntryTime] =
     useState('');
@@ -192,18 +280,94 @@ export function ReportWorkspace() {
       if (cancelled) return;
 
       try {
-        const saved =
-          window.localStorage.getItem(
-            STORAGE_KEY
+        const workspace =
+          deserializeWorkspace(
+            window.localStorage.getItem(
+              WORKSPACE_STORAGE_KEY
+            )
           );
 
-        if (saved) {
+        if (
+          workspace &&
+          workspace.incidents.length >
+            0
+        ) {
+          const active =
+            workspace.incidents.find(
+              (incident) =>
+                incident.id ===
+                workspace.activeIncidentId
+            ) ??
+            workspace.incidents[0];
+
+          setIncidentRecords(
+            workspace.incidents
+          );
+
+          setActiveIncidentId(
+            active.id
+          );
+
           setReport(
-            JSON.parse(saved) as IncidentReport
+            active.report
+          );
+        } else {
+          const savedDraft =
+            window.localStorage.getItem(
+              STORAGE_KEY
+            );
+
+          let initialReport =
+            SAMPLE_REPORT;
+
+          if (savedDraft) {
+            try {
+              initialReport =
+                JSON.parse(
+                  savedDraft
+                ) as IncidentReport;
+            } catch {
+              initialReport =
+                SAMPLE_REPORT;
+            }
+          }
+
+          const incident =
+            createIncidentRecord(
+              createClientIncidentId(),
+              initialReport
+            );
+
+          setIncidentRecords([
+            incident,
+          ]);
+
+          setActiveIncidentId(
+            incident.id
+          );
+
+          setReport(
+            incident.report
           );
         }
       } catch {
-        // Broken local drafts must never block the app.
+        const incident =
+          createIncidentRecord(
+            createClientIncidentId(),
+            SAMPLE_REPORT
+          );
+
+        setIncidentRecords([
+          incident,
+        ]);
+
+        setActiveIncidentId(
+          incident.id
+        );
+
+        setReport(
+          incident.report
+        );
       } finally {
         if (!cancelled) {
           setHydrated(true);
@@ -217,13 +381,50 @@ export function ReportWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (
+      !hydrated ||
+      !activeIncidentId ||
+      incidentRecords.length === 0
+    ) {
+      return;
+    }
 
+    const now =
+      new Date().toISOString();
+
+    const syncedIncidents =
+      upsertIncidentReport(
+        incidentRecords,
+        activeIncidentId,
+        report,
+        now
+      );
+
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      serializeWorkspace({
+        version: 1,
+        activeIncidentId,
+        incidents:
+          syncedIncidents,
+      })
+    );
+
+    //
+    // Keep the legacy draft key during
+    // F3 migration so rollback never
+    // destroys the currently open report.
+    //
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(report)
     );
-  }, [hydrated, report]);
+  }, [
+    activeIncidentId,
+    hydrated,
+    incidentRecords,
+    report,
+  ]);
 
   const generated = useMemo(
     () => formatReport(report),
@@ -245,6 +446,187 @@ export function ReportWorkspace() {
         ),
       [report.progress]
     );
+
+  const incidentRecordsForView =
+    useMemo(
+      () =>
+        sortIncidentsByUpdatedAt(
+          activeIncidentId
+            ? upsertIncidentReport(
+                incidentRecords,
+                activeIncidentId,
+                report,
+                incidentRecords.find(
+                  (incident) =>
+                    incident.id ===
+                    activeIncidentId
+                )?.updatedAt ??
+                  new Date().toISOString()
+              )
+            : incidentRecords
+        ),
+      [
+        activeIncidentId,
+        incidentRecords,
+        report,
+      ]
+    );
+
+  const filteredIncidents =
+    useMemo(
+      () =>
+        filterIncidents(
+          incidentRecordsForView,
+          archiveQuery
+        ),
+      [
+        archiveQuery,
+        incidentRecordsForView,
+      ]
+    );
+
+  const activeIncident =
+    incidentRecordsForView.find(
+      (incident) =>
+        incident.id ===
+        activeIncidentId
+    );
+
+  const activeIncidentCount =
+    incidentRecordsForView.filter(
+      (incident) =>
+        incident.status ===
+        'active'
+    ).length;
+
+  const archivedIncidentCount =
+    incidentRecordsForView.filter(
+      (incident) =>
+        incident.status ===
+        'archived'
+    ).length;
+
+  function snapshotCurrentIncident(
+    records: IncidentRecord[] =
+      incidentRecords
+  ): IncidentRecord[] {
+    if (!activeIncidentId) {
+      return records;
+    }
+
+    return upsertIncidentReport(
+      records,
+      activeIncidentId,
+      report
+    );
+  }
+
+  function createNewIncident() {
+    const current =
+      snapshotCurrentIncident();
+
+    const incident =
+      createIncidentRecord(
+        createClientIncidentId(),
+        EMPTY_REPORT
+      );
+
+    setIncidentRecords([
+      incident,
+      ...current,
+    ]);
+
+    setActiveIncidentId(
+      incident.id
+    );
+
+    setReport(
+      incident.report
+    );
+
+    setEntryTime('');
+    setEntryText('');
+    setRawImport('');
+    setImportFeedback(null);
+    cancelEditProgress();
+    setWorkspaceMode('compose');
+    setMobilePane('compose');
+  }
+
+  function openIncident(
+    incidentId: string
+  ) {
+    if (
+      incidentId ===
+      activeIncidentId
+    ) {
+      setWorkspaceMode(
+        'compose'
+      );
+      return;
+    }
+
+    const current =
+      snapshotCurrentIncident();
+
+    const target =
+      current.find(
+        (incident) =>
+          incident.id ===
+          incidentId
+      );
+
+    if (!target) {
+      return;
+    }
+
+    setIncidentRecords(
+      current
+    );
+
+    setActiveIncidentId(
+      target.id
+    );
+
+    setReport(
+      target.report
+    );
+
+    setEntryTime('');
+    setEntryText('');
+    setRawImport('');
+    setImportFeedback(null);
+    cancelEditProgress();
+    setWorkspaceMode('compose');
+    setMobilePane('compose');
+  }
+
+  function toggleIncidentArchive(
+    incidentId: string
+  ) {
+    const current =
+      snapshotCurrentIncident();
+
+    const target =
+      current.find(
+        (incident) =>
+          incident.id ===
+          incidentId
+      );
+
+    if (!target) {
+      return;
+    }
+
+    setIncidentRecords(
+      setIncidentArchived(
+        current,
+        incidentId,
+        target.status !==
+          'archived'
+      )
+    );
+  }
 
   function updateField<
     Key extends keyof IncidentReport
@@ -581,8 +963,18 @@ export function ReportWorkspace() {
             aria-label="Primary navigation"
           >
             <button
-              className="nav-item nav-item-active"
+              className={
+                workspaceMode ===
+                'compose'
+                  ? 'nav-item nav-item-active'
+                  : 'nav-item'
+              }
               type="button"
+              onClick={() =>
+                setWorkspaceMode(
+                  'compose'
+                )
+              }
             >
               <WandSparkles size={18} />
 
@@ -614,16 +1006,32 @@ export function ReportWorkspace() {
             </button>
 
             <button
-              className="nav-item"
+              className={
+                workspaceMode ===
+                'archive'
+                  ? 'nav-item nav-item-active'
+                  : 'nav-item'
+              }
               type="button"
+              onClick={() =>
+                setWorkspaceMode(
+                  'archive'
+                )
+              }
             >
               <Archive size={18} />
 
               <span className="nav-copy">
                 <strong>Archive</strong>
                 <small>
-                  Saved incidents
+                  Incident vault
                 </small>
+              </span>
+
+              <span className="nav-count">
+                {
+                  incidentRecordsForView.length
+                }
               </span>
             </button>
           </nav>
@@ -654,11 +1062,51 @@ export function ReportWorkspace() {
               </div>
 
               <h1>
-                Compose with clarity.
+                {workspaceMode ===
+                'archive'
+                  ? 'Incident vault.'
+                  : 'Compose with clarity.'}
               </h1>
+
+              {workspaceMode ===
+                'compose' &&
+              activeIncident ? (
+                <div className="active-incident-context">
+                  <span
+                    data-status={
+                      activeIncident.status
+                    }
+                  >
+                    {
+                      activeIncident.status
+                    }
+                  </span>
+
+                  <span>
+                    {
+                      activeIncident.report
+                        .ticket ||
+                      'New incident'
+                    }
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             <div className="topbar-actions">
+              <button
+                className="new-incident-button"
+                type="button"
+                onClick={
+                  createNewIncident
+                }
+              >
+                <FilePlus2
+                  size={16}
+                />
+                New incident
+              </button>
+
               <div className="save-chip">
                 <span className="save-dot" />
 
@@ -678,6 +1126,320 @@ export function ReportWorkspace() {
             </div>
           </header>
 
+          {workspaceMode ===
+          'archive' ? (
+            <section className="incident-vault">
+              <div className="vault-hero glass-panel">
+                <div className="vault-hero-copy">
+                  <span className="vault-kicker">
+                    INCIDENT MEMORY
+                  </span>
+
+                  <h2>
+                    Every TT, one
+                    operational memory.
+                  </h2>
+
+                  <p>
+                    Search, reopen, archive,
+                    and continue any incident
+                    without sacrificing the
+                    draft currently in your
+                    composer.
+                  </p>
+                </div>
+
+                <div className="vault-stat-grid">
+                  <div>
+                    <span>
+                      TOTAL
+                    </span>
+                    <strong>
+                      {
+                        incidentRecordsForView
+                          .length
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      ACTIVE
+                    </span>
+                    <strong>
+                      {
+                        activeIncidentCount
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      ARCHIVED
+                    </span>
+                    <strong>
+                      {
+                        archivedIncidentCount
+                      }
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="vault-toolbar glass-panel">
+                <label className="vault-search">
+                  <Search size={15} />
+
+                  <input
+                    value={
+                      archiveQuery
+                    }
+                    placeholder="Search TT, region, PIC, rootcause, progress..."
+                    onChange={(
+                      event
+                    ) =>
+                      setArchiveQuery(
+                        event.target
+                          .value
+                      )
+                    }
+                  />
+
+                  {archiveQuery ? (
+                    <button
+                      type="button"
+                      title="Clear search"
+                      onClick={() =>
+                        setArchiveQuery(
+                          ''
+                        )
+                      }
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </label>
+
+                <button
+                  className="vault-create-button"
+                  type="button"
+                  onClick={
+                    createNewIncident
+                  }
+                >
+                  <FilePlus2
+                    size={15}
+                  />
+                  Create incident
+                </button>
+              </div>
+
+              <div className="vault-list">
+                <AnimatePresence
+                  initial={false}
+                >
+                  {filteredIncidents.map(
+                    (incident) => {
+                      const isCurrent =
+                        incident.id ===
+                        activeIncidentId;
+
+                      const reportItem =
+                        incident.report;
+
+                      return (
+                        <motion.article
+                          className="vault-incident-card glass-panel"
+                          data-current={
+                            isCurrent
+                              ? 'true'
+                              : 'false'
+                          }
+                          data-status={
+                            incident.status
+                          }
+                          key={
+                            incident.id
+                          }
+                          layout
+                          initial={{
+                            opacity: 0,
+                            y: 8,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          exit={{
+                            opacity: 0,
+                            scale: 0.98,
+                          }}
+                        >
+                          <div className="vault-card-status">
+                            <span
+                              className="vault-status-dot"
+                              aria-hidden="true"
+                            />
+
+                            <span>
+                              {
+                                incident.status
+                              }
+                            </span>
+
+                            {isCurrent ? (
+                              <span className="vault-current-chip">
+                                OPEN NOW
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="vault-card-main">
+                            <div className="vault-card-identity">
+                              <span className="vault-region">
+                                {
+                                  reportItem.region ||
+                                  'UNASSIGNED'
+                                }
+                              </span>
+
+                              <h3>
+                                {
+                                  reportItem.ticket ||
+                                  'Untitled incident'
+                                }
+                              </h3>
+
+                              <p>
+                                {
+                                  reportItem.summary ||
+                                  'No incident summary yet.'
+                                }
+                              </p>
+                            </div>
+
+                            <div className="vault-card-metrics">
+                              <div>
+                                <span>
+                                  READY
+                                </span>
+                                <strong>
+                                  {
+                                    completionScore(
+                                      reportItem
+                                    )
+                                  }
+                                  %
+                                </strong>
+                              </div>
+
+                              <div>
+                                <span>
+                                  UPDATES
+                                </span>
+                                <strong>
+                                  {
+                                    reportItem.progress
+                                      .length
+                                  }
+                                </strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="vault-card-footer">
+                            <div className="vault-card-meta">
+                              <span>
+                                {
+                                  reportItem.pic ||
+                                  'No PIC'
+                                }
+                              </span>
+
+                              <span>
+                                Updated {
+                                  isCurrent
+                                    ? 'now'
+                                    : formatIncidentTimestamp(
+                                        incident.updatedAt
+                                      )
+                                }
+                              </span>
+                            </div>
+
+                            <div className="vault-card-actions">
+                              <button
+                                className="vault-secondary-action"
+                                type="button"
+                                onClick={() =>
+                                  toggleIncidentArchive(
+                                    incident.id
+                                  )
+                                }
+                              >
+                                {incident.status ===
+                                'archived' ? (
+                                  <ArchiveRestore
+                                    size={14}
+                                  />
+                                ) : (
+                                  <FolderArchive
+                                    size={14}
+                                  />
+                                )}
+
+                                {incident.status ===
+                                'archived'
+                                  ? 'Restore'
+                                  : 'Archive'}
+                              </button>
+
+                              <button
+                                className="vault-open-action"
+                                type="button"
+                                onClick={() =>
+                                  openIncident(
+                                    incident.id
+                                  )
+                                }
+                              >
+                                {isCurrent
+                                  ? 'Return to composer'
+                                  : 'Open incident'}
+
+                                <ChevronRight
+                                  size={14}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.article>
+                      );
+                    }
+                  )}
+                </AnimatePresence>
+
+                {filteredIncidents.length ===
+                0 ? (
+                  <div className="vault-empty glass-panel">
+                    <FolderArchive
+                      size={24}
+                    />
+
+                    <strong>
+                      No incidents found
+                    </strong>
+
+                    <span>
+                      Try another search or
+                      create a fresh incident.
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          ) : (
+            <>
           <div
             className="mobile-pane-switcher glass-panel"
             role="tablist"
@@ -1685,6 +2447,8 @@ export function ReportWorkspace() {
               </div>
             </aside>
           </div>
+            </>
+          )}
         </section>
 
         <nav
@@ -1692,8 +2456,18 @@ export function ReportWorkspace() {
           aria-label="Mobile navigation"
         >
           <button
-            className="bottom-nav-active"
+            className={
+              workspaceMode ===
+                'compose'
+                ? 'bottom-nav-active'
+                : ''
+            }
             type="button"
+            onClick={() =>
+              setWorkspaceMode(
+                'compose'
+              )
+            }
           >
             <WandSparkles size={18} />
             <span>Composer</span>
@@ -1704,7 +2478,20 @@ export function ReportWorkspace() {
             <span>Timeline</span>
           </button>
 
-          <button type="button">
+          <button
+            className={
+              workspaceMode ===
+                'archive'
+                ? 'bottom-nav-active'
+                : ''
+            }
+            type="button"
+            onClick={() =>
+              setWorkspaceMode(
+                'archive'
+              )
+            }
+          >
             <Archive size={18} />
             <span>Archive</span>
           </button>
