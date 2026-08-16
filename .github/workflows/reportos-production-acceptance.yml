@@ -30,4 +30,4 @@ jobs:
       - name: Production acceptance
         env:
           REPORTOS_PRODUCTION_URL: https://reportos.reportosnoc.workers.dev
-        run: node scripts/production-acceptance.mjs
+        run: npm run acceptance:production
