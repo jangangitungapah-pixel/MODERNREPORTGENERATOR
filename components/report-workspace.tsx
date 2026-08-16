@@ -119,6 +119,11 @@ type MobilePane = 'compose' | 'preview';
 type TimelineSortOrder =
   | 'newest'
   | 'oldest';
+
+type OperationsViewMode =
+  | 'columns'
+  | 'list';
+
 type WorkspaceMode =
   | 'compose'
   | 'operations'
@@ -432,6 +437,25 @@ export function ReportWorkspace() {
   ] = useState<WorkspaceMode>(
     'compose'
   );
+
+  const [
+    operationsViewMode,
+    setOperationsViewMode,
+  ] = useState<OperationsViewMode>(
+    'columns'
+  );
+
+  const [
+    operationsQuickUpdateIncidentId,
+    setOperationsQuickUpdateIncidentId,
+  ] = useState<string | null>(
+    null
+  );
+
+  const [
+    operationsQuickUpdateText,
+    setOperationsQuickUpdateText,
+  ] = useState('');
 
   const [
     incidentRecords,
@@ -1458,6 +1482,111 @@ export function ReportWorkspace() {
     setEntryText('');
   }
 
+  function appendOperationalProgress(
+    incidentId: string,
+    text: string
+  ) {
+    const normalizedText =
+      text.trim();
+
+    if (!normalizedText) {
+      return;
+    }
+
+    const sourceReport =
+      incidentId ===
+      activeIncidentId
+        ? report
+        : incidentRecordsForView.find(
+            (incident) =>
+              incident.id ===
+              incidentId
+          )?.report;
+
+    if (!sourceReport) {
+      return;
+    }
+
+    const stamp =
+      currentProgressStamp();
+
+    const nextEntry:
+      ProgressEntry = {
+      id:
+        typeof crypto !==
+          'undefined' &&
+        'randomUUID' in
+          crypto
+          ? crypto.randomUUID()
+          : (
+              String(
+                Date.now()
+              ) +
+              '-ops'
+            ),
+      date:
+        stamp.date,
+      time:
+        stamp.time,
+      text:
+        normalizedText,
+    };
+
+    const nextReport:
+      IncidentReport = {
+      ...sourceReport,
+      progress:
+        sortProgressChronologically(
+          [
+            ...sourceReport.progress,
+            nextEntry,
+          ],
+          sourceReport.occurTime
+        ),
+    };
+
+    setIncidentRecords(
+      (current) =>
+        upsertIncidentReport(
+          current,
+          incidentId,
+          nextReport
+        )
+    );
+
+    if (
+      incidentId ===
+      activeIncidentId
+    ) {
+      setReport(
+        nextReport
+      );
+    }
+
+    setOperationsQuickUpdateText(
+      ''
+    );
+
+    setOperationsQuickUpdateIncidentId(
+      null
+    );
+  }
+
+  function toggleOperationsQuickUpdate(
+    incidentId: string
+  ) {
+    setOperationsQuickUpdateIncidentId(
+      (current) =>
+        current === incidentId
+          ? null
+          : incidentId
+    );
+
+    setOperationsQuickUpdateText(
+      ''
+    );
+  }
+
   function removeProgress(id: string) {
     setReport((current) => ({
       ...current,
@@ -2188,27 +2317,88 @@ export function ReportWorkspace() {
                     </p>
                   </div>
 
-                  {operationalSummary.critical >
-                  0 ? (
-                    <span className="operations-critical-chip">
-                      <AlertTriangle
-                        size={13}
-                      />
-                      {
-                        operationalSummary.critical
-                      } critical freshness
-                    </span>
-                  ) : (
-                    <span className="operations-healthy-chip">
-                      <ShieldCheck
-                        size={13}
-                      />
-                      No critical freshness
-                    </span>
-                  )}
+                  <div className="operations-board-actions">
+                    <div
+                      className="operations-view-switch"
+                      role="group"
+                      aria-label="Operations view mode"
+                    >
+                      <button
+                        className={
+                          operationsViewMode ===
+                          'columns'
+                            ? 'operations-view-option operations-view-option-active'
+                            : 'operations-view-option'
+                        }
+                        type="button"
+                        aria-pressed={
+                          operationsViewMode ===
+                          'columns'
+                        }
+                        onClick={() =>
+                          setOperationsViewMode(
+                            'columns'
+                          )
+                        }
+                      >
+                        <Layers3
+                          size={13}
+                        />
+                        Columns
+                      </button>
+
+                      <button
+                        className={
+                          operationsViewMode ===
+                          'list'
+                            ? 'operations-view-option operations-view-option-active'
+                            : 'operations-view-option'
+                        }
+                        type="button"
+                        aria-pressed={
+                          operationsViewMode ===
+                          'list'
+                        }
+                        onClick={() =>
+                          setOperationsViewMode(
+                            'list'
+                          )
+                        }
+                      >
+                        <FileText
+                          size={13}
+                        />
+                        List
+                      </button>
+                    </div>
+
+                    {operationalSummary.critical >
+                    0 ? (
+                      <span className="operations-critical-chip">
+                        <AlertTriangle
+                          size={13}
+                        />
+                        {
+                          operationalSummary.critical
+                        } critical freshness
+                      </span>
+                    ) : (
+                      <span className="operations-healthy-chip">
+                        <ShieldCheck
+                          size={13}
+                        />
+                        No critical freshness
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="operations-queue">
+                <div
+                  className="operations-queue"
+                  data-view={
+                    operationsViewMode
+                  }
+                >
                   <AnimatePresence
                     initial={false}
                   >
@@ -2371,20 +2561,176 @@ export function ReportWorkspace() {
                             </p>
                           </div>
 
-                          <button
-                            className="operations-open-button"
-                            type="button"
-                            onClick={() =>
-                              openIncident(
+                          <div className="operations-row-actions">
+                            <button
+                              className="operations-quick-update-button"
+                              type="button"
+                              aria-expanded={
+                                operationsQuickUpdateIncidentId ===
                                 item.incidentId
-                              )
-                            }
-                          >
-                            Open
-                            <ChevronRight
-                              size={14}
-                            />
-                          </button>
+                              }
+                              onClick={() =>
+                                toggleOperationsQuickUpdate(
+                                  item.incidentId
+                                )
+                              }
+                            >
+                              <Sparkles
+                                size={13}
+                              />
+                              Quick update
+                            </button>
+
+                            <button
+                              className="operations-open-button"
+                              type="button"
+                              onClick={() =>
+                                openIncident(
+                                  item.incidentId
+                                )
+                              }
+                            >
+                              Open
+                              <ChevronRight
+                                size={14}
+                              />
+                            </button>
+                          </div>
+
+                          {operationsQuickUpdateIncidentId ===
+                          item.incidentId ? (
+                            <motion.div
+                              className="operations-quick-update-panel"
+                              initial={{
+                                opacity: 0,
+                                y: -4,
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                              }}
+                              exit={{
+                                opacity: 0,
+                                y: -4,
+                              }}
+                            >
+                              <div className="operations-quick-update-head">
+                                <div>
+                                  <strong>
+                                    Periodic update
+                                  </strong>
+
+                                  <span>
+                                    Add a timestamped
+                                    progress signal
+                                    without leaving
+                                    Operations.
+                                  </span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  title="Close quick update"
+                                  onClick={() =>
+                                    setOperationsQuickUpdateIncidentId(
+                                      null
+                                    )
+                                  }
+                                >
+                                  <X
+                                    size={13}
+                                  />
+                                </button>
+                              </div>
+
+                              <div className="operations-quick-macros">
+                                {progressMacroSuggestions(
+                                  item.status
+                                ).map(
+                                  (macro) => (
+                                    <button
+                                      data-kind={
+                                        macro.kind
+                                      }
+                                      key={
+                                        macro.id
+                                      }
+                                      type="button"
+                                      title={
+                                        macro.text
+                                      }
+                                      onClick={() =>
+                                        appendOperationalProgress(
+                                          item.incidentId,
+                                          macro.text
+                                        )
+                                      }
+                                    >
+                                      <Plus
+                                        size={11}
+                                      />
+                                      {
+                                        macro.label
+                                      }
+                                    </button>
+                                  )
+                                )}
+                              </div>
+
+                              <div className="operations-quick-custom">
+                                <input
+                                  value={
+                                    operationsQuickUpdateText
+                                  }
+                                  placeholder="Custom periodic update..."
+                                  aria-label={
+                                    'Periodic update for ' +
+                                    (
+                                      item.ticket ||
+                                      'incident'
+                                    )
+                                  }
+                                  onChange={(
+                                    event
+                                  ) =>
+                                    setOperationsQuickUpdateText(
+                                      event.target
+                                        .value
+                                    )
+                                  }
+                                  onKeyDown={(
+                                    event
+                                  ) => {
+                                    if (
+                                      event.key ===
+                                      'Enter' &&
+                                      operationsQuickUpdateText.trim()
+                                    ) {
+                                      appendOperationalProgress(
+                                        item.incidentId,
+                                        operationsQuickUpdateText
+                                      );
+                                    }
+                                  }}
+                                />
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !operationsQuickUpdateText.trim()
+                                  }
+                                  onClick={() =>
+                                    appendOperationalProgress(
+                                      item.incidentId,
+                                      operationsQuickUpdateText
+                                    )
+                                  }
+                                >
+                                  Add now
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : null}
                         </motion.article>
                       )
                     )}
