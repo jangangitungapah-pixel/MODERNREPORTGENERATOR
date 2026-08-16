@@ -363,6 +363,13 @@ export function parseIncidentReport(
       /^\*?\s*\[([^\]]+)\]\s*(.*?)\s*,?\s*\[TT\s*:\s*([^\]]+)\]\s*\*?\s*$/i
     );
 
+  const operationalHeader =
+    completeHeader
+      ? null
+      : header.match(
+          /^\*?\s*\[([^\]]+)\]\s*(\[[^\]]+\])?\s*(.*?)\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*\*?\s*$/i
+        );
+
   if (completeHeader) {
     report.region =
       cleanImportedValue(
@@ -380,6 +387,39 @@ export function parseIncidentReport(
     report.ticket =
       cleanImportedValue(
         completeHeader[3]
+      );
+  } else if (operationalHeader) {
+    report.region =
+      cleanImportedValue(
+        operationalHeader[1]
+      );
+
+    const operationalState =
+      cleanImportedValue(
+        operationalHeader[2] ??
+          ''
+      );
+
+    const operationalSummary =
+      cleanImportedValue(
+        operationalHeader[3]
+      ).replace(
+        /,\s*$/,
+        ''
+      );
+
+    report.summary =
+      [
+        operationalState,
+        operationalSummary,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+
+    report.ticket =
+      cleanImportedValue(
+        operationalHeader[4]
       );
   } else {
     //
@@ -405,16 +445,36 @@ export function parseIncidentReport(
         );
     }
 
-    const looseTicket =
+    const looseBracketTicket =
       compactMetadata.match(
         /\[TT\s*:\s*([^\]]+)\]/i
       );
 
-    if (looseTicket) {
+    if (looseBracketTicket) {
       report.ticket =
         cleanImportedValue(
-          looseTicket[1]
+          looseBracketTicket[1]
         );
+    } else {
+      //
+      // Operational headlines often use:
+      //
+      // ... - DATACOM-INC-YYYYMMDD-NNNNNNNN
+      //
+      // Keep the whole ticket namespace instead of
+      // stripping DATACOM / other future prefixes.
+      //
+      const looseOperationalTicket =
+        header.match(
+          /\s+-\s+((?:[A-Z0-9_]+-)*INC-\d{8}-\d+)\s*\*?\s*$/i
+        );
+
+      if (looseOperationalTicket) {
+        report.ticket =
+          cleanImportedValue(
+            looseOperationalTicket[1]
+          );
+      }
     }
   }
 

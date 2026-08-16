@@ -166,6 +166,155 @@ describe('parseIncidentReport', () => {
     );
   });
 
+  it('parses FLP operational titles with status tag and DATACOM ticket suffix', () => {
+    const raw =
+      '*[FLP_3rd_MANDAU][Open - Major] DOWN - 13BDG0419_KIARA_ASRI_RAYA_BDG_PL(03BDG665/100450)<>13BDG0560_AHNASUTION_PASIRENDAH_PL(100512/03BDG096) - DATACOM-INC-20260816-00012945*';
+
+    const result =
+      parseIncidentReport(
+        raw
+      );
+
+    expect(
+      result.report.region
+    ).toBe(
+      'FLP_3rd_MANDAU'
+    );
+
+    expect(
+      result.report.summary
+    ).toBe(
+      '[Open - Major] DOWN - 13BDG0419_KIARA_ASRI_RAYA_BDG_PL(03BDG665/100450)<>13BDG0560_AHNASUTION_PASIRENDAH_PL(100512/03BDG096)'
+    );
+
+    expect(
+      result.report.ticket
+    ).toBe(
+      'DATACOM-INC-20260816-00012945'
+    );
+
+    expect(
+      result.detectedFields
+    ).toEqual(
+      expect.arrayContaining([
+        'region',
+        'summary',
+        'ticket',
+      ])
+    );
+  });
+
+  it('parses a complete FLP DATACOM incident report and preserves all metadata', () => {
+    const raw = [
+      '*[FLP_3rd_MANDAU][Open - Major] DOWN - 13BDG0419_KIARA_ASRI_RAYA_BDG_PL(03BDG665/100450)<>13BDG0560_AHNASUTION_PASIRENDAH_PL(100512/03BDG096) - DATACOM-INC-20260816-00012945*',
+      'Occur Time = 16/08/2026 09:00',
+      'Dispacth Time = 16/08/2026 09:15',
+      'PIC = Dede (Bandung)',
+      'Rootcause = Still Investigation',
+      'Cut Point = Still Investigation',
+      '',
+      'Update Progress',
+      '09:20 We already open TT',
+    ].join('\n');
+
+    const result =
+      parseIncidentReport(
+        raw
+      );
+
+    expect(
+      result.report.region
+    ).toBe(
+      'FLP_3rd_MANDAU'
+    );
+
+    expect(
+      result.report.ticket
+    ).toBe(
+      'DATACOM-INC-20260816-00012945'
+    );
+
+    expect(
+      result.report.summary
+    ).toContain(
+      '[Open - Major] DOWN -'
+    );
+
+    expect(
+      result.report.occurTime
+    ).toBe(
+      '16/08/2026 09:00'
+    );
+
+    expect(
+      result.report.dispatchTime
+    ).toBe(
+      '16/08/2026 09:15'
+    );
+
+    expect(
+      result.report.pic
+    ).toBe(
+      'Dede (Bandung)'
+    );
+
+    expect(
+      result.report.progress
+    ).toHaveLength(1);
+
+    expect(
+      result.confidence
+    ).toBe(100);
+  });
+
+  it('parses the FLP DATACOM format even when the complete report is collapsed into one line', () => {
+    const raw = [
+      '*[FLP_3rd_MANDAU][Open - Major] DOWN - 13BDG0419_KIARA_ASRI_RAYA_BDG_PL(03BDG665/100450)<>13BDG0560_AHNASUTION_PASIRENDAH_PL(100512/03BDG096) - DATACOM-INC-20260816-00012945*',
+      'Occur Time = 16/08/2026 09:00',
+      'Dispatch Time = 16/08/2026 09:15',
+      'PIC = Dede (Bandung)',
+      'Rootcause = Still Investigation',
+      'Cut Point = Still Investigation',
+      'Update Progress',
+      '09:20 Team OTW location ETA 30 min',
+      '10:00 Team arrive on location',
+    ]
+      .join(' ')
+      .replace(
+        /\s+/g,
+        ' '
+      );
+
+    const result =
+      parseIncidentReport(
+        raw
+      );
+
+    expect(
+      result.report.ticket
+    ).toBe(
+      'DATACOM-INC-20260816-00012945'
+    );
+
+    expect(
+      result.report.progress
+    ).toHaveLength(2);
+
+    expect(
+      result.report.progress[0]
+        .time
+    ).toBe('09:20');
+
+    expect(
+      result.report.progress[1]
+        .time
+    ).toBe('10:00');
+
+    expect(
+      result.confidence
+    ).toBe(100);
+  });
+
   it('reports missing signals instead of inventing data', () => {
     const result =
       parseIncidentReport(
