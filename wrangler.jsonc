@@ -12,5 +12,13 @@
   },
   "vars": {
     "REPORTOS_ENV": "production"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reportos-db",
+      "database_id": "2914d882-d24f-41f8-a1a1-3ebebb558d30",
+      "migrations_dir": "drizzle"
+    }
+  ]
 }
