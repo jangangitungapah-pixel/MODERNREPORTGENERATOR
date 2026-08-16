@@ -134,22 +134,34 @@ export function ReportWorkspace() {
     useState(false);
 
   useEffect(() => {
-    try {
-      const saved =
-        window.localStorage.getItem(
-          STORAGE_KEY
-        );
+    let cancelled = false;
 
-      if (saved) {
-        setReport(
-          JSON.parse(saved) as IncidentReport
-        );
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      try {
+        const saved =
+          window.localStorage.getItem(
+            STORAGE_KEY
+          );
+
+        if (saved) {
+          setReport(
+            JSON.parse(saved) as IncidentReport
+          );
+        }
+      } catch {
+        // Broken local drafts must never block the app.
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
       }
-    } catch {
-      // Broken local drafts must never block the app.
-    } finally {
-      setHydrated(true);
-    }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
