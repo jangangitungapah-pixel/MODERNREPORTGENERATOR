@@ -141,6 +141,420 @@ export function formatReport(report: IncidentReport): string {
   ].join('\n');
 }
 
+export type IncidentParseResult = {
+  report: IncidentReport;
+  confidence: number;
+  detectedFields: string[];
+  missingFields: string[];
+  progressCount: number;
+};
+
+function cleanImportedValue(
+  value: string
+): string {
+  return value
+    .replace(/\\s+/g, ' ')
+    .replace(/^\\*+|\\*+$/g, '')
+    .trim();
+}
+
+function createProgressId(
+  index: number
+): string {
+  return (
+    'import-' +
+    String(index + 1).padStart(3, '0')
+  );
+}
+
+function parseProgressEntries(
+  raw: string
+): ProgressEntry[] {
+  const normalized = raw
+    .replace(/\\r/g, '')
+    .trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const lines = normalized
+    .split('\\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const entries: ProgressEntry[] = [];
+
+  for (const line of lines) {
+    const match = line.match(
+      /^[•*\\-\\s]*(\\d{1,2}:\\d{2})\\s+(.+)$/
+    );
+
+    if (match) {
+      const [, time, text] = match;
+
+      entries.push({
+        id: createProgressId(
+          entries.length
+        ),
+        time,
+        text: cleanImportedValue(text),
+      });
+
+      continue;
+    }
+
+    if (entries.length > 0) {
+      const previous =
+        entries[entries.length - 1];
+
+      previous.text = cleanImportedValue(
+        previous.text + ' ' + line
+      );
+    }
+  }
+
+  if (entries.length > 0) {
+    return entries;
+  }
+
+  //
+  // Fallback for text copied from chat,
+  // spreadsheets, WhatsApp, or other
+  // sources that collapse all progress
+  // lines into one long line.
+  //
+  const collapsed = normalized
+    .replace(/\\s+/g, ' ')
+    .trim();
+
+  const segmentPattern =
+    /(?:^|\\s)(\\d{1,2}:\\d{2})\\s+(.+?)(?=\\s+\\d{1,2}:\\d{2}\\s+[A-Za-z0-9]|$)/g;
+
+  let match:
+    RegExpExecArray | null;
+
+  while (
+    (match =
+      segmentPattern.exec(
+        collapsed
+      )) !== null
+  ) {
+    entries.push({
+      id: createProgressId(
+        entries.length
+      ),
+      time: match[1],
+      text: cleanImportedValue(
+        match[2]
+      ),
+    });
+  }
+
+  return entries;
+}
+
+export function parseIncidentReport(
+  raw: string
+): IncidentParseResult {
+  const normalized = raw
+    .replace(/\\u00a0/g, ' ')
+    .replace(/\\r/g, '')
+    .trim();
+
+  const report: IncidentReport = {
+    ...EMPTY_REPORT,
+    progress: [],
+  };
+
+  if (!normalized) {
+    return {
+      report,
+      confidence: 0,
+      detectedFields: [],
+      missingFields: [
+        'region',
+        'summary',
+        'ticket',
+        'occurTime',
+        'dispatchTime',
+        'pic',
+        'rootcause',
+        'cutPoint',
+        'progress',
+      ],
+      progressCount: 0,
+    };
+  }
+
+  const progressMarker =
+    /\\bUpdate\\s*Progress\\b/i;
+
+  const progressMarkerMatch =
+    progressMarker.exec(
+      normalized
+    );
+
+  const metadataRaw =
+    progressMarkerMatch
+      ? normalized.slice(
+          0,
+          progressMarkerMatch.index
+        )
+      : normalized;
+
+  const progressRaw =
+    progressMarkerMatch
+      ? normalized.slice(
+          progressMarkerMatch.index +
+            progressMarkerMatch[0].length
+        )
+      : '';
+
+  //
+  // Compress metadata first.
+  //
+  // This allows the parser to understand
+  // copied text even when the browser,
+  // WhatsApp, or another tool destroys
+  // its original line breaks.
+  //
+  const compactMetadata =
+    metadataRaw
+      .replace(/\\n+/g, ' ')
+      .replace(/[ \\t]+/g, ' ')
+      .trim();
+
+  const metadataLines =
+    compactMetadata
+      .replace(
+        /\\s+(?=(?:Occur\\s*Time|(?:Dispacth|Dispatch)\\s*Time|PIC|Root\\s*Cause|Rootcause|Cut\\s*Point)\\s*=)/gi,
+        '\\n'
+      )
+      .split('\\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+  const header =
+    metadataLines[0] ?? '';
+
+  const completeHeader =
+    header.match(
+      /^\\*?\\s*\\[([^\\]]+)\\]\\s*(.*?)\\s*,?\\s*\\[TT\\s*:\\s*([^\\]]+)\\]\\s*\\*?\\s*$/i
+    );
+
+  if (completeHeader) {
+    report.region =
+      cleanImportedValue(
+        completeHeader[1]
+      );
+
+    report.summary =
+      cleanImportedValue(
+        completeHeader[2]
+      ).replace(
+        /,\\s*$/,
+        ''
+      );
+
+    report.ticket =
+      cleanImportedValue(
+        completeHeader[3]
+      );
+  } else {
+    //
+    // Graceful partial header support.
+    //
+    // Example:
+    // [MANDAU] LINK DOWN ...
+    //
+    const partialHeader =
+      header.match(
+        /^\\*?\\s*\\[([^\\]]+)\\]\\s*(.*?)\\s*\\*?$/
+      );
+
+    if (partialHeader) {
+      report.region =
+        cleanImportedValue(
+          partialHeader[1]
+        );
+
+      report.summary =
+        cleanImportedValue(
+          partialHeader[2]
+        );
+    }
+
+    const looseTicket =
+      compactMetadata.match(
+        /\\[TT\\s*:\\s*([^\\]]+)\\]/i
+      );
+
+    if (looseTicket) {
+      report.ticket =
+        cleanImportedValue(
+          looseTicket[1]
+        );
+    }
+  }
+
+  for (
+    const line of
+    metadataLines.slice(1)
+  ) {
+    const equalsIndex =
+      line.indexOf('=');
+
+    if (equalsIndex < 0) {
+      continue;
+    }
+
+    const label =
+      line
+        .slice(
+          0,
+          equalsIndex
+        )
+        .trim();
+
+    const value =
+      cleanImportedValue(
+        line.slice(
+          equalsIndex + 1
+        )
+      );
+
+    if (
+      /^Occur\\s*Time$/i.test(
+        label
+      )
+    ) {
+      report.occurTime = value;
+      continue;
+    }
+
+    if (
+      /^(?:Dispacth|Dispatch)\\s*Time$/i.test(
+        label
+      )
+    ) {
+      report.dispatchTime =
+        value;
+
+      continue;
+    }
+
+    if (
+      /^PIC$/i.test(
+        label
+      )
+    ) {
+      report.pic = value;
+      continue;
+    }
+
+    if (
+      /^(?:Rootcause|Root\\s*Cause)$/i.test(
+        label
+      )
+    ) {
+      report.rootcause = value;
+      continue;
+    }
+
+    if (
+      /^Cut\\s*Point$/i.test(
+        label
+      )
+    ) {
+      report.cutPoint = value;
+    }
+  }
+
+  report.progress =
+    parseProgressEntries(
+      progressRaw
+    );
+
+  const signals = [
+    [
+      'region',
+      report.region,
+    ],
+    [
+      'summary',
+      report.summary,
+    ],
+    [
+      'ticket',
+      report.ticket,
+    ],
+    [
+      'occurTime',
+      report.occurTime,
+    ],
+    [
+      'dispatchTime',
+      report.dispatchTime,
+    ],
+    [
+      'pic',
+      report.pic,
+    ],
+    [
+      'rootcause',
+      report.rootcause,
+    ],
+    [
+      'cutPoint',
+      report.cutPoint,
+    ],
+    [
+      'progress',
+      report.progress.length > 0
+        ? 'detected'
+        : '',
+    ],
+  ] as const;
+
+  const detectedFields =
+    signals
+      .filter(
+        ([, value]) =>
+          value.trim().length > 0
+      )
+      .map(
+        ([name]) => name
+      );
+
+  const missingFields =
+    signals
+      .filter(
+        ([, value]) =>
+          value.trim().length === 0
+      )
+      .map(
+        ([name]) => name
+      );
+
+  const confidence =
+    Math.round(
+      (
+        detectedFields.length /
+        signals.length
+      ) * 100
+    );
+
+  return {
+    report,
+    confidence,
+    detectedFields,
+    missingFields,
+    progressCount:
+      report.progress.length,
+  };
+}
+
 export function completionScore(report: IncidentReport): number {
   const values = [
     report.region,

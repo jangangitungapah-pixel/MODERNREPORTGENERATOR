@@ -37,6 +37,7 @@ import {
   SAMPLE_REPORT,
   completionScore,
   formatReport,
+  parseIncidentReport,
   type IncidentReport,
 } from '@/lib/report';
 
@@ -132,6 +133,21 @@ export function ReportWorkspace() {
 
   const [copied, setCopied] =
     useState(false);
+
+  const [rawImport, setRawImport] =
+    useState('');
+
+  const [
+    importFeedback,
+    setImportFeedback,
+  ] = useState<{
+    tone:
+      | 'neutral'
+      | 'success'
+      | 'error';
+    title: string;
+    detail: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -255,6 +271,94 @@ export function ReportWorkspace() {
     setReport(EMPTY_REPORT);
     setEntryTime('');
     setEntryText('');
+  }
+
+  async function pasteFromClipboard() {
+    try {
+      const text =
+        await navigator.clipboard.readText();
+
+      if (!text.trim()) {
+        setImportFeedback({
+          tone: 'error',
+          title: 'Clipboard is empty',
+          detail:
+            'Copy an incident report first, then try again.',
+        });
+
+        return;
+      }
+
+      setRawImport(text);
+
+      setImportFeedback({
+        tone: 'neutral',
+        title: 'Clipboard captured',
+        detail:
+          'Payload is ready to parse and apply.',
+      });
+    } catch {
+      setImportFeedback({
+        tone: 'error',
+        title: 'Clipboard access blocked',
+        detail:
+          'Paste the report manually into the payload area.',
+      });
+    }
+  }
+
+  function applySmartImport() {
+    if (!rawImport.trim()) {
+      setImportFeedback({
+        tone: 'error',
+        title: 'Nothing to parse',
+        detail:
+          'Paste a report payload before running Smart Parse.',
+      });
+
+      return;
+    }
+
+    const result =
+      parseIncidentReport(
+        rawImport
+      );
+
+    if (
+      result.detectedFields.length ===
+      0
+    ) {
+      setImportFeedback({
+        tone: 'error',
+        title: 'No report signals detected',
+        detail:
+          'The payload does not look like a supported incident report yet.',
+      });
+
+      return;
+    }
+
+    setReport(result.report);
+    setEntryTime('');
+    setEntryText('');
+
+    setImportFeedback({
+      tone:
+        result.confidence >= 80
+          ? 'success'
+          : 'neutral',
+      title:
+        result.confidence === 100
+          ? 'Perfect parse'
+          : 'Import applied',
+      detail:
+        result.detectedFields.length +
+        '/9 signals detected · ' +
+        result.progressCount +
+        ' progress updates · ' +
+        result.confidence +
+        '% confidence',
+    });
   }
 
   return (
@@ -439,6 +543,167 @@ export function ReportWorkspace() {
                 mobilePane !== 'compose'
               }
             >
+              <motion.section
+                className="smart-import-card glass-panel"
+                layout
+              >
+                <div className="smart-import-head">
+                  <div className="smart-import-title">
+                    <div className="smart-import-icon">
+                      <WandSparkles
+                        size={18}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="smart-import-kicker">
+                        SMART INGEST
+                      </div>
+
+                      <h2>
+                        Paste. Parse. Done.
+                      </h2>
+
+                      <p>
+                        Drop a raw incident bagan here.
+                        ReportOS will reconstruct its
+                        structured fields and timeline.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="smart-import-badge">
+                    F1 PARSER
+                  </span>
+                </div>
+
+                <div className="smart-import-body">
+                  <label className="smart-import-editor">
+                    <span className="smart-import-editor-label">
+                      <span>
+                        RAW INCIDENT PAYLOAD
+                      </span>
+
+                      <span>
+                        {
+                          rawImport.length
+                        } chars
+                      </span>
+                    </span>
+
+                    <textarea
+                      value={rawImport}
+                      spellCheck={false}
+                      placeholder="Paste the complete incident report here — formatting can be messy."
+                      onChange={(event) => {
+                        setRawImport(
+                          event.target.value
+                        );
+
+                        setImportFeedback(
+                          null
+                        );
+                      }}
+                    />
+                  </label>
+
+                  <div className="smart-import-actions">
+                    <button
+                      className="clipboard-import-button"
+                      type="button"
+                      onClick={
+                        pasteFromClipboard
+                      }
+                    >
+                      <Clipboard
+                        size={16}
+                      />
+
+                      Read clipboard
+                    </button>
+
+                    <button
+                      className="smart-parse-button"
+                      type="button"
+                      disabled={
+                        !rawImport.trim()
+                      }
+                      onClick={
+                        applySmartImport
+                      }
+                    >
+                      <Sparkles
+                        size={16}
+                      />
+
+                      Smart Parse & Apply
+
+                      <ChevronRight
+                        size={15}
+                      />
+                    </button>
+                  </div>
+
+                  <AnimatePresence
+                    mode="popLayout"
+                  >
+                    {importFeedback ? (
+                      <motion.div
+                        key={
+                          importFeedback.title +
+                          importFeedback.detail
+                        }
+                        className="import-feedback"
+                        data-tone={
+                          importFeedback.tone
+                        }
+                        initial={{
+                          opacity: 0,
+                          y: -4,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: -4,
+                        }}
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <span className="import-feedback-indicator">
+                          {importFeedback.tone ===
+                          'success' ? (
+                            <Check
+                              size={13}
+                            />
+                          ) : (
+                            <FileText
+                              size={13}
+                            />
+                          )}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {
+                              importFeedback.title
+                            }
+                          </strong>
+
+                          <span>
+                            {
+                              importFeedback.detail
+                            }
+                          </span>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+              </motion.section>
+
               <motion.div
                 className="hero-card glass-panel"
                 layout
