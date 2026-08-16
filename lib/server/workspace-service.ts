@@ -9,6 +9,7 @@ import {
 
 import {
   reportOsDb,
+  type D1Statement,
 } from '@/lib/server/db/d1';
 
 import {
@@ -84,6 +85,386 @@ function randomId(
   prefix: string
 ): string {
   return `${prefix}-${crypto.randomUUID()}`;
+}
+
+function epochFromIso(
+  value: string,
+  fallback: number
+): number {
+  const parsed =
+    Date.parse(value);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : fallback;
+}
+
+async function runBatches(
+  statements: D1Statement[]
+): Promise<void> {
+  const db = reportOsDb();
+  const size = 50;
+
+  for (
+    let index = 0;
+    index < statements.length;
+    index += size
+  ) {
+    await db.batch(
+      statements.slice(
+        index,
+        index + size
+      )
+    );
+  }
+}
+
+async function projectWorkspace({
+  context,
+  principal,
+  workspace,
+}: {
+  context: WorkspaceContext;
+  principal: AuthenticatedPrincipal;
+  workspace: WorkspaceSnapshot;
+}): Promise<void> {
+  const db = reportOsDb();
+  const now = Date.now();
+
+  const currentRows =
+    await db
+      .prepare(
+        `SELECT id
+        FROM incidents
+        WHERE workspace_id = ?`
+      )
+      .bind(context.id)
+      .all<{
+        id: string;
+      }>();
+
+  const incomingIds =
+    new Set(
+      workspace.incidents.map(
+        (incident) =>
+          incident.id
+      )
+    );
+
+  const statements:
+    D1Statement[] = [];
+
+  for (
+    const row of
+    currentRows.results
+  ) {
+    if (
+      !incomingIds.has(
+        row.id
+      )
+    ) {
+      statements.push(
+        db
+          .prepare(
+            `DELETE FROM incidents
+            WHERE id = ?
+              AND workspace_id = ?`
+          )
+          .bind(
+            row.id,
+            context.id
+          )
+      );
+    }
+  }
+
+  for (
+    const incident of
+    workspace.incidents
+  ) {
+    const report =
+      incident.report;
+
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO incidents (
+            id,
+            workspace_id,
+            lifecycle,
+            region,
+            summary,
+            ticket,
+            occur_time,
+            dispatch_time,
+            pic,
+            rootcause,
+            cut_point,
+            primary_marker,
+            status_tag,
+            revision,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, NULL)
+          ON CONFLICT(id) DO UPDATE SET
+            workspace_id = excluded.workspace_id,
+            lifecycle = excluded.lifecycle,
+            region = excluded.region,
+            summary = excluded.summary,
+            ticket = excluded.ticket,
+            occur_time = excluded.occur_time,
+            dispatch_time = excluded.dispatch_time,
+            pic = excluded.pic,
+            rootcause = excluded.rootcause,
+            cut_point = excluded.cut_point,
+            primary_marker = excluded.primary_marker,
+            status_tag = excluded.status_tag,
+            revision = incidents.revision + 1,
+            updated_by = excluded.updated_by,
+            updated_at = excluded.updated_at,
+            deleted_at = NULL`
+        )
+        .bind(
+          incident.id,
+          context.id,
+          incident.status,
+          report.region,
+          report.summary,
+          report.ticket,
+          report.occurTime,
+          report.dispatchTime,
+          report.pic,
+          report.rootcause,
+          report.cutPoint,
+          report.primaryMarker ??
+            null,
+          report.statusTag ??
+            null,
+          principal.uid,
+          principal.uid,
+          epochFromIso(
+            incident.createdAt,
+            now
+          ),
+          epochFromIso(
+            incident.updatedAt,
+            now
+          )
+        )
+    );
+
+    statements.push(
+      db
+        .prepare(
+          `DELETE FROM progress_entries
+          WHERE incident_id = ?`
+        )
+        .bind(incident.id)
+    );
+
+    statements.push(
+      db
+        .prepare(
+          `DELETE FROM impact_links
+          WHERE incident_id = ?`
+        )
+        .bind(incident.id)
+    );
+
+    statements.push(
+      db
+        .prepare(
+          `DELETE FROM cut_points
+          WHERE incident_id = ?`
+        )
+        .bind(incident.id)
+    );
+
+    for (
+      const [
+        position,
+        progress,
+      ] of report.progress.entries()
+    ) {
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO progress_entries (
+              id,
+              incident_id,
+              date,
+              time,
+              text,
+              kind,
+              position,
+              created_by,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`
+          )
+          .bind(
+            progress.id,
+            incident.id,
+            progress.date ??
+              null,
+            progress.time,
+            progress.text,
+            position,
+            principal.uid,
+            epochFromIso(
+              incident.updatedAt,
+              now
+            ),
+            epochFromIso(
+              incident.updatedAt,
+              now
+            )
+          )
+      );
+    }
+
+    for (
+      const [
+        position,
+        impact,
+      ] of (
+        report.impactLinks ??
+        []
+      ).entries()
+    ) {
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO impact_links (
+              id,
+              incident_id,
+              marker,
+              region,
+              status_tag,
+              summary,
+              ticket,
+              position
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .bind(
+            impact.id,
+            incident.id,
+            impact.marker,
+            impact.region,
+            impact.statusTag,
+            impact.summary,
+            impact.ticket,
+            position
+          )
+      );
+    }
+
+    for (
+      const [
+        position,
+        cutPoint,
+      ] of (
+        report.cutPoints ??
+        []
+      ).entries()
+    ) {
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO cut_points (
+              id,
+              incident_id,
+              label,
+              rootcause,
+              cut_point,
+              marker,
+              position
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+          )
+          .bind(
+            cutPoint.id,
+            incident.id,
+            cutPoint.label,
+            cutPoint.rootcause,
+            cutPoint.cutPoint,
+            cutPoint.marker,
+            position
+          )
+      );
+    }
+
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO closure_states (
+            incident_id,
+            statement_up_wag,
+            matoa_status_tt,
+            matoa_event_and_photo,
+            matoa_rfo,
+            sent_closed_email,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(incident_id) DO UPDATE SET
+            statement_up_wag = excluded.statement_up_wag,
+            matoa_status_tt = excluded.matoa_status_tt,
+            matoa_event_and_photo = excluded.matoa_event_and_photo,
+            matoa_rfo = excluded.matoa_rfo,
+            sent_closed_email = excluded.sent_closed_email,
+            updated_at = excluded.updated_at`
+        )
+        .bind(
+          incident.id,
+          incident.closureChecklist
+            .statementUpWag
+            ? 1
+            : 0,
+          incident.closureChecklist
+            .matoaClearance
+            .statusTt
+            ? 1
+            : 0,
+          incident.closureChecklist
+            .matoaClearance
+            .eventAndPhoto
+            ? 1
+            : 0,
+          incident.closureChecklist
+            .matoaClearance
+            .rfo
+            ? 1
+            : 0,
+          incident.closureChecklist
+            .sentClosedEmail
+            ? 1
+            : 0,
+          epochFromIso(
+            incident.updatedAt,
+            now
+          )
+        )
+    );
+  }
+
+  statements.push(
+    db
+      .prepare(
+        `UPDATE workspaces
+        SET updated_at = ?
+        WHERE id = ?`
+      )
+      .bind(
+        now,
+        context.id
+      )
+  );
+
+  await runBatches(
+    statements
+  );
 }
 
 export async function ensureWorkspaceContext(
@@ -354,6 +735,12 @@ export async function saveCanonicalWorkspace({
     previous?.checksum ===
     nextChecksum
   ) {
+    await projectWorkspace({
+      context,
+      principal,
+      workspace,
+    });
+
     return {
       context,
       canonical: {
@@ -456,6 +843,12 @@ export async function saveCanonicalWorkspace({
       'A newer workspace revision already exists.'
     );
   }
+
+  await projectWorkspace({
+    context,
+    principal,
+    workspace,
+  });
 
   await db
     .prepare(
