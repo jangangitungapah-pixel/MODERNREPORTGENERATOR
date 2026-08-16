@@ -3,19 +3,19 @@ import type {
 } from 'next';
 
 import {
-  BackboneImpactBoard,
-} from '@/components/backbone-impact-board';
+  BackboneImpactWorkspace,
+} from '@/components/backbone-impact-workspace';
 
 export const metadata:
   Metadata = {
     title:
       'Backbone Impact Board — ReportOS',
     description:
-      'Build and copy customer, tenant, and B2B impact lists for backbone outages.',
+      'Build, save, sync, and copy customer, tenant, and B2B impact lists for backbone outages.',
   };
 
 export default function BackboneImpactPage() {
   return (
-    <BackboneImpactBoard />
+    <BackboneImpactWorkspace />
   );
 }

@@ -1,5 +1,7 @@
-import { ReportWorkspace } from '@/components/report-workspace';
+import {
+  ReportWorkspaceEntry,
+} from '@/components/report-workspace-entry';
 
 export default function HomePage() {
-  return <ReportWorkspace />;
+  return <ReportWorkspaceEntry />;
 }

@@ -1,0 +1,763 @@
+/*
+ * ReportOS IMPACT-03
+ * Spatial Ambient Operational Impact Workspace
+ *
+ * Final presentation layer for /backbone-impact.
+ * Keeps the existing editor behavior while integrating the page into
+ * the ReportOS navigation shell and Cloudflare-backed template workflow.
+ */
+
+.impact-route-shell {
+  position: relative;
+  display: block;
+  min-height: 100svh;
+}
+
+.impact-route-shell .reportos-route-brand,
+.impact-route-shell .reportos-route-sidebar a {
+  text-decoration: none;
+}
+
+.impact-route-main {
+  position: relative;
+  min-width: 0;
+  min-height: 100svh;
+  margin-left: 258px;
+  padding: 16px 18px 150px 0;
+}
+
+.impact-route-main::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0 0 0 220px;
+  background:
+    radial-gradient(circle at 28% 4%, rgba(104, 86, 234, 0.055), transparent 34rem),
+    radial-gradient(circle at 91% 19%, rgba(70, 139, 224, 0.045), transparent 30rem),
+    radial-gradient(circle at 71% 78%, rgba(45, 167, 124, 0.024), transparent 29rem),
+    #f4f6fb;
+  content: '';
+  pointer-events: none;
+}
+
+.impact-route-main .impact-page-shell {
+  min-height: 0;
+  overflow: visible;
+  padding-bottom: 0;
+  background: transparent;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cloud template control                                                     */
+/* -------------------------------------------------------------------------- */
+
+.impact-cloud-toolbar {
+  position: fixed;
+  z-index: 90;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 15px;
+  padding: 5px;
+  background: rgba(250, 251, 255, 0.84);
+  box-shadow:
+    0 16px 42px rgba(48, 55, 83, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(1.12);
+  -webkit-backdrop-filter: blur(24px) saturate(1.12);
+}
+
+.impact-cloud-state {
+  display: flex;
+  min-width: 166px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  color: #6e788d;
+}
+
+.impact-cloud-state > svg {
+  flex: 0 0 auto;
+  color: #25956d;
+}
+
+.impact-cloud-toolbar[data-state='saving'] .impact-cloud-state > svg,
+.impact-cloud-toolbar[data-state='connecting'] .impact-cloud-state > svg {
+  color: #6654db;
+}
+
+.impact-cloud-toolbar[data-state='error'] .impact-cloud-state > svg,
+.impact-cloud-toolbar[data-state='conflict'] .impact-cloud-state > svg {
+  color: #bd812f;
+}
+
+.impact-cloud-state > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.impact-cloud-state strong {
+  color: #465066;
+  font-size: 9.75px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.impact-cloud-state small {
+  overflow: hidden;
+  color: #929bad;
+  font-size: 8.5px;
+  font-weight: 560;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.impact-cloud-toolbar > button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(102, 82, 236, 0.13);
+  border-radius: 10px;
+  padding: 0 11px;
+  color: #5744cf;
+  background:
+    linear-gradient(145deg, rgba(247, 245, 255, 0.98), rgba(255, 255, 255, 0.88));
+  box-shadow: 0 6px 16px rgba(80, 66, 161, 0.055);
+  font-size: 10.25px;
+  font-weight: 770;
+  cursor: pointer;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.impact-cloud-toolbar > button:hover:not(:disabled) {
+  border-color: rgba(102, 82, 236, 0.24);
+  background: #fff;
+  box-shadow: 0 10px 23px rgba(80, 66, 161, 0.09);
+  transform: translateY(-1px);
+}
+
+.impact-cloud-toolbar > button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.impact-cloud-boot {
+  display: grid;
+  width: min(540px, calc(100% - 32px));
+  min-height: 180px;
+  place-items: center;
+  gap: 7px;
+  margin: 18vh auto 0;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 22px;
+  padding: 28px;
+  color: #8172d7;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 24px 64px rgba(48, 55, 83, 0.075);
+  text-align: center;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.impact-cloud-boot strong {
+  color: #343b50;
+  font-size: 16px;
+}
+
+.impact-cloud-boot span {
+  max-width: 360px;
+  color: #858ea1;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Route topbar                                                               */
+/* -------------------------------------------------------------------------- */
+
+.impact-route-main .impact-page-topbar {
+  position: sticky;
+  z-index: 38;
+  top: 0;
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 0;
+  border: 0;
+  padding: 0 310px 0 6px;
+  background:
+    linear-gradient(180deg, rgba(244, 246, 251, 0.94), rgba(244, 246, 251, 0.72) 74%, transparent);
+  backdrop-filter: blur(18px) saturate(1.06);
+  -webkit-backdrop-filter: blur(18px) saturate(1.06);
+}
+
+.impact-route-main .impact-back-link,
+.impact-route-main .impact-local-chip {
+  display: none;
+}
+
+.impact-route-main .impact-page-brand {
+  justify-content: flex-start;
+  gap: 9px;
+}
+
+.impact-route-main .impact-page-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(103, 84, 234, 0.1);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 7px 18px rgba(55, 62, 91, 0.045);
+}
+
+.impact-route-main .impact-page-brand strong {
+  font-size: 13px;
+  font-weight: 790;
+  letter-spacing: -0.018em;
+}
+
+.impact-route-main .impact-page-brand span:not(.impact-page-brand-icon) {
+  margin-top: 1px;
+  font-size: 9px;
+}
+
+.impact-route-main .impact-page-content {
+  width: 100%;
+  gap: 12px;
+  margin: 4px 0 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Operational context header                                                 */
+/* -------------------------------------------------------------------------- */
+
+.impact-route-main .impact-hero {
+  grid-template-columns: minmax(0, 1fr) 126px;
+  min-height: 138px;
+  gap: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 19px;
+  padding: 18px 22px;
+  background:
+    radial-gradient(circle at 88% 28%, rgba(103, 84, 234, 0.075), transparent 14rem),
+    linear-gradient(142deg, rgba(255, 255, 255, 0.955), rgba(249, 250, 254, 0.79));
+  box-shadow:
+    0 20px 56px rgba(48, 55, 83, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.impact-route-main .impact-hero::after {
+  right: 30%;
+  left: 30%;
+  opacity: 0.55;
+}
+
+.impact-route-main .impact-hero-copy {
+  max-width: 770px;
+}
+
+.impact-route-main .impact-hero-kicker,
+.impact-route-main .impact-section-kicker {
+  font-size: 8.75px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.impact-route-main .impact-hero h1 {
+  max-width: 650px;
+  margin-top: 5px;
+  font-size: clamp(24px, 2vw, 29px);
+  font-weight: 785;
+  line-height: 1.04;
+  letter-spacing: -0.042em;
+}
+
+.impact-route-main .impact-hero-copy > p {
+  max-width: 690px;
+  margin-top: 7px;
+  font-size: 10.75px;
+  line-height: 1.46;
+}
+
+.impact-route-main .impact-hero-badges {
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.impact-route-main .impact-hero-badges span {
+  min-height: 23px;
+  border-color: rgba(63, 71, 98, 0.075);
+  padding-inline: 8px;
+  font-size: 8.5px;
+  font-weight: 680;
+}
+
+.impact-route-main .impact-hero-badges span:last-child {
+  display: none;
+}
+
+.impact-route-main .impact-hero-badges::after {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  border: 1px solid rgba(37, 149, 109, 0.12);
+  border-radius: 999px;
+  padding-inline: 8px;
+  color: #2b8667;
+  background: rgba(37, 149, 109, 0.055);
+  content: 'Cloud D1 sync';
+  font-size: 8.5px;
+  font-weight: 720;
+}
+
+.impact-route-main .impact-hero-visual {
+  width: 116px;
+  height: 86px;
+}
+
+.impact-route-main .impact-hero-visual > svg {
+  border-radius: 13px;
+  padding: 11px;
+  box-shadow: 0 9px 24px rgba(83, 68, 160, 0.1);
+}
+
+.impact-route-main .impact-hero-node {
+  width: 9px;
+  height: 9px;
+  border-width: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Telemetry                                                                   */
+/* -------------------------------------------------------------------------- */
+
+.impact-route-main .impact-summary-grid {
+  gap: 8px;
+}
+
+.impact-route-main .impact-summary-card {
+  min-height: 70px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 14px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 30px rgba(48, 55, 83, 0.04);
+}
+
+.impact-route-main .impact-summary-card > span {
+  font-size: 8.5px;
+  letter-spacing: 0.07em;
+}
+
+.impact-route-main .impact-summary-card strong {
+  margin-top: 1px;
+  font-size: 19px;
+}
+
+.impact-route-main .impact-summary-card small {
+  margin-top: 1px;
+  font-size: 9px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Editor / preview workspace                                                 */
+/* -------------------------------------------------------------------------- */
+
+.impact-route-main .impact-workspace-grid {
+  grid-template-columns: minmax(0, 1.72fr) minmax(330px, 0.82fr);
+  gap: 12px;
+}
+
+.impact-route-main .impact-editor-column,
+.impact-route-main .impact-preview-column {
+  gap: 10px;
+}
+
+.impact-route-main .impact-preview-column {
+  position: static;
+}
+
+.impact-route-main .impact-preview-card {
+  position: sticky;
+  top: 70px;
+  max-height: calc(100svh - 176px);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.impact-route-main :is(
+  .impact-editor-card,
+  .impact-preview-card,
+  .impact-actions-card,
+  .impact-guide-card
+) {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.87);
+  box-shadow:
+    0 16px 42px rgba(48, 55, 83, 0.047),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px) saturate(1.06);
+  -webkit-backdrop-filter: blur(18px) saturate(1.06);
+}
+
+.impact-route-main .impact-editor-card,
+.impact-route-main .impact-preview-card {
+  padding: 16px;
+}
+
+.impact-route-main .impact-section-head,
+.impact-route-main .impact-preview-head {
+  gap: 12px;
+}
+
+.impact-route-main .impact-section-head h2,
+.impact-route-main .impact-preview-head h2 {
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 785;
+  letter-spacing: -0.02em;
+}
+
+.impact-route-main .impact-section-head p,
+.impact-route-main .impact-preview-head p {
+  margin-top: 3px;
+  font-size: 9.75px;
+  line-height: 1.42;
+}
+
+.impact-route-main .impact-title-field {
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.impact-route-main :is(
+  .impact-title-field > span,
+  .impact-customer-name > span,
+  .impact-note-field > span,
+  .impact-service-name > span,
+  .impact-service-note > span,
+  .impact-mini-label
+) {
+  font-size: 8.75px;
+  font-weight: 790;
+  letter-spacing: 0.045em;
+}
+
+.impact-route-main :is(
+  .impact-title-field input,
+  .impact-customer-name input,
+  .impact-note-field input,
+  .impact-service-name input,
+  .impact-service-note input
+) {
+  min-height: 40px;
+  border-color: rgba(62, 70, 98, 0.095);
+  border-radius: 10px;
+  padding-inline: 10px;
+  background:
+    linear-gradient(180deg, rgba(251, 252, 254, 0.9), rgba(255, 255, 255, 0.98));
+  box-shadow: inset 0 1px 2px rgba(50, 57, 83, 0.02);
+  font-size: 11.5px;
+  font-weight: 590;
+}
+
+.impact-route-main :is(
+  .impact-title-field input,
+  .impact-customer-name input,
+  .impact-note-field input,
+  .impact-service-name input,
+  .impact-service-note input
+):focus {
+  border-color: rgba(103, 84, 234, 0.25);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(103, 84, 234, 0.055),
+    0 8px 20px rgba(48, 55, 83, 0.035);
+}
+
+.impact-route-main .impact-add-customer,
+.impact-route-main .impact-add-service {
+  min-height: 34px;
+  border-radius: 9px;
+  padding-inline: 10px;
+  font-size: 9.75px;
+}
+
+.impact-route-main .impact-customer-list {
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.impact-route-main .impact-customer-card {
+  border-color: rgba(61, 69, 96, 0.075);
+  border-radius: 14px;
+  padding: 12px;
+  background:
+    linear-gradient(145deg, rgba(248, 249, 253, 0.88), rgba(255, 255, 255, 0.72));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.impact-route-main .impact-customer-card[data-grouped='true'] {
+  border-color: rgba(103, 84, 234, 0.11);
+  background:
+    linear-gradient(145deg, rgba(103, 84, 234, 0.038), rgba(251, 251, 255, 0.84));
+}
+
+.impact-route-main .impact-customer-card-head {
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  gap: 8px;
+}
+
+.impact-route-main .impact-customer-number {
+  width: 34px;
+  height: 40px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.impact-route-main .impact-delete-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.impact-route-main .impact-status-selector {
+  gap: 5px;
+}
+
+.impact-route-main .impact-status-option {
+  min-height: 34px;
+  border-radius: 9px;
+  padding-inline: 8px;
+}
+
+.impact-route-main .impact-status-option small {
+  font-size: 8.75px;
+}
+
+.impact-route-main .impact-service-row {
+  gap: 7px;
+}
+
+.impact-route-main .impact-parent-note,
+.impact-route-main .impact-customer-service-hint {
+  border-radius: 9px;
+  font-size: 8.75px;
+}
+
+.impact-route-main .impact-preview-window,
+.impact-route-main .impact-preview-paper {
+  border-radius: 12px;
+}
+
+.impact-route-main .impact-preview-output,
+.impact-route-main .impact-preview-paper pre {
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.impact-route-main .impact-copy-button {
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 790;
+}
+
+.impact-route-main .impact-actions-card,
+.impact-route-main .impact-guide-card {
+  padding: 13px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Anti-overlap / long-content guards                                         */
+/* -------------------------------------------------------------------------- */
+
+.impact-route-main :is(
+  .impact-workspace-grid,
+  .impact-editor-column,
+  .impact-preview-column,
+  .impact-editor-card,
+  .impact-preview-card,
+  .impact-customer-card,
+  .impact-customer-card-head,
+  .impact-service-row,
+  .impact-section-head,
+  .impact-preview-head
+) > * {
+  min-width: 0;
+}
+
+.impact-route-main :is(
+  p,
+  strong,
+  small,
+  label,
+  span
+) {
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Laptop / tablet                                                            */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .impact-route-main {
+    margin-left: 104px;
+    padding-right: 14px;
+  }
+
+  .impact-route-main::before {
+    left: 88px;
+  }
+
+  .impact-route-main .impact-workspace-grid {
+    grid-template-columns: minmax(0, 1fr) 330px;
+  }
+}
+
+@media (max-width: 980px) {
+  .impact-route-main .impact-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-route-main .impact-preview-card {
+    position: static;
+    max-height: none;
+  }
+
+  .impact-route-main .impact-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .impact-route-main .impact-summary-card:nth-child(n + 4) {
+    min-height: 64px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile                                                                     */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .impact-route-main {
+    margin-left: 0;
+    padding: 10px 10px 116px;
+  }
+
+  .impact-route-main::before {
+    left: 0;
+  }
+
+  .impact-cloud-toolbar {
+    position: relative;
+    top: auto;
+    right: auto;
+    z-index: 42;
+    width: 100%;
+    min-height: 52px;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .impact-cloud-state {
+    min-width: 0;
+  }
+
+  .impact-route-main .impact-page-topbar {
+    position: relative;
+    min-height: 48px;
+    padding: 0 4px;
+    background: transparent;
+  }
+
+  .impact-route-main .impact-page-content {
+    margin-top: 0;
+  }
+
+  .impact-route-main .impact-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .impact-route-main .impact-hero-visual {
+    display: none;
+  }
+
+  .impact-route-main .impact-hero h1 {
+    font-size: clamp(24px, 7vw, 29px);
+  }
+
+  .impact-route-main .impact-hero-copy > p {
+    font-size: 12px;
+  }
+
+  .impact-route-main .impact-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .impact-route-main .impact-summary-card {
+    min-height: 72px;
+  }
+
+  .impact-route-main :is(
+    .impact-title-field input,
+    .impact-customer-name input,
+    .impact-note-field input,
+    .impact-service-name input,
+    .impact-service-note input
+  ) {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .impact-route-main .impact-status-option,
+  .impact-route-main .impact-add-customer,
+  .impact-route-main .impact-add-service,
+  .impact-route-main .impact-copy-button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 560px) {
+  .impact-cloud-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .impact-cloud-toolbar > button {
+    min-height: 42px;
+  }
+
+  .impact-route-main .impact-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .impact-route-main .impact-customer-card-head {
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impact-cloud-toolbar > button,
+  .impact-route-main button {
+    transition: none;
+  }
+}
