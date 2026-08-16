@@ -3,11 +3,13 @@
 import {
   GoogleAuthProvider,
   linkWithPopup,
+  signInWithPopup,
   type User,
 } from 'firebase/auth';
 
 import {
   ensureFirebaseUser,
+  firebaseAuth,
 } from './firebase-client';
 
 export type IdentitySummary = {
@@ -31,6 +33,30 @@ function summary(
   };
 }
 
+function googleProvider(): GoogleAuthProvider {
+  const provider =
+    new GoogleAuthProvider();
+
+  provider.setCustomParameters({
+    prompt: 'select_account',
+  });
+
+  return provider;
+}
+
+function authErrorCode(
+  error: unknown
+): string {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+      ? error.code
+      : 'auth/unknown'
+  );
+}
+
 export async function currentIdentity(): Promise<IdentitySummary> {
   return summary(
     await ensureFirebaseUser()
@@ -45,18 +71,11 @@ export async function linkCurrentUserWithGoogle(): Promise<IdentitySummary> {
     return summary(user);
   }
 
-  const provider =
-    new GoogleAuthProvider();
-
-  provider.setCustomParameters({
-    prompt: 'select_account',
-  });
-
   try {
     const credential =
       await linkWithPopup(
         user,
-        provider
+        googleProvider()
       );
 
     return summary(
@@ -64,13 +83,7 @@ export async function linkCurrentUserWithGoogle(): Promise<IdentitySummary> {
     );
   } catch (error) {
     const code =
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      typeof error.code ===
-        'string'
-        ? error.code
-        : 'auth/unknown';
+      authErrorCode(error);
 
     if (
       code ===
@@ -79,7 +92,7 @@ export async function linkCurrentUserWithGoogle(): Promise<IdentitySummary> {
         'auth/email-already-in-use'
     ) {
       throw new Error(
-        'That Google account already owns a ReportOS identity. Existing anonymous data was not switched or deleted.'
+        'That Google account already owns a ReportOS identity. Use “Sign in to existing Google identity” instead. Existing anonymous data was not switched or deleted.'
       );
     }
 
@@ -94,6 +107,36 @@ export async function linkCurrentUserWithGoogle(): Promise<IdentitySummary> {
 
     throw new Error(
       'Google account linking is unavailable. Verify the Google provider is enabled in Firebase Authentication.'
+    );
+  }
+}
+
+export async function signInWithGoogleIdentity(): Promise<IdentitySummary> {
+  try {
+    const credential =
+      await signInWithPopup(
+        firebaseAuth,
+        googleProvider()
+      );
+
+    return summary(
+      credential.user
+    );
+  } catch (error) {
+    const code =
+      authErrorCode(error);
+
+    if (
+      code ===
+      'auth/popup-closed-by-user'
+    ) {
+      throw new Error(
+        'Google sign-in was cancelled.'
+      );
+    }
+
+    throw new Error(
+      'Google sign-in is unavailable. Verify the Google provider is enabled in Firebase Authentication.'
     );
   }
 }
