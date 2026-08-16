@@ -1,0 +1,1764 @@
+/*
+ * ReportOS Composer V3 — Precision Premium Calibration
+ * ----------------------------------------------------
+ * Final visual calibration layer for Composer only.
+ * Loaded after the modular application styles and after COMPOSER-02.
+ *
+ * Design intent:
+ * - less native / less form-like
+ * - smaller, calmer, more harmonious type scale
+ * - stronger nested-surface hierarchy without visual noise
+ * - precision spacing and compact controls
+ * - preserve overlap-safe responsive behavior
+ * - preserve all product and business logic
+ */
+
+:root {
+  --composer-v3-ink-950: #202536;
+  --composer-v3-ink-900: #292f42;
+  --composer-v3-ink-800: #3c4459;
+  --composer-v3-ink-700: #525c71;
+  --composer-v3-ink-600: #6c768a;
+  --composer-v3-ink-500: #8a93a4;
+  --composer-v3-ink-400: #a2a9b7;
+
+  --composer-v3-brand: #6857e8;
+  --composer-v3-brand-strong: #5847d5;
+  --composer-v3-brand-soft: rgba(104, 87, 232, 0.07);
+  --composer-v3-brand-softer: rgba(104, 87, 232, 0.035);
+  --composer-v3-brand-line: rgba(104, 87, 232, 0.13);
+
+  --composer-v3-blue: #4a83d6;
+  --composer-v3-blue-soft: rgba(74, 131, 214, 0.07);
+  --composer-v3-green: #238966;
+  --composer-v3-green-soft: rgba(35, 137, 102, 0.07);
+  --composer-v3-amber: #b97b2f;
+  --composer-v3-amber-soft: rgba(185, 123, 47, 0.075);
+  --composer-v3-red: #b95b62;
+
+  --composer-v3-line: rgba(45, 53, 78, 0.085);
+  --composer-v3-line-strong: rgba(45, 53, 78, 0.13);
+  --composer-v3-surface: rgba(255, 255, 255, 0.925);
+  --composer-v3-surface-soft: rgba(249, 250, 253, 0.86);
+  --composer-v3-surface-nested: rgba(246, 247, 251, 0.82);
+  --composer-v3-surface-hover: rgba(255, 255, 255, 0.985);
+
+  --composer-v3-shadow-card:
+    0 18px 50px rgba(48, 56, 86, 0.055),
+    0 2px 8px rgba(48, 56, 86, 0.025);
+
+  --composer-v3-shadow-raised:
+    0 24px 64px rgba(48, 56, 86, 0.08),
+    0 4px 14px rgba(48, 56, 86, 0.035);
+
+  --composer-v3-radius-card: 19px;
+  --composer-v3-radius-section: 17px;
+  --composer-v3-radius-nested: 13px;
+  --composer-v3-radius-control: 10px;
+}
+
+/* ========================================================================== */
+/* 01 — FINAL COMPOSER ISOLATION / BACKDROP                                   */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .main-stage {
+  min-width: 0;
+  padding-bottom: 148px;
+}
+
+.app-shell[data-workspace-mode='compose'] .main-stage::before {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 236px;
+  background:
+    radial-gradient(circle at 30% 0%, rgba(112, 94, 244, 0.035), transparent 34rem),
+    radial-gradient(circle at 94% 22%, rgba(77, 143, 224, 0.025), transparent 28rem);
+  content: '';
+  pointer-events: none;
+}
+
+.app-shell[data-workspace-mode='compose'] .workspace-grid,
+.app-shell[data-workspace-mode='compose'] .composer-column,
+.app-shell[data-workspace-mode='compose'] .preview-column,
+.app-shell[data-workspace-mode='compose'] .composer-column > *,
+.app-shell[data-workspace-mode='compose'] .preview-column > *,
+.app-shell[data-workspace-mode='compose'] .field-grid > *,
+.app-shell[data-workspace-mode='compose'] .section-heading > *,
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading > *,
+.app-shell[data-workspace-mode='compose'] .topology-card-head > * {
+  min-width: 0;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  p,
+  small,
+  strong,
+  span,
+  pre,
+  label,
+  button,
+  input,
+  textarea
+) {
+  text-rendering: optimizeLegibility;
+}
+
+/* ========================================================================== */
+/* 02 — TOPBAR: QUIETER, EDITORIAL                                            */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .topbar {
+  min-height: 66px;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-inline: 2px;
+}
+
+.app-shell[data-workspace-mode='compose'] .topbar .eyebrow {
+  gap: 5px;
+  color: #786bd0;
+  font-size: 9.5px;
+  font-weight: 820;
+  letter-spacing: 0.105em;
+}
+
+.app-shell[data-workspace-mode='compose'] .topbar h1 {
+  margin-top: 5px;
+  color: var(--composer-v3-ink-950);
+  font-size: clamp(31px, 2.25vw, 38px);
+  font-weight: 755;
+  line-height: 1.02;
+  letter-spacing: -0.047em;
+}
+
+.app-shell[data-workspace-mode='compose'] .active-incident-context {
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--composer-v3-ink-500);
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .active-incident-context > span:first-child {
+  min-height: 21px;
+  padding-inline: 7px;
+  border-color: var(--composer-v3-brand-line);
+  color: #6556c8;
+  background: var(--composer-v3-brand-soft);
+  font-size: 9px;
+  letter-spacing: 0.055em;
+}
+
+.app-shell[data-workspace-mode='compose'] .topbar-actions {
+  gap: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.new-incident-button, .save-chip) {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .new-incident-button {
+  border-color: var(--composer-v3-brand-line);
+  padding-inline: 12px;
+  color: #5d4bd0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 248, 255, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 6px 16px rgba(76, 65, 145, 0.045);
+  font-size: 10.5px;
+  font-weight: 760;
+}
+
+.app-shell[data-workspace-mode='compose'] .new-incident-button:hover:not(:disabled) {
+  border-color: rgba(104, 87, 232, 0.22);
+  background: #fff;
+  box-shadow: 0 9px 20px rgba(76, 65, 145, 0.075);
+}
+
+.app-shell[data-workspace-mode='compose'] .save-chip {
+  min-width: 130px;
+  gap: 8px;
+  border-color: rgba(35, 137, 102, 0.1);
+  padding: 5px 11px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 252, 249, 0.92));
+  box-shadow: 0 6px 16px rgba(55, 104, 85, 0.035);
+}
+
+.app-shell[data-workspace-mode='compose'] .save-chip-copy strong {
+  color: #217c5d;
+  font-size: 8.5px;
+  font-weight: 820;
+  letter-spacing: 0.055em;
+}
+
+.app-shell[data-workspace-mode='compose'] .save-chip-copy small {
+  margin-top: 2px;
+  color: #849289;
+  font-size: 9.5px;
+}
+
+/* ========================================================================== */
+/* 03 — WORKSPACE GEOMETRY                                                    */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .workspace-grid {
+  grid-template-columns: minmax(0, 1.62fr) minmax(370px, 1fr);
+  gap: 18px;
+}
+
+.app-shell[data-workspace-mode='compose'] .composer-column {
+  gap: 14px;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-column {
+  position: static;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  max-height: none;
+  overflow: visible;
+  padding: 0 0 112px;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-card {
+  position: sticky;
+  z-index: 8;
+  top: 14px;
+  max-height: calc(100dvh - 132px);
+  overflow: hidden;
+}
+
+/* ========================================================================== */
+/* 04 — SURFACE LANGUAGE                                                      */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .smart-import-card,
+  .hero-card,
+  .section-card,
+  .preview-card,
+  .delivery-console-card,
+  .shortcut-card
+) {
+  border: 1px solid var(--composer-v3-line);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.965), rgba(251, 252, 254, 0.89));
+  box-shadow: var(--composer-v3-shadow-card);
+  backdrop-filter: none;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .smart-import-card,
+  .hero-card,
+  .preview-card
+) {
+  border-radius: var(--composer-v3-radius-card);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .section-card,
+  .delivery-console-card,
+  .shortcut-card
+) {
+  border-radius: var(--composer-v3-radius-section);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .smart-import-card,
+  .hero-card,
+  .section-card,
+  .preview-card,
+  .delivery-console-card
+)::before {
+  pointer-events: none;
+}
+
+/* ========================================================================== */
+/* 05 — SMART INGEST                                                          */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .smart-import-card {
+  padding: 16px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(111, 91, 239, 0.075), transparent 220px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(250, 250, 254, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-card::before {
+  right: 40px;
+  left: 40px;
+  background: linear-gradient(90deg, transparent, rgba(104, 87, 232, 0.2), transparent);
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-head {
+  gap: 12px;
+  padding: 0 0 12px;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-title {
+  gap: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-icon {
+  width: 36px;
+  height: 36px;
+  border-color: var(--composer-v3-brand-line);
+  border-radius: 11px;
+  color: var(--composer-v3-brand-strong);
+  background:
+    linear-gradient(145deg, rgba(104, 87, 232, 0.09), rgba(255, 255, 255, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-kicker {
+  color: #786bd0;
+  font-size: 9px;
+  letter-spacing: 0.105em;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-title h2 {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-900);
+  font-size: 16.5px;
+  font-weight: 770;
+  line-height: 1.22;
+  letter-spacing: -0.022em;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-title p {
+  max-width: 620px;
+  margin-top: 3px;
+  color: var(--composer-v3-ink-600);
+  font-size: 10.5px;
+  line-height: 1.46;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-badge {
+  min-height: 24px;
+  border-color: var(--composer-v3-brand-line);
+  padding-inline: 8px;
+  color: #6557c9;
+  background: var(--composer-v3-brand-soft);
+  font-size: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-editor {
+  border-color: var(--composer-v3-line);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(246, 247, 251, 0.9), rgba(250, 251, 253, 0.78));
+  box-shadow:
+    inset 0 1px 2px rgba(36, 43, 65, 0.025),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-editor:focus-within {
+  border-color: rgba(104, 87, 232, 0.24);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(104, 87, 232, 0.055),
+    0 8px 20px rgba(57, 62, 88, 0.035);
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-editor-label {
+  min-height: 33px;
+  padding-inline: 11px;
+  color: var(--composer-v3-ink-500);
+  background: rgba(244, 246, 249, 0.72);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-editor textarea {
+  min-height: 108px;
+  padding: 11px 12px;
+  color: var(--composer-v3-ink-700);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11.5px;
+  line-height: 1.52;
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-import-actions {
+  grid-template-columns: minmax(130px, auto) minmax(190px, 1fr);
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.clipboard-import-button, .smart-parse-button) {
+  min-height: 39px;
+  border-radius: 10px;
+  padding-inline: 12px;
+  font-size: 10.5px;
+  font-weight: 740;
+}
+
+.app-shell[data-workspace-mode='compose'] .clipboard-import-button {
+  border-color: var(--composer-v3-line);
+  color: var(--composer-v3-ink-700);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-parse-button {
+  background:
+    linear-gradient(135deg, #7663ed 0%, #6653e2 55%, #5947d5 100%);
+  box-shadow:
+    0 8px 20px rgba(84, 66, 198, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.app-shell[data-workspace-mode='compose'] .smart-parse-button:disabled {
+  color: #9aa1b0;
+  background: linear-gradient(180deg, #f0f1f4, #ebedf1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ========================================================================== */
+/* 06 — ACTIVE INCIDENT HERO                                                  */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .composer-column > .hero-card {
+  min-height: 118px;
+  gap: 18px;
+  padding: 18px 20px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(104, 87, 232, 0.105), transparent 170px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(249, 249, 254, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .hero-kicker {
+  margin-bottom: 5px;
+  color: #7769cf;
+  font-size: 9px;
+  letter-spacing: 0.105em;
+}
+
+.app-shell[data-workspace-mode='compose'] .hero-card h2 {
+  color: var(--composer-v3-ink-950);
+  font-size: clamp(24px, 1.9vw, 29px);
+  font-weight: 760;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.app-shell[data-workspace-mode='compose'] .hero-card p {
+  margin-top: 6px;
+  color: var(--composer-v3-ink-600);
+  font-size: 11px;
+  line-height: 1.48;
+}
+
+.app-shell[data-workspace-mode='compose'] .health-ring {
+  width: 72px;
+  height: 72px;
+}
+
+.app-shell[data-workspace-mode='compose'] .health-ring::before {
+  width: 58px;
+  height: 58px;
+}
+
+.app-shell[data-workspace-mode='compose'] .health-ring-inner strong {
+  color: #4d438e;
+  font-size: 16px;
+}
+
+.app-shell[data-workspace-mode='compose'] .health-ring-inner span {
+  font-size: 8px;
+  letter-spacing: 0.055em;
+}
+
+/* ========================================================================== */
+/* 07 — SECTION SYSTEM                                                        */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .composer-column > .section-card {
+  padding: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.955), rgba(250, 251, 253, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .section-heading {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.app-shell[data-workspace-mode='compose'] .section-icon {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(47, 55, 80, 0.055);
+  border-radius: 11px;
+}
+
+.app-shell[data-workspace-mode='compose'] .section-icon-violet {
+  color: #6250d6;
+  background: var(--composer-v3-brand-soft);
+}
+
+.app-shell[data-workspace-mode='compose'] .section-icon-blue {
+  color: #3f77bd;
+  background: var(--composer-v3-blue-soft);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.section-icon-emerald, .closure-section-icon) {
+  color: #238261;
+  background: var(--composer-v3-green-soft);
+}
+
+.app-shell[data-workspace-mode='compose'] .section-index {
+  margin: 0 0 1px;
+  color: #8d85b1;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-workspace-mode='compose'] .section-heading h3 {
+  margin: 0;
+  color: var(--composer-v3-ink-900);
+  font-size: 16px;
+  font-weight: 760;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
+}
+
+.app-shell[data-workspace-mode='compose'] .section-heading p {
+  max-width: 680px;
+  margin-top: 3px;
+  color: var(--composer-v3-ink-600);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+/* ========================================================================== */
+/* 08 — ENGINEERED CONTROL SYSTEM                                             */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .field-grid {
+  gap: 11px 12px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .field,
+  .primary-link-grid label,
+  .impact-link-grid label,
+  .cut-point-grid label,
+  .cp-label-editor
+) {
+  gap: 5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .field-label-row {
+  gap: 4px 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .field-label,
+  .primary-link-grid label > span:first-child,
+  .impact-link-grid label > span:first-child,
+  .cut-point-grid label > span:first-child,
+  .cp-label-editor > span:first-child
+) {
+  color: #596378;
+  font-size: 9.5px;
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: 0.015em;
+}
+
+.app-shell[data-workspace-mode='compose'] .field-hint {
+  color: #969dac;
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .control,
+  .primary-link-grid input,
+  .primary-link-grid textarea,
+  .impact-link-grid input,
+  .impact-link-grid textarea,
+  .cut-point-grid input,
+  .cut-point-grid textarea,
+  .cp-label-editor input,
+  .quick-add-f10 input
+) {
+  appearance: none;
+  border: 1px solid var(--composer-v3-line);
+  border-radius: var(--composer-v3-radius-control);
+  color: #394257;
+  background:
+    linear-gradient(180deg, rgba(247, 248, 251, 0.88), rgba(252, 252, 254, 0.96));
+  box-shadow:
+    inset 0 1px 2px rgba(36, 43, 65, 0.025),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 520;
+  line-height: 1.42;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .control,
+  .primary-link-grid input,
+  .impact-link-grid input,
+  .cp-label-editor input,
+  .quick-add-f10 input
+) {
+  min-height: 41px;
+  padding-inline: 11px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .control-textarea,
+  .primary-link-grid textarea,
+  .impact-link-grid textarea,
+  .cut-point-grid textarea
+) {
+  min-height: 76px;
+  padding: 10px 11px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .control,
+  .primary-link-grid input,
+  .primary-link-grid textarea,
+  .impact-link-grid input,
+  .impact-link-grid textarea,
+  .cut-point-grid input,
+  .cut-point-grid textarea,
+  .cp-label-editor input,
+  .quick-add-f10 input
+):hover:not(:focus) {
+  border-color: rgba(65, 74, 103, 0.13);
+  background: #fff;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .control,
+  .primary-link-grid input,
+  .primary-link-grid textarea,
+  .impact-link-grid input,
+  .impact-link-grid textarea,
+  .cut-point-grid input,
+  .cut-point-grid textarea,
+  .cp-label-editor input,
+  .quick-add-f10 input
+):focus {
+  outline: none;
+  border-color: rgba(104, 87, 232, 0.27);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(104, 87, 232, 0.05),
+    0 7px 18px rgba(55, 61, 88, 0.035);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(input, textarea)::placeholder {
+  color: #a5abb7;
+  opacity: 1;
+}
+
+/* ========================================================================== */
+/* 09 — DISPATCH / TOPOLOGY                                                   */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .dispatch-context-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(74, 131, 214, 0.035), transparent 260px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(250, 251, 253, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-topology-summary {
+  gap: 5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-topology-summary > span {
+  min-height: 23px;
+  border-color: rgba(74, 131, 214, 0.11);
+  padding-inline: 7px;
+  color: #5274a1;
+  background: var(--composer-v3-blue-soft);
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-core-grid {
+  margin-bottom: 14px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-topology {
+  gap: 10px;
+  padding-top: 13px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-topology-block {
+  border-color: rgba(47, 55, 80, 0.07);
+  border-radius: 14px;
+  padding: 12px;
+  background:
+    linear-gradient(145deg, rgba(246, 248, 251, 0.82), rgba(252, 252, 254, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 6px 18px rgba(50, 57, 82, 0.025);
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading > div:first-child {
+  gap: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading strong {
+  color: #485267;
+  font-size: 11.5px;
+  font-weight: 750;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-subheading small {
+  max-width: 560px;
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.app-shell[data-workspace-mode='compose'] .dispatch-add-button {
+  min-height: 32px;
+  border-color: var(--composer-v3-brand-line);
+  border-radius: 9px;
+  padding-inline: 9px;
+  color: #604fd0;
+  background: var(--composer-v3-brand-soft);
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .primary-link-editor,
+  .impact-link-editor,
+  .cut-point-editor,
+  .legacy-cp-editor
+) {
+  border-color: rgba(47, 55, 80, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 5px 16px rgba(49, 56, 82, 0.025);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .primary-link-editor,
+  .impact-link-editor,
+  .cut-point-editor
+) {
+  padding: 11px;
+}
+
+.app-shell[data-workspace-mode='compose'] .cut-point-editor {
+  border-color: rgba(185, 123, 47, 0.11);
+  background: linear-gradient(145deg, rgba(255, 251, 246, 0.72), rgba(255, 255, 255, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-card-head {
+  gap: 9px;
+  margin-bottom: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-index {
+  color: #8b83ac;
+  font-size: 8.5px;
+  letter-spacing: 0.055em;
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-card-head strong {
+  margin-top: 2px;
+  color: #4d576c;
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-head-actions,
+.app-shell[data-workspace-mode='compose'] .marker-selector {
+  gap: 4px;
+}
+
+.app-shell[data-workspace-mode='compose'] .marker-option {
+  min-width: 31px;
+  min-height: 31px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-delete-button {
+  width: 31px;
+  height: 31px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.primary-link-grid, .impact-link-grid, .cut-point-grid) {
+  gap: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .primary-link-readonly {
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(245, 247, 250, 0.8);
+}
+
+.app-shell[data-workspace-mode='compose'] .primary-link-readonly > span {
+  color: var(--composer-v3-ink-500);
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .primary-link-readonly > strong {
+  margin-top: 3px;
+  color: #5d687d;
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .topology-empty-state,
+  .legacy-cp-note,
+  .topology-sync-note
+) {
+  gap: 8px;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(244, 246, 249, 0.72);
+}
+
+.app-shell[data-workspace-mode='compose'] .topology-empty-state {
+  min-height: 60px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.topology-empty-state, .legacy-cp-note) strong {
+  color: #5a6579;
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .topology-empty-state,
+  .legacy-cp-note,
+  .topology-sync-note
+) span {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+/* ========================================================================== */
+/* 10 — UPDATE PROGRESS                                                       */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .timeline-card {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(35, 137, 102, 0.035), transparent 220px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(250, 251, 253, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .update-count,
+  .progress-stage-chip,
+  .timeline-clean-chip,
+  .duplicate-time-alert
+) {
+  min-height: 24px;
+  padding-inline: 7px;
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-panel {
+  border-color: rgba(104, 87, 232, 0.065);
+  border-radius: 12px;
+  padding: 11px;
+  background:
+    linear-gradient(145deg, rgba(247, 246, 253, 0.78), rgba(251, 251, 254, 0.88));
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-head {
+  gap: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-head > div:first-child {
+  gap: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-icon {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-head strong {
+  color: #4d566b;
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-assistant-head span:not(.progress-assistant-icon):not(.progress-stage-chip) {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-suggestion-row {
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .progress-suggestion-button,
+  .progress-macro-library button
+) {
+  min-height: 30px;
+  border-radius: 8px;
+  padding-inline: 8px;
+  font-size: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-macro-library {
+  margin-top: 6px;
+}
+
+.app-shell[data-workspace-mode='compose'] .progress-macro-library summary {
+  min-height: 30px;
+  color: #737d91;
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .quick-add-f10 {
+  grid-template-columns: minmax(135px, 0.9fr) 90px minmax(200px, 2fr) 72px minmax(128px, 0.9fr);
+  gap: 7px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-color: rgba(47, 55, 80, 0.065);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(245, 247, 250, 0.76);
+}
+
+.app-shell[data-workspace-mode='compose'] .quick-add-f10 label {
+  gap: 4px;
+}
+
+.app-shell[data-workspace-mode='compose'] .quick-add-f10 label > span {
+  color: #748095;
+  font-size: 8.5px;
+  letter-spacing: 0.045em;
+}
+
+.app-shell[data-workspace-mode='compose'] .quick-add-f10 input {
+  height: 39px;
+  min-height: 39px;
+  font-size: 11.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(
+  .progress-now-button,
+  .quick-add-f10 > .add-button
+) {
+  min-height: 39px;
+  border-radius: 9px;
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-intelligence-bar {
+  gap: 9px 14px;
+  border-color: rgba(104, 87, 232, 0.055);
+  border-radius: 11px;
+  padding: 9px 10px;
+  background: rgba(248, 247, 253, 0.66);
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-intelligence-copy {
+  min-width: min(100%, 300px);
+  flex-basis: 320px;
+  gap: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-intelligence-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-intelligence-copy strong {
+  color: #4e586c;
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-intelligence-copy span:not(.timeline-intelligence-icon) {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 8.8px;
+  line-height: 1.38;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-sort-selector {
+  gap: 3px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-sort-option {
+  min-height: 30px;
+  border-radius: 8px;
+  padding-inline: 8px;
+  font-size: 8.8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-list {
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-row {
+  grid-template-columns: 34px 68px minmax(0, 1fr) auto;
+  gap: 8px;
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 11px;
+  padding: 8px 9px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-node {
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-time strong {
+  color: #4e586d;
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-time small {
+  margin-top: 2px;
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.timeline-kind-chip, .timeline-duplicate-label) {
+  min-height: 19px;
+  padding-inline: 6px;
+  font-size: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-entry-main p {
+  margin-top: 5px;
+  color: #596378;
+  font-size: 10px;
+  line-height: 1.48;
+}
+
+.app-shell[data-workspace-mode='compose'] .timeline-action {
+  width: 31px;
+  min-width: 31px;
+  height: 31px;
+  min-height: 31px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .empty-timeline {
+  min-height: 96px;
+  border-color: rgba(104, 87, 232, 0.095);
+  border-radius: 11px;
+  background: rgba(248, 249, 252, 0.55);
+}
+
+.app-shell[data-workspace-mode='compose'] .empty-timeline strong {
+  margin-top: 6px;
+  color: #616b7f;
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .empty-timeline span {
+  margin-top: 2px;
+  font-size: 8.8px;
+}
+
+/* ========================================================================== */
+/* 11 — CLOSURE READINESS                                                     */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .closure-readiness-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(35, 137, 102, 0.045), transparent 220px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(250, 252, 251, 0.9));
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-score {
+  min-width: 56px;
+  min-height: 48px;
+  border-color: rgba(35, 137, 102, 0.1);
+  border-radius: 11px;
+  background: var(--composer-v3-green-soft);
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-score strong {
+  color: #27795d;
+  font-size: 13px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-score span {
+  margin-top: 2px;
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-warning, .closure-ready-banner) {
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-warning, .closure-ready-banner) strong {
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-warning, .closure-ready-banner) span {
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-checklist {
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-task, .closure-group-head) {
+  grid-template-columns: 27px minmax(0, 1fr) auto;
+  min-height: 46px;
+  gap: 8px;
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 10px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-task-copy strong, .closure-group-head strong) {
+  color: #505c70;
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.closure-task-copy small, .closure-group-head small) {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 8.5px;
+  line-height: 1.36;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-task-state {
+  min-height: 21px;
+  padding-inline: 6px;
+  font-size: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-subtasks {
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-subtask {
+  min-height: 36px;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 5px 7px;
+  font-size: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-checkbox {
+  width: 21px;
+  height: 21px;
+  border-radius: 6px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-footer {
+  gap: 6px 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  color: var(--composer-v3-ink-600);
+  font-size: 8.8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .closure-footer strong {
+  font-size: 8.3px;
+}
+
+/* ========================================================================== */
+/* 12 — OUTPUT MONITOR                                                        */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .preview-card {
+  border-color: rgba(71, 65, 112, 0.1);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(104, 87, 232, 0.055), transparent 210px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(249, 249, 253, 0.94));
+  box-shadow: var(--composer-v3-shadow-raised);
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-header {
+  min-height: 58px;
+  gap: 10px;
+  padding: 13px 14px 11px;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-header .eyebrow {
+  color: #786bd0;
+  font-size: 8.8px;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-header h2 {
+  margin-top: 3px;
+  color: var(--composer-v3-ink-900);
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.app-shell[data-workspace-mode='compose'] .live-badge {
+  min-height: 23px;
+  gap: 4px;
+  border-color: rgba(35, 137, 102, 0.1);
+  padding-inline: 7px;
+  color: #247a5d;
+  background: var(--composer-v3-green-soft);
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .report-paper {
+  margin-inline: 11px;
+  border-color: rgba(47, 55, 80, 0.075);
+  border-radius: 11px;
+  background: #f7f8fb;
+  box-shadow:
+    inset 0 1px 2px rgba(38, 45, 68, 0.025),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.app-shell[data-workspace-mode='compose'] .paper-toolbar {
+  min-height: 34px;
+  gap: 7px;
+  padding-inline: 10px;
+  color: #8992a3;
+  background: rgba(244, 246, 249, 0.82);
+  font-size: 8.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .report-paper pre {
+  min-height: 235px;
+  padding: 13px 14px 16px;
+  color: #3f485d;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 10.5px;
+  line-height: 1.58;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-metrics {
+  gap: 6px;
+  padding: 8px 11px 0;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-metrics > div {
+  min-height: 50px;
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 9px;
+  padding: 7px 8px;
+  background: rgba(249, 250, 252, 0.82);
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-metrics span {
+  color: #8b94a4;
+  font-size: 8px;
+  letter-spacing: 0.025em;
+}
+
+.app-shell[data-workspace-mode='compose'] .preview-metrics strong {
+  margin-top: 2px;
+  color: #515c70;
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .primary-action {
+  min-height: 41px;
+  gap: 6px;
+  margin: 8px 11px 11px;
+  border-radius: 9px;
+  padding-inline: 11px;
+  background:
+    linear-gradient(135deg, #745fed 0%, #6651df 58%, #5945d3 100%);
+  box-shadow:
+    0 8px 20px rgba(82, 63, 195, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .primary-action kbd {
+  font-size: 8px;
+}
+
+/* ========================================================================== */
+/* 13 — DELIVERY CONSOLE                                                      */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .delivery-console-card {
+  padding: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(104, 87, 232, 0.04), transparent 190px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(250, 251, 253, 0.91));
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-console-head {
+  gap: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-kicker {
+  margin-bottom: 3px;
+  color: #786bd0;
+  font-size: 8.5px;
+  letter-spacing: 0.065em;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-console-head h3 {
+  color: #40495e;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-console-head p {
+  max-width: 330px;
+  margin-top: 3px;
+  color: var(--composer-v3-ink-600);
+  font-size: 9.5px;
+  line-height: 1.42;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-ready-chip {
+  min-height: 23px;
+  padding-inline: 7px;
+  font-size: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-validation-grid {
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-validation-grid > div {
+  min-height: 48px;
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 9px;
+  padding: 7px 8px;
+  background: rgba(248, 249, 252, 0.8);
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-validation-grid span {
+  color: #8b94a4;
+  font-size: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-validation-grid strong {
+  margin-top: 2px;
+  color: #525c70;
+  font-size: 10.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.delivery-blockers, .delivery-clear) {
+  margin-top: 6px;
+  border-radius: 9px;
+  padding: 8px 9px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.delivery-blocker-title, .delivery-clear strong) {
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] :is(.delivery-blockers > span, .delivery-clear span) {
+  font-size: 8.7px;
+  line-height: 1.38;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-action-grid {
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-action-card {
+  grid-template-columns: 32px minmax(0, 1fr);
+  min-height: 50px;
+  gap: 7px;
+  border-color: rgba(47, 55, 80, 0.06);
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: rgba(250, 250, 252, 0.8);
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-action-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-action-card strong {
+  color: #556075;
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-action-card small {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-finalize-button {
+  min-height: 40px;
+  margin-top: 7px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.app-shell[data-workspace-mode='compose'] .delivery-footnote {
+  margin-top: 6px;
+  color: #9299a8;
+  font-size: 8.5px;
+  line-height: 1.38;
+}
+
+/* ========================================================================== */
+/* 14 — FAST OPERATOR FLOW                                                    */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .shortcut-card {
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 13px;
+}
+
+.app-shell[data-workspace-mode='compose'] .shortcut-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.app-shell[data-workspace-mode='compose'] .shortcut-card strong {
+  color: #515c70;
+  font-size: 9.5px;
+}
+
+.app-shell[data-workspace-mode='compose'] .shortcut-card p {
+  margin-top: 2px;
+  color: var(--composer-v3-ink-600);
+  font-size: 8.7px;
+  line-height: 1.38;
+}
+
+.app-shell[data-workspace-mode='compose'] .shortcut-card kbd {
+  font-size: 8px;
+}
+
+/* ========================================================================== */
+/* 15 — MICRO INTERACTIONS                                                    */
+/* ========================================================================== */
+
+.app-shell[data-workspace-mode='compose'] .composer-column button,
+.app-shell[data-workspace-mode='compose'] .preview-column button {
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.app-shell[data-workspace-mode='compose'] .composer-column button:hover:not(:disabled),
+.app-shell[data-workspace-mode='compose'] .preview-column button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.app-shell[data-workspace-mode='compose'] :is(button, input, textarea):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(104, 87, 232, 0.09);
+}
+
+/* ========================================================================== */
+/* 16 — UTILITY DOCK CLEARANCE + CALMER DESKTOP FOOTPRINT                     */
+/* ========================================================================== */
+
+body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-dock {
+  right: 18px;
+  bottom: 18px;
+  width: min(610px, calc(100vw - 280px));
+}
+
+body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-surface {
+  grid-template-columns: minmax(210px, 1fr) max-content;
+  gap: 5px;
+  border-color: rgba(47, 55, 80, 0.1);
+  border-radius: 14px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow:
+    0 18px 46px rgba(35, 42, 69, 0.12),
+    0 3px 10px rgba(35, 42, 69, 0.045);
+}
+
+body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-sheet-status > * {
+  min-height: 38px;
+}
+
+body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-trigger-group {
+  gap: 4px;
+  padding-left: 5px;
+}
+
+body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-trigger-group > :is(a, button) {
+  min-height: 36px;
+  border-radius: 9px;
+  padding-inline: 8px;
+  font-size: 9.5px;
+}
+
+/* ========================================================================== */
+/* 17 — COMPACT DESKTOP                                                       */
+/* ========================================================================== */
+
+@media (max-width: 1450px) {
+  .app-shell[data-workspace-mode='compose'] .workspace-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(350px, 1fr);
+    gap: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .quick-add-f10 {
+    grid-template-columns: minmax(130px, 0.8fr) 86px minmax(175px, 1.8fr) 68px minmax(115px, 0.75fr);
+    gap: 6px;
+  }
+
+  body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-dock {
+    width: min(570px, calc(100vw - 240px));
+  }
+}
+
+@media (max-width: 1279px) {
+  .app-shell[data-workspace-mode='compose'] .workspace-grid {
+    grid-template-columns: minmax(0, 1.42fr) minmax(340px, 1fr);
+    gap: 14px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .composer-column > .section-card {
+    padding: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .quick-add-f10 {
+    grid-template-columns: minmax(130px, 1fr) 90px minmax(180px, 2fr);
+    grid-template-areas:
+      'date time text'
+      'now add add';
+  }
+}
+
+/* ========================================================================== */
+/* 18 — TABLET                                                                */
+/* ========================================================================== */
+
+@media (max-width: 1023px) {
+  .app-shell[data-workspace-mode='compose'] .main-stage {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell[data-workspace-mode='compose'] .main-stage::before {
+    left: 0;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .topbar {
+    gap: 10px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .workspace-grid {
+    display: block;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .preview-column {
+    padding-bottom: 0;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .preview-card {
+    position: relative;
+    top: auto;
+    max-height: none;
+  }
+
+  body:has(.app-shell[data-workspace-mode='compose']) .reportos-utility-dock {
+    width: auto;
+  }
+}
+
+/* ========================================================================== */
+/* 19 — MOBILE                                                                */
+/* ========================================================================== */
+
+@media (max-width: 767px) {
+  .app-shell[data-workspace-mode='compose'] .topbar h1 {
+    font-size: clamp(27px, 8vw, 32px);
+  }
+
+  .app-shell[data-workspace-mode='compose'] :is(.new-incident-button, .save-chip) {
+    min-height: 46px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] :is(
+    .smart-import-card,
+    .composer-column > .hero-card,
+    .composer-column > .section-card,
+    .preview-card,
+    .delivery-console-card,
+    .shortcut-card
+  ) {
+    border-radius: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .smart-import-card {
+    padding: 14px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .smart-import-title h2 {
+    font-size: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .smart-import-title p,
+  .app-shell[data-workspace-mode='compose'] .hero-card p,
+  .app-shell[data-workspace-mode='compose'] .section-heading p {
+    font-size: 11px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .smart-import-editor textarea {
+    min-height: 135px;
+    font-size: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] :is(.clipboard-import-button, .smart-parse-button) {
+    min-height: 46px;
+    font-size: 12px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .composer-column > .hero-card {
+    min-height: 118px;
+    padding: 17px 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .hero-card h2 {
+    font-size: clamp(24px, 7vw, 29px);
+  }
+
+  .app-shell[data-workspace-mode='compose'] .composer-column > .section-card {
+    padding: 16px 14px 17px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .section-heading {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .app-shell[data-workspace-mode='compose'] .section-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .section-heading h3 {
+    font-size: 15.5px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] :is(
+    .control,
+    .primary-link-grid input,
+    .primary-link-grid textarea,
+    .impact-link-grid input,
+    .impact-link-grid textarea,
+    .cut-point-grid input,
+    .cut-point-grid textarea,
+    .cp-label-editor input,
+    .quick-add-f10 input
+  ) {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .dispatch-add-button {
+    min-height: 42px;
+    font-size: 11px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .marker-option,
+  .app-shell[data-workspace-mode='compose'] .topology-delete-button {
+    min-width: 42px;
+    width: 42px;
+    min-height: 42px;
+    height: 42px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .quick-add-f10 {
+    grid-template-columns: minmax(0, 1fr) minmax(96px, 0.64fr);
+    grid-template-areas:
+      'date time'
+      'text text'
+      'now add';
+    gap: 8px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] :is(.progress-now-button, .quick-add-f10 > .add-button) {
+    min-height: 46px;
+    font-size: 11px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .timeline-sort-option {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .closure-subtask {
+    min-height: 46px;
+    font-size: 11px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .report-paper pre {
+    min-height: 280px;
+    font-size: 12px;
+  }
+
+  .app-shell[data-workspace-mode='compose'] .primary-action {
+    min-height: 48px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 479px) {
+  .app-shell[data-workspace-mode='compose'] .quick-add-f10 {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'date'
+      'time'
+      'text'
+      'now'
+      'add';
+  }
+}
+
+/* ========================================================================== */
+/* 20 — REDUCED MOTION                                                        */
+/* ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-workspace-mode='compose'] :is(button, input, textarea) {
+    transition: none !important;
+  }
+}
