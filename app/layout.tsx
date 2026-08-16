@@ -19,6 +19,7 @@ import './styles/impact-board.css';
 import './styles/fiber-lab.css';
 import './styles/utilities.css';
 import './ui-composer-ultra-premium.css';
+import './ui-composer-v3.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Operations Platform',
