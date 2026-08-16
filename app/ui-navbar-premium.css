@@ -1,787 +1,619 @@
 /*
- * ReportOS NAV-01
- * Premium Navigation Shell
+ * ReportOS NAV-02
+ * Spatial Ambient Navigation Rail
  *
- * Scope:
- * - desktop sidebar
- * - compact desktop sidebar
- * - navigation typography
- * - navigation states
- * - sidebar workspace status
- *
- * No composer / operations / archive business layout changes.
+ * Final presentation layer for the shared desktop navigation.
+ * Design intent:
+ * - seamless spatial / ambient shell instead of native sidebar card
+ * - quieter typography and chrome
+ * - embedded active destination state
+ * - smooth, low-amplitude motion
+ * - compact status treatment
+ * - preserve all navigation behavior and business logic
  */
 
 :root {
-  --nav-shell-bg:
-    rgba(250, 251, 255, 0.88);
+  --nav-spatial-ink-950: #242a3b;
+  --nav-spatial-ink-900: #30374a;
+  --nav-spatial-ink-800: #465066;
+  --nav-spatial-ink-700: #5c667b;
+  --nav-spatial-ink-600: #727d91;
+  --nav-spatial-ink-500: #8f98a9;
+  --nav-spatial-ink-400: #a8afbc;
 
-  --nav-shell-border:
-    rgba(75, 82, 118, 0.11);
+  --nav-spatial-brand: #6b58e8;
+  --nav-spatial-brand-strong: #5846d4;
+  --nav-spatial-brand-soft: rgba(107, 88, 232, 0.075);
+  --nav-spatial-brand-faint: rgba(107, 88, 232, 0.038);
+  --nav-spatial-brand-line: rgba(107, 88, 232, 0.13);
 
-  --nav-shell-border-soft:
-    rgba(75, 82, 118, 0.07);
+  --nav-spatial-line: rgba(45, 53, 78, 0.075);
+  --nav-spatial-line-strong: rgba(45, 53, 78, 0.11);
 
-  --nav-text:
-    #434b62;
+  --nav-spatial-surface: rgba(250, 251, 255, 0.62);
+  --nav-spatial-surface-hover: rgba(255, 255, 255, 0.62);
+  --nav-spatial-surface-active: rgba(255, 255, 255, 0.78);
 
-  --nav-text-soft:
-    #778097;
+  --nav-spatial-shadow:
+    0 24px 80px rgba(47, 54, 84, 0.065),
+    0 8px 28px rgba(47, 54, 84, 0.028);
 
-  --nav-text-muted:
-    #929aad;
+  --nav-spatial-shadow-active:
+    0 12px 30px rgba(77, 63, 160, 0.085),
+    0 2px 8px rgba(77, 63, 160, 0.025);
 
-  --nav-violet:
-    #6652ec;
-
-  --nav-violet-strong:
-    #5742df;
-
-  --nav-violet-soft:
-    rgba(102, 82, 236, 0.09);
-
-  --nav-shadow:
-    0 28px 80px
-      rgba(46, 52, 79, 0.105),
-    0 8px 24px
-      rgba(46, 52, 79, 0.055);
+  --nav-spatial-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* ============================================================
-   APP SHELL
-   ============================================================ */
+/* ========================================================================== */
+/* 01 — SHELL GEOMETRY                                                        */
+/* ========================================================================== */
 
 .app-shell {
-  grid-template-columns:
-    272px
-    minmax(0, 1fr);
+  grid-template-columns: 254px minmax(0, 1fr);
 }
-
-/* ============================================================
-   PREMIUM SIDEBAR SURFACE
-   ============================================================ */
 
 .sidebar {
   position: fixed;
-
-  top: 18px;
-  bottom: 18px;
-  left: 18px;
-
-  width: 236px;
-
+  z-index: 30;
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  width: 218px;
+  min-width: 218px;
+  flex-direction: column;
   overflow: hidden;
-
-  border:
-    1px solid
-    var(--nav-shell-border);
-
-  border-radius: 25px;
-
-  padding:
-    15px
-    12px
-    14px;
-
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 30px;
+  padding: 13px 10px 11px;
   background:
-    radial-gradient(
-      circle at 14% -2%,
-      rgba(122, 103, 255, 0.14),
-      transparent 150px
-    ),
-    radial-gradient(
-      circle at 105% 50%,
-      rgba(93, 151, 255, 0.07),
-      transparent 210px
-    ),
-    linear-gradient(
-      155deg,
-      rgba(255, 255, 255, 0.96),
-      rgba(248, 249, 255, 0.84)
-    );
-
+    radial-gradient(circle at 8% 0%, rgba(124, 104, 247, 0.11), transparent 11rem),
+    radial-gradient(circle at 115% 48%, rgba(73, 142, 224, 0.055), transparent 13rem),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.68), rgba(246, 248, 253, 0.52));
   box-shadow:
-    var(--nav-shadow),
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.96);
-
-  backdrop-filter:
-    blur(30px)
-    saturate(1.2);
-
-  -webkit-backdrop-filter:
-    blur(30px)
-    saturate(1.2);
+    var(--nav-spatial-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset -1px 0 0 rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(34px) saturate(1.18);
+  -webkit-backdrop-filter: blur(34px) saturate(1.18);
+  isolation: isolate;
 }
 
 .sidebar::before {
   position: absolute;
-
+  z-index: -1;
   top: 0;
-  right: 24px;
-  left: 24px;
-
+  right: 22px;
+  left: 22px;
   height: 1px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(119, 99, 247, 0.33),
-      transparent
-    );
-
+  background: linear-gradient(90deg, transparent, rgba(123, 103, 245, 0.32), transparent);
   content: '';
-
   pointer-events: none;
 }
 
 .sidebar::after {
   position: absolute;
-
-  top: 72px;
-  right: -70px;
-
-  width: 180px;
-  height: 180px;
-
+  z-index: -1;
+  top: 84px;
+  right: -76px;
+  width: 190px;
+  height: 190px;
   border-radius: 999px;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(116, 96, 246, 0.065),
-      transparent 67%
-    );
-
+  background: radial-gradient(circle, rgba(112, 92, 238, 0.075), transparent 68%);
+  filter: blur(4px);
   content: '';
-
   pointer-events: none;
 }
 
-/* ============================================================
-   BRAND
-   ============================================================ */
+/* ========================================================================== */
+/* 02 — BRAND LOCKUP                                                          */
+/* ========================================================================== */
 
 .brand-lockup {
   position: relative;
-  z-index: 1;
-
+  z-index: 2;
   display: flex;
-
+  min-width: 0;
   align-items: center;
+  gap: 11px;
+  margin: 0 2px 8px;
+  border: 0;
+  padding: 7px 7px 15px;
+}
 
-  gap: 12px;
-
-  margin-bottom: 8px;
-
-  padding:
-    8px
-    9px
-    18px;
-
-  border-bottom:
-    1px solid
-    rgba(71, 77, 105, 0.075);
+.brand-lockup::after {
+  position: absolute;
+  right: 7px;
+  bottom: 0;
+  left: 7px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(49, 57, 83, 0.075) 16%, rgba(49, 57, 83, 0.075) 84%, transparent);
+  content: '';
 }
 
 .app-mark {
-  width: 46px;
-  height: 46px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.48);
-
-  border-radius: 15px;
-
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 14px;
   background:
-    radial-gradient(
-      circle at 28% 18%,
-      rgba(255, 255, 255, 0.31),
-      transparent 45%
-    ),
-    linear-gradient(
-      145deg,
-      #826fff 0%,
-      #6652ef 52%,
-      #5040dc 100%
-    );
-
+    radial-gradient(circle at 27% 18%, rgba(255, 255, 255, 0.34), transparent 45%),
+    linear-gradient(145deg, #8170f8 0%, #6a58e8 52%, #5846d4 100%);
   box-shadow:
-    0 12px 28px
-      rgba(88, 66, 225, 0.28),
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.35);
+    0 10px 24px rgba(88, 69, 214, 0.22),
+    0 2px 6px rgba(88, 69, 214, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateZ(0);
+}
+
+.app-mark::after {
+  position: absolute;
+  inset: -7px;
+  border: 1px solid rgba(107, 88, 232, 0.055);
+  border-radius: 19px;
+  content: '';
+  pointer-events: none;
 }
 
 .app-mark-core {
-  width: 8px;
-  height: 8px;
-
+  width: 7px;
+  height: 7px;
   box-shadow:
-    0 0 0 4px
-      rgba(255, 255, 255, 0.16),
-    0 0 15px
-      rgba(255, 255, 255, 0.5);
+    0 0 0 4px rgba(255, 255, 255, 0.13),
+    0 0 15px rgba(255, 255, 255, 0.44);
 }
 
 .brand-copy {
   display: flex;
-
-  flex-direction: column;
-
   min-width: 0;
-
-  line-height: 1.1;
+  flex-direction: column;
+  line-height: 1.08;
 }
 
 .brand-copy strong {
-  color: #292f43;
-
-  font-size: 16px;
-
-  font-weight: 810;
-
-  letter-spacing: -0.03em;
+  overflow: hidden;
+  color: var(--nav-spatial-ink-950);
+  font-size: 14px;
+  font-weight: 805;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brand-copy span {
-  margin-top: 5px;
-
-  color: #8991a5;
-
-  font-size: 10px;
-
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--nav-spatial-ink-500);
+  font-size: 8.5px;
   font-weight: 760;
-
   line-height: 1.25;
-
-  letter-spacing: 0.09em;
-
+  letter-spacing: 0.105em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-/* ============================================================
-   NAV GROUP
-   ============================================================ */
+/* ========================================================================== */
+/* 03 — DESTINATION GROUP                                                     */
+/* ========================================================================== */
 
 .side-nav {
   position: relative;
-  z-index: 1;
-
+  z-index: 2;
   display: grid;
-
-  gap: 6px;
-
-  padding-top: 5px;
+  gap: 3px;
+  padding: 3px 1px 0;
 }
 
 .side-nav::before {
   display: block;
-
-  padding:
-    3px
-    11px
-    5px;
-
-  color: #a0a6b6;
-
+  padding: 4px 10px 6px;
+  color: var(--nav-spatial-ink-400);
   content: 'WORKSPACE';
-
-  font-size: 9px;
-
-  font-weight: 850;
-
+  font-size: 8px;
+  font-weight: 830;
   line-height: 1.2;
-
-  letter-spacing: 0.14em;
+  letter-spacing: 0.15em;
 }
 
-/* ============================================================
-   NAV ITEM
-   ============================================================ */
+/* ========================================================================== */
+/* 04 — NAV DESTINATION                                                       */
+/* ========================================================================== */
 
 .nav-item {
   position: relative;
-
   display: grid;
-
-  grid-template-columns:
-    38px
-    minmax(0, 1fr)
-    18px;
-
-  min-height: 60px;
-
+  grid-template-columns: 34px minmax(0, 1fr) 14px;
+  min-height: 52px;
   align-items: center;
-
-  gap: 9px;
-
+  gap: 8px;
   overflow: hidden;
-
-  border:
-    1px solid
-    transparent;
-
-  border-radius: 15px;
-
-  padding:
-    6px
-    7px;
-
-  color: var(--nav-text-soft);
-
-  background:
-    transparent;
-
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 5px 7px 5px 6px;
+  color: var(--nav-spatial-ink-600);
+  background: transparent;
   box-shadow: none;
-
   cursor: pointer;
-
+  text-align: left;
+  text-decoration: none;
+  transform: translate3d(0, 0, 0);
   transition:
-    transform 160ms ease,
-    color 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease;
+    transform 220ms var(--nav-spatial-ease),
+    color 220ms var(--nav-spatial-ease),
+    border-color 220ms var(--nav-spatial-ease),
+    background 220ms var(--nav-spatial-ease),
+    box-shadow 220ms var(--nav-spatial-ease);
 }
 
 .nav-item::before {
   position: absolute;
-
-  top: 50%;
-  left: 0;
-
-  width: 3px;
-  height: 0;
-
-  border-radius:
-    0
-    999px
-    999px
-    0;
-
+  z-index: 0;
+  inset: 2px;
+  border-radius: 12px;
   background:
-    linear-gradient(
-      180deg,
-      #846fff,
-      #6049e8
-    );
-
-  box-shadow:
-    0 0 14px
-      rgba(102, 82, 236, 0.38);
-
+    radial-gradient(circle at 14% 50%, rgba(107, 88, 232, 0.085), transparent 58%),
+    linear-gradient(100deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.13));
   content: '';
-
   opacity: 0;
-
-  transform:
-    translateY(-50%);
-
+  transform: scale(0.985);
   transition:
-    height 170ms ease,
-    opacity 170ms ease;
+    opacity 220ms var(--nav-spatial-ease),
+    transform 220ms var(--nav-spatial-ease);
+  pointer-events: none;
+}
+
+.nav-item::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 1px;
+  width: 2px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8a76f8, #5f4bd7);
+  box-shadow: 0 0 13px rgba(107, 88, 232, 0.28);
+  content: '';
+  opacity: 0;
+  transform: translateY(-50%) scaleY(0.45);
+  transition:
+    opacity 220ms var(--nav-spatial-ease),
+    transform 220ms var(--nav-spatial-ease);
+  pointer-events: none;
+}
+
+.nav-item > * {
+  position: relative;
+  z-index: 1;
 }
 
 .nav-item:hover {
-  border-color:
-    rgba(88, 94, 123, 0.075);
+  border-color: rgba(255, 255, 255, 0.56);
+  color: var(--nav-spatial-ink-800);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 24px rgba(52, 60, 88, 0.035);
+  transform: translate3d(2px, -1px, 0);
+}
 
-  color: #555e75;
-
-  background:
-    rgba(255, 255, 255, 0.72);
-
-  box-shadow:
-    0 8px 22px
-      rgba(53, 58, 83, 0.045);
-
-  transform:
-    translateX(2px);
+.nav-item:hover::before {
+  opacity: 0.7;
+  transform: scale(1);
 }
 
 .nav-item > svg:first-child {
-  width: 18px;
-  height: 18px;
-
+  width: 17px;
+  height: 17px;
   box-sizing: content-box;
-
   justify-self: center;
-
-  padding: 8px;
-
-  border:
-    1px solid
-    rgba(77, 84, 113, 0.055);
-
-  border-radius: 11px;
-
-  color: #778096;
-
-  background:
-    rgba(102, 110, 145, 0.045);
-
+  padding: 7px;
+  border: 1px solid rgba(49, 57, 83, 0.045);
+  border-radius: 10px;
+  color: var(--nav-spatial-ink-600);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    color 220ms var(--nav-spatial-ease),
+    border-color 220ms var(--nav-spatial-ease),
+    background 220ms var(--nav-spatial-ease),
+    box-shadow 220ms var(--nav-spatial-ease),
+    transform 220ms var(--nav-spatial-ease);
 }
 
 .nav-item:hover > svg:first-child {
-  color: #6253c8;
-
-  border-color:
-    rgba(102, 82, 236, 0.09);
-
-  background:
-    rgba(102, 82, 236, 0.065);
-
-  transform:
-    scale(1.025);
+  border-color: rgba(107, 88, 232, 0.085);
+  color: #6150c8;
+  background: rgba(107, 88, 232, 0.05);
+  transform: scale(1.025);
 }
 
 .nav-copy {
   display: flex;
-
   min-width: 0;
-
   flex-direction: column;
-
   justify-content: center;
 }
 
 .nav-copy strong {
   overflow: hidden;
-
-  color: #525b72;
-
-  font-size: 13.5px;
-
-  font-weight: 770;
-
-  line-height: 1.2;
-
+  color: var(--nav-spatial-ink-700);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.18;
   letter-spacing: -0.012em;
-
   text-overflow: ellipsis;
-
   white-space: nowrap;
+  transition: color 220ms var(--nav-spatial-ease);
 }
 
 .nav-copy small {
-  margin-top: 4px;
-
+  margin-top: 3px;
   overflow: hidden;
-
-  color: #9299aa;
-
-  font-size: 10.25px;
-
-  font-weight: 570;
-
-  line-height: 1.22;
-
+  color: var(--nav-spatial-ink-500);
+  font-size: 9px;
+  font-weight: 555;
+  line-height: 1.2;
   text-overflow: ellipsis;
-
   white-space: nowrap;
+  transition: color 220ms var(--nav-spatial-ease);
 }
 
 .nav-chevron {
   display: block;
-
-  width: 14px;
-  height: 14px;
-
+  width: 13px;
+  height: 13px;
   justify-self: center;
-
-  color: #a7adba;
-
-  opacity: 0.55;
-
+  color: var(--nav-spatial-ink-400);
+  opacity: 0.48;
+  transform: translateX(-1px);
   transition:
-    color 160ms ease,
-    opacity 160ms ease,
-    transform 160ms ease;
+    color 220ms var(--nav-spatial-ease),
+    opacity 220ms var(--nav-spatial-ease),
+    transform 220ms var(--nav-spatial-ease);
 }
 
 .nav-item:hover .nav-chevron {
-  color: #7869d3;
-
-  opacity: 0.9;
-
-  transform:
-    translateX(1px);
+  color: #6b59c7;
+  opacity: 0.82;
+  transform: translateX(1px);
 }
 
-/* ============================================================
-   ACTIVE NAV
-   ============================================================ */
+/* ========================================================================== */
+/* 05 — ACTIVE DESTINATION                                                    */
+/* ========================================================================== */
 
 .nav-item-active {
-  border-color:
-    rgba(102, 82, 236, 0.12);
-
-  color: #4f3ed2;
-
+  border-color: rgba(107, 88, 232, 0.105);
+  color: var(--nav-spatial-brand-strong);
   background:
-    radial-gradient(
-      circle at 4% 50%,
-      rgba(114, 93, 246, 0.13),
-      transparent 90px
-    ),
-    linear-gradient(
-      135deg,
-      rgba(245, 242, 255, 0.96),
-      rgba(255, 255, 255, 0.88)
-    );
-
+    radial-gradient(circle at 11% 50%, rgba(107, 88, 232, 0.11), transparent 56%),
+    linear-gradient(105deg, rgba(255, 255, 255, 0.78), rgba(251, 250, 255, 0.52));
   box-shadow:
-    0 10px 26px
-      rgba(79, 64, 174, 0.075),
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.9);
+    var(--nav-spatial-shadow-active),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .nav-item-active::before {
-  height: 28px;
+  opacity: 0.92;
+  transform: scale(1);
+}
 
+.nav-item-active::after {
   opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+}
+
+.nav-item-active:hover {
+  border-color: rgba(107, 88, 232, 0.14);
+  background:
+    radial-gradient(circle at 11% 50%, rgba(107, 88, 232, 0.125), transparent 58%),
+    linear-gradient(105deg, rgba(255, 255, 255, 0.84), rgba(251, 250, 255, 0.58));
 }
 
 .nav-item-active > svg:first-child {
+  border-color: rgba(255, 255, 255, 0.46);
   color: #fff;
-
-  border-color:
-    rgba(102, 82, 236, 0.16);
-
   background:
-    linear-gradient(
-      145deg,
-      #7c68fa,
-      #604ae5
-    );
-
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.22), transparent 48%),
+    linear-gradient(145deg, #7d6bf4, #624fdc);
   box-shadow:
-    0 7px 17px
-      rgba(92, 70, 222, 0.22),
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.27);
+    0 7px 18px rgba(92, 72, 210, 0.19),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .nav-item-active .nav-copy strong {
-  color: #4535bf;
+  color: #4f40ba;
 }
 
 .nav-item-active .nav-copy small {
-  color: #8176b8;
+  color: #7d73a6;
 }
 
 .nav-item-active .nav-chevron {
-  color: #6a58d2;
-
-  opacity: 0.9;
+  color: #6554c8;
+  opacity: 0.72;
 }
 
-/* ============================================================
-   ACCESSIBILITY / KEYBOARD
-   ============================================================ */
+.nav-count,
+.nav-alert-count {
+  display: inline-grid;
+  min-width: 20px;
+  min-height: 20px;
+  place-items: center;
+  border: 1px solid rgba(107, 88, 232, 0.1);
+  border-radius: 999px;
+  padding: 0 5px;
+  color: #6554c8;
+  background: rgba(107, 88, 232, 0.065);
+  font-size: 8.5px;
+  font-weight: 820;
+  line-height: 1;
+}
+
+/* ========================================================================== */
+/* 06 — FOCUS / MOTION                                                        */
+/* ========================================================================== */
 
 .nav-item:focus-visible {
-  border-color:
-    rgba(102, 82, 236, 0.28);
-
+  outline: none;
+  border-color: rgba(107, 88, 232, 0.25);
   box-shadow:
-    0 0 0 4px
-      rgba(102, 82, 236, 0.08);
+    0 0 0 3px rgba(107, 88, 232, 0.075),
+    0 8px 22px rgba(52, 60, 88, 0.035);
 }
 
-/* ============================================================
-   SIDEBAR FOOTER STATUS
-   ============================================================ */
+/* ========================================================================== */
+/* 07 — FOOT STATUS                                                           */
+/* ========================================================================== */
 
 .sidebar-spacer {
-  min-height: 24px;
+  min-height: 18px;
 }
 
 .sidebar-status {
   position: relative;
-  z-index: 1;
-
+  z-index: 2;
   display: flex;
-
-  min-height: 62px;
-
+  min-height: 48px;
   align-items: center;
-
-  gap: 11px;
-
-  margin:
-    14px
-    3px
-    1px;
-
-  border:
-    1px solid
-    rgba(61, 70, 98, 0.08);
-
-  border-radius: 15px;
-
-  padding:
-    10px
-    11px;
-
+  gap: 9px;
+  margin: 10px 3px 2px;
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  border-radius: 14px;
+  padding: 8px 9px;
   background:
-    linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.82),
-      rgba(247, 250, 255, 0.66)
-    );
-
+    linear-gradient(110deg, rgba(255, 255, 255, 0.5), rgba(247, 250, 253, 0.28));
   box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.92),
-    0 7px 22px
-      rgba(53, 59, 84, 0.045);
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 7px 22px rgba(50, 58, 84, 0.025);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
 }
 
 .status-orb,
 .save-dot {
-  width: 8px;
-  height: 8px;
-
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: #2faf80;
   box-shadow:
-    0 0 0 5px
-      rgba(48, 189, 133, 0.095),
-    0 0 14px
-      rgba(48, 189, 133, 0.25);
+    0 0 0 4px rgba(47, 175, 128, 0.085),
+    0 0 13px rgba(47, 175, 128, 0.14);
 }
 
 .sidebar-foot-copy {
   display: flex;
-
   min-width: 0;
-
   flex-direction: column;
 }
 
 .sidebar-foot-copy strong {
-  color: #4e586e;
-
-  font-size: 11.5px;
-
-  font-weight: 790;
-
-  line-height: 1.2;
-}
-
-.sidebar-foot-copy span {
-  margin-top: 4px;
-
   overflow: hidden;
-
-  color: #9098a9;
-
-  font-size: 9.75px;
-
-  font-weight: 550;
-
-  line-height: 1.25;
-
+  color: var(--nav-spatial-ink-700);
+  font-size: 10px;
+  font-weight: 755;
+  line-height: 1.18;
   text-overflow: ellipsis;
-
   white-space: nowrap;
 }
 
-/* ============================================================
-   COMPACT DESKTOP
-   ============================================================ */
+.sidebar-foot-copy span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--nav-spatial-ink-500);
+  font-size: 8.5px;
+  font-weight: 540;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========================================================================== */
+/* 08 — COMPACT DESKTOP                                                       */
+/* ========================================================================== */
 
 @media (max-width: 1180px) {
   .app-shell {
-    grid-template-columns:
-      104px
-      minmax(0, 1fr);
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 
   .sidebar {
     top: 14px;
     bottom: 14px;
     left: 14px;
-
-    width: 76px;
-
-    padding:
-      13px
-      8px;
+    width: 68px;
+    min-width: 68px;
+    border-radius: 24px;
+    padding: 11px 7px;
   }
 
   .brand-lockup {
     justify-content: center;
+    margin-inline: 0;
+    padding: 6px 0 14px;
+  }
 
-    margin-bottom: 7px;
-
-    padding:
-      7px
-      0
-      16px;
+  .brand-lockup::after {
+    right: 8px;
+    left: 8px;
   }
 
   .app-mark {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 
   .brand-copy,
   .nav-copy,
   .nav-chevron,
   .sidebar-foot-copy,
-  .side-nav::before {
+  .side-nav::before,
+  .nav-count,
+  .nav-alert-count {
     display: none;
   }
 
   .side-nav {
-    gap: 7px;
-
+    gap: 5px;
     padding-top: 3px;
   }
 
   .nav-item {
-    display: grid;
-
     grid-template-columns: 1fr;
+    min-height: 50px;
+    gap: 0;
+    border-radius: 13px;
+    padding: 5px;
+  }
 
-    min-height: 54px;
-
-    padding: 6px;
+  .nav-item::after {
+    left: 0;
   }
 
   .nav-item > svg:first-child {
     justify-self: center;
   }
 
-  .nav-item::before {
-    left: -1px;
+  .nav-item:hover {
+    transform: translate3d(0, -1px, 0);
   }
 
   .sidebar-status {
     justify-content: center;
-
-    min-height: 52px;
-
+    min-height: 44px;
     margin-inline: 0;
-
     padding: 0;
   }
 }
 
-/* ============================================================
-   MOBILE
-   Existing mobile bottom navigation remains untouched in NAV-01.
-   ============================================================ */
+/* ========================================================================== */
+/* 09 — MOBILE                                                                */
+/* ========================================================================== */
 
 @media (max-width: 860px) {
   .app-shell {
@@ -793,13 +625,14 @@
   }
 }
 
-/* ============================================================
-   REDUCED MOTION
-   ============================================================ */
+/* ========================================================================== */
+/* 10 — REDUCED MOTION                                                        */
+/* ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .nav-item,
   .nav-item::before,
+  .nav-item::after,
   .nav-item > svg:first-child,
   .nav-chevron {
     transition: none;
