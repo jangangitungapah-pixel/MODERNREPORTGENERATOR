@@ -10,17 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "firebase:emulators": "firebase emulators:start",
-    "firebase:deploy": "firebase deploy --only auth,firestore --project reportgeneratornoc",
-    "firebase:deploy:auth": "firebase deploy --only auth --project reportgeneratornoc",
-    "quality": "npm run typecheck && npm run lint && npm test && npm run build",
-    "test:coverage": "vitest run --coverage",
-    "build:worker": "opennextjs-cloudflare build",
-    "preview:worker": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "upload:worker": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "deploy:worker": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "db:generate": "drizzle-kit generate",
-    "firebase:deploy:data": "firebase deploy --only auth,firestore --project reportgeneratornoc"
+    "firebase:deploy": "npm run build && firebase deploy --only auth,firestore,hosting --project reportgeneratornoc",
+    "firebase:deploy:auth": "firebase deploy --only auth --project reportgeneratornoc"
   },
   "dependencies": {
     "firebase": "12.17.0",
