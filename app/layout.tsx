@@ -16,6 +16,10 @@ import {
   ReportOsIntelligence,
 } from '@/components/reportos-intelligence';
 
+import {
+  ReportOsSystemLink,
+} from '@/components/reportos-system-link';
+
 import './globals.css';
 import './cloud-recovery.css';
 
@@ -33,6 +37,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <ReportOsSystemLink />
         <ReportOsIdentity />
         <ReportOsIntelligence />
         <ReportOsCanonicalSync />
