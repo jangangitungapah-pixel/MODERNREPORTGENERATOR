@@ -664,20 +664,33 @@ export function ReportWorkspace() {
       return;
     }
 
-    const stamp =
-      currentProgressStamp();
+    let cancelled =
+      false;
 
-    setEntryDate(
-      (current) =>
-        current ||
-        stamp.date
-    );
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
 
-    setEntryTime(
-      (current) =>
-        current ||
-        stamp.time
-    );
+      const stamp =
+        currentProgressStamp();
+
+      setEntryDate(
+        (current) =>
+          current ||
+          stamp.date
+      );
+
+      setEntryTime(
+        (current) =>
+          current ||
+          stamp.time
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [hydrated]);
 
   useEffect(() => {
