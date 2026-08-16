@@ -8,6 +8,10 @@ import {
   ReportOsCanonicalSync,
 } from '@/components/reportos-canonical-sync';
 
+import {
+  ReportOsIntelligence,
+} from '@/components/reportos-intelligence';
+
 import './globals.css';
 import './cloud-recovery.css';
 
@@ -25,6 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <ReportOsIntelligence />
         <ReportOsCanonicalSync />
         <FirebaseCloudRecovery />
       </body>
