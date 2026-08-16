@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import {
   Activity,
   AlertTriangle,
@@ -14,6 +16,7 @@ import {
   Clock3,
   Command,
   Copy,
+  FileOutput,
   FilePlus2,
   FileText,
   FolderArchive,
@@ -1710,6 +1713,30 @@ export function ReportWorkspace() {
                 }
               </span>
             </button>
+
+            <Link
+              className="nav-item nav-item-tool"
+              href="/sor-to-pdf"
+            >
+              <FileOutput
+                size={18}
+              />
+
+              <span className="nav-copy">
+                <strong>
+                  SOR → PDF
+                </strong>
+
+                <small>
+                  OTDR fiber lab
+                </small>
+              </span>
+
+              <ChevronRight
+                className="nav-chevron"
+                size={15}
+              />
+            </Link>
           </nav>
 
           <div className="sidebar-spacer" />
@@ -4787,6 +4814,18 @@ export function ReportWorkspace() {
             <Archive size={18} />
             <span>Archive</span>
           </button>
+
+          <Link
+            className="bottom-nav-tool"
+            href="/sor-to-pdf"
+          >
+            <FileOutput
+              size={18}
+            />
+            <span>
+              SOR PDF
+            </span>
+          </Link>
         </nav>
       </main>
     </MotionConfig>
