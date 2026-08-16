@@ -17,6 +17,7 @@ import './cloud-recovery.css';
 import './ui-overhaul.css';
 import './ui-overhaul-detail.css';
 import './ui-navbar-premium.css';
+import './ui-composer-ultra-premium.css';
 
 export const metadata: Metadata = {
   title: 'ReportOS — Incident Operations Platform',
