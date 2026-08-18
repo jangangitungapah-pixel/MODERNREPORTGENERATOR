@@ -29,6 +29,10 @@ import {
 import styles from './composer-operator-deck.module.css';
 
 import {
+  buildComposerFlow,
+} from '@/lib/composer-flow';
+
+import {
   buildComposerReadiness,
   cleanComposerTemplateReport,
   cloneComposerReport,
@@ -397,6 +401,23 @@ export function ComposerOperatorDeck() {
           : null,
       [snapshot]
     );
+
+  const guidedFlow =
+    useMemo(
+      () =>
+        snapshot
+          ? buildComposerFlow(
+              snapshot.incident.report,
+              snapshot.incident.closureChecklist
+            )
+          : null,
+      [snapshot]
+    );
+
+  const completedFlowStages =
+    guidedFlow?.completedStageCount ?? 0;
+
+  // REPORTOS_COMPOSER_UNIFIED_FLOW_V3: guided flow is part of the single Operator Control.
 
   const jumpTo =
     useCallback(
@@ -882,7 +903,7 @@ export function ComposerOperatorDeck() {
           <Command size={15} />
         </span>
         <span className={styles.launcherCopy}>
-          <strong>Operator Deck</strong>
+          <strong>Operator Control</strong>
           <small>
             {issues.length === 0
               ? 'Ready · Ctrl K'
@@ -908,9 +929,9 @@ export function ComposerOperatorDeck() {
             <span className={styles.panelTitle}>
               <Command size={16} />
               <span>
-                <strong>Composer cockpit</strong>
+                <strong>Operator Control</strong>
                 <small>
-                  Readiness, reusable templates, and rapid actions.
+                  Guided flow, readiness, templates, and actions.
                 </small>
               </span>
             </span>
@@ -966,6 +987,60 @@ export function ComposerOperatorDeck() {
 
           {tab === 'readiness' ? (
             <div className={styles.panelBody}>
+              {guidedFlow ? (
+                <section
+                  className={styles.guidedFlow}
+                  aria-label="Composer guided flow"
+                >
+                  <div className={styles.guidedFlowStages}>
+                    {guidedFlow.stages.map(
+                      (stage, index) => (
+                        <button
+                          key={stage.id}
+                          type="button"
+                          data-state={stage.state}
+                          onClick={() =>
+                            jumpTo(stage.id)
+                          }
+                        >
+                          <span className={styles.guidedFlowIndex}>
+                            {stage.state === 'complete' ? (
+                              <Check size={12} />
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <span className={styles.guidedFlowCopy}>
+                            <strong>{stage.label}</strong>
+                            <small>{stage.detail}</small>
+                          </span>
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <button
+                    className={styles.guidedFlowNext}
+                    data-tone={guidedFlow.nextAction.tone}
+                    type="button"
+                    onClick={() =>
+                      jumpTo(guidedFlow.nextAction.section)
+                    }
+                  >
+                    <span>
+                      <small>NEXT REQUIRED</small>
+                      <strong>
+                        {guidedFlow.nextAction.label}
+                      </strong>
+                    </span>
+                    <span className={styles.guidedFlowMeta}>
+                      {completedFlowStages}/4
+                    </span>
+                    <ChevronRight size={14} />
+                  </button>
+                </section>
+              ) : null}
+
               <div className={styles.scoreGrid}>
                 <article>
                   <Gauge size={16} />

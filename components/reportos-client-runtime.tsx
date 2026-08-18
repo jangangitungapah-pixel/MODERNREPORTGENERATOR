@@ -18,14 +18,6 @@ const ComposerOperatorDeck = dynamic(
   { ssr: false }
 );
 
-const ComposerFlowGuide = dynamic(
-  () =>
-    import('./composer-flow-guide').then(
-      (module) => module.ComposerFlowGuide
-    ),
-  { ssr: false }
-);
-
 const SavedTTLibraryControl = dynamic(
   () =>
     import('./saved-tt-library-control').then(
@@ -39,8 +31,9 @@ export function ReportOsClientRuntime() {
     <>
       <ReportOsUtilityDock />
       <ComposerOperatorDeck />
-      <ComposerFlowGuide />
       <SavedTTLibraryControl />
     </>
   );
 }
+
+// REPORTOS_COMPOSER_UNIFIED_FLOW_V3: guided flow is merged into Composer Operator Control.

@@ -643,3 +643,203 @@
     transform: none;
   }
 }
+
+/* REPORTOS_COMPOSER_UNIFIED_FLOW_V3: guided flow merged into one compact Operator Control. */
+.guidedFlow {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 7px;
+  border: 1px solid rgba(103, 84, 234, 0.085);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(103, 84, 234, 0.065), transparent 108px),
+    rgba(248, 249, 253, 0.68);
+}
+
+.guidedFlowStages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.guidedFlowStages > button {
+  display: grid;
+  min-width: 0;
+  min-height: 42px;
+  grid-template-columns: 21px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 5px 6px;
+  border: 1px solid rgba(65, 72, 101, 0.065);
+  border-radius: 9px;
+  color: #747c90;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.64);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.guidedFlowStages > button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 84, 234, 0.15);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.guidedFlowStages > button[data-state='current'] {
+  border-color: rgba(103, 84, 234, 0.18);
+  color: #5d49d0;
+  background: rgba(103, 84, 234, 0.065);
+}
+
+.guidedFlowStages > button[data-state='complete'] {
+  border-color: rgba(35, 158, 114, 0.13);
+  color: #257d60;
+  background: rgba(35, 158, 114, 0.045);
+}
+
+.guidedFlowIndex {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border: 1px solid rgba(103, 84, 234, 0.11);
+  border-radius: 7px;
+  color: #7062c2;
+  background: rgba(103, 84, 234, 0.055);
+  font-size: 8.75px;
+  font-weight: 820;
+}
+
+.guidedFlowStages > button[data-state='complete'] .guidedFlowIndex {
+  border-color: rgba(35, 158, 114, 0.13);
+  color: #239e72;
+  background: rgba(35, 158, 114, 0.07);
+}
+
+.guidedFlowCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.guidedFlowCopy strong {
+  overflow: hidden;
+  color: currentColor;
+  font-size: 9.75px;
+  font-weight: 780;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guidedFlowCopy small {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #9aa1b0;
+  font-size: 8.4px;
+  font-weight: 610;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guidedFlowNext {
+  display: grid;
+  width: 100%;
+  min-height: 37px;
+  grid-template-columns: minmax(0, 1fr) auto 14px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 1px solid rgba(103, 84, 234, 0.11);
+  border-radius: 9px;
+  color: #5c49cf;
+  text-align: left;
+  background:
+    linear-gradient(90deg, rgba(103, 84, 234, 0.06), transparent 72%),
+    rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+}
+
+.guidedFlowNext[data-tone='required'] {
+  border-color: rgba(201, 81, 81, 0.13);
+  color: #a74444;
+  background:
+    linear-gradient(90deg, rgba(201, 81, 81, 0.052), transparent 72%),
+    rgba(255, 255, 255, 0.76);
+}
+
+.guidedFlowNext[data-tone='ready'] {
+  border-color: rgba(35, 158, 114, 0.14);
+  color: #257d61;
+  background:
+    linear-gradient(90deg, rgba(35, 158, 114, 0.052), transparent 72%),
+    rgba(255, 255, 255, 0.76);
+}
+
+.guidedFlowNext > span:first-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.guidedFlowNext small {
+  color: #979eaf;
+  font-size: 7.8px;
+  font-weight: 830;
+  letter-spacing: 0.07em;
+}
+
+.guidedFlowNext strong {
+  overflow: hidden;
+  margin-top: 1px;
+  color: currentColor;
+  font-size: 10.25px;
+  font-weight: 790;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guidedFlowMeta {
+  display: grid;
+  min-width: 30px;
+  height: 23px;
+  place-items: center;
+  border: 1px solid rgba(65, 72, 101, 0.075);
+  border-radius: 7px;
+  color: #747c8e;
+  background: rgba(255, 255, 255, 0.76);
+  font-size: 8.75px;
+  font-weight: 790;
+}
+
+@media (max-width: 560px) {
+  .guidedFlowStages > button {
+    min-height: 35px;
+    grid-template-columns: 1fr;
+    place-items: center;
+    padding: 4px;
+  }
+
+  .guidedFlowCopy {
+    display: none;
+  }
+
+  .guidedFlowNext {
+    min-height: 41px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guidedFlowStages > button {
+    transition: none;
+  }
+
+  .guidedFlowStages > button:hover {
+    transform: none;
+  }
+}

@@ -265,3 +265,42 @@ section[aria-label='Composer command palette'] button {
     transform: none;
   }
 }
+
+/* REPORTOS_COMPOSER_UNIFIED_FLOW_V3: only one compact floating Composer control remains. */
+@media (min-width: 1024px) {
+  button[data-ready][aria-expanded] {
+    right: 18px;
+    bottom: 92px;
+    width: 156px;
+    min-width: 156px;
+    min-height: 41px;
+    grid-template-columns: 29px minmax(0, 1fr) 12px;
+    gap: 7px;
+    padding: 5px 8px 5px 6px;
+    border-radius: 13px;
+  }
+
+  button[data-ready][aria-expanded] > span:first-child {
+    width: 29px;
+    height: 29px;
+    border-radius: 9px;
+  }
+
+  button[data-ready][aria-expanded] > span:nth-child(2) strong {
+    font-size: 10.25px;
+  }
+
+  button[data-ready][aria-expanded] > span:nth-child(2) small {
+    font-size: 8.6px;
+  }
+
+  aside[aria-label='Composer operator deck'] {
+    width: min(380px, calc(100vw - 36px));
+  }
+}
+
+@media (max-width: 1023px) {
+  button[data-ready][aria-expanded] {
+    min-width: 148px;
+  }
+}
