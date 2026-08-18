@@ -18,6 +18,14 @@ const ComposerOperatorDeck = dynamic(
   { ssr: false }
 );
 
+const ComposerFlowGuide = dynamic(
+  () =>
+    import('./composer-flow-guide').then(
+      (module) => module.ComposerFlowGuide
+    ),
+  { ssr: false }
+);
+
 const SavedTTLibraryControl = dynamic(
   () =>
     import('./saved-tt-library-control').then(
@@ -31,6 +39,7 @@ export function ReportOsClientRuntime() {
     <>
       <ReportOsUtilityDock />
       <ComposerOperatorDeck />
+      <ComposerFlowGuide />
       <SavedTTLibraryControl />
     </>
   );
