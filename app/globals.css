@@ -1412,6 +1412,24 @@ textarea:focus-visible {
   gap: 12px;
 
   min-width: 0;
+
+  /* Preview rail viewport guard: keep Smart Close accessible */
+
+  align-content: start;
+
+  max-height:
+    calc(100vh - 36px);
+
+  max-height:
+    calc(100dvh - 36px);
+
+  overflow-y: auto;
+
+  overscroll-behavior-y:
+    contain;
+
+  scrollbar-gutter:
+    stable;
 }
 
 .preview-card {
@@ -2054,6 +2072,14 @@ kbd {
 
   .preview-column {
     position: static;
+
+    max-height: none;
+
+    overflow: visible;
+
+    overscroll-behavior: auto;
+
+    scrollbar-gutter: auto;
   }
 
   .report-paper pre {
