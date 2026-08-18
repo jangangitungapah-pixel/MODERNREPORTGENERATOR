@@ -26,7 +26,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 38px 8px 8px;
 }
 
 .stageList {
@@ -280,21 +280,22 @@
 
 .collapseButton {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  display: none;
+  top: 8px;
+  right: 7px;
+  display: grid;
   width: 26px;
   height: 26px;
   place-items: center;
-  border: 0;
+  border: 1px solid rgba(65, 72, 101, 0.07);
   border-radius: 8px;
   color: #8a91a3;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.76);
   cursor: pointer;
 }
 
-.dock[data-collapsed='true'] .progressTrack {
-  padding-right: 38px;
+.collapseButton:hover {
+  color: #6652df;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 :global([data-reportos-flow-focus='true']) {
@@ -357,7 +358,7 @@
   .progressTrack {
     grid-template-columns: 36px minmax(0, 1fr) 36px;
     gap: 5px;
-    padding: 6px;
+    padding: 6px 36px 6px 6px;
   }
 
   .stageList {
@@ -409,10 +410,6 @@
 
   .continueButton kbd {
     display: none;
-  }
-
-  .collapseButton {
-    display: grid;
   }
 }
 
